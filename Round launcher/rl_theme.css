@@ -1,0 +1,181 @@
+/* =====================================================================
+   Round Launcher — Theme File  (rl_theme.css)
+   =====================================================================
+
+   HOW THIS FILE WORKS
+   ───────────────────
+   This is NOT standard CSS. The launcher only reads ":root { --name:
+   value; }" custom-property declarations. All other selectors and
+   rules are ignored, so feel free to use comments anywhere without
+   breaking the parser.
+
+   The file is watched at runtime — save it and the wheel reloads
+   live without relaunching. The same applies to any theme file you
+   swap in via --theme or $THEME_PATH.
+
+   COLOR FORMAT — IMPORTANT
+   ────────────────────────
+   Qt/QML uses #AARRGGBB order (alpha FIRST), which is the opposite
+   of CSS/web #RRGGBBAA (alpha LAST). Getting this wrong produces
+   correct hue but wrong transparency. Examples:
+
+     Web CSS : #ff000080  →  red at 50% opacity
+     Qt/QML  : #80ff0000  →  red at 50% opacity  ← use this format
+
+   For fully-opaque colors, 6-digit hex (#RRGGBB) works in both and
+   is unambiguous — prefer it when you don't need transparency.
+   For colors with transparency, always use the 8-digit #AARRGGBB form.
+
+   AVAILABLE VARIABLES — COMPLETE REFERENCE
+   ─────────────────────────────────────────
+
+   ┌─ COLOR GROUP ───────────────────────────────────────────────────┐
+   │                                                                  │
+   │  --color-cream             Primary text color and icon glow.     │
+   │                            Used for cell labels, center-card     │
+   │                            name, and the hint line at the bottom.│
+   │                                                                  │
+   │  --color-red               Active-slice highlight outline color. │
+   │                            Drawn as a thin stroke just inside    │
+   │                            the edges of the currently-selected   │
+   │                            (hovered or keyboard-focused) slice.  │
+   │                            Doesn't have to be red — any accent   │
+   │                            color works here.                     │
+   │                                                                  │
+   │  --color-ink               Slice fill for INACTIVE slices        │
+   │                            (everything that isn't selected).     │
+   │                            This is the dominant background color │
+   │                            of the wheel ring.                    │
+   │                                                                  │
+   │  --color-slice-active-fill Slice fill for the ACTIVE (selected   │
+   │                            or hovered) slice. Usually a slightly │
+   │                            lighter/brighter version of --ink so  │
+   │                            the selection is visible but subtle.  │
+   │                                                                  │
+   │  --color-slice-stroke      Border line drawn between slices      │
+   │                            (the radial divider lines and the     │
+   │                            inner/outer arc edges). Supports      │
+   │                            transparency — e.g. #80a7c080 gives   │
+   │                            a soft translucent edge.              │
+   │                                                                  │
+   │  --color-text-secondary    Secondary / category label text.      │
+   │                            Shown in the center card below the    │
+   │                            main cell name. Good place for a      │
+   │                            bright accent color.                  │
+   │                                                                  │
+   │  --color-hint              Subtle helper text color.             │
+   │                            Used for the "hover or use arrow      │
+   │                            keys" prompt at the bottom of the     │
+   │                            wheel when nothing is selected yet.   │
+   │                                                                  │
+   │  --color-icon-bg           Background badge fill behind each     │
+   │                            slice icon. Almost always a very      │
+   │                            low-opacity version of a color —      │
+   │                            e.g. #33000000 is black at ~20%       │
+   │                            opacity. Set to #00000000 to remove   │
+   │                            the badge entirely.                   │
+   │                                                                  │
+   │  --color-ring-border       Border/stroke color for the center    │
+   │                            hub ring and the icon badge circles.  │
+   │                            Ties the center disc to the slices    │
+   │                            visually.                             │
+   │                                                                  │
+   │  --color-ring-fill         Fill color of the center hub ring     │
+   │                            (the solid disc in the middle of the  │
+   │                            donut). The actual rendered alpha is  │
+   │                            this color's own alpha multiplied by  │
+   │                            --opacity-center (see below).         │
+   │                                                                  │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ SIZE GROUP ────────────────────────────────────────────────────┐
+   │                                                                  │
+   │  --scale                   Global scale multiplier for the whole │
+   │                            wheel. 1.0 = default size as set by  │
+   │                            outerR in the layout JSON.            │
+   │                            Use 0.8 to shrink, 1.2 to enlarge.   │
+   │                            Affects ring radii, icon sizes, font  │
+   │                            sizes, and all spacing uniformly.     │
+   │                                                                  │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ EFFECTS GROUP ─────────────────────────────────────────────────┐
+   │                                                                  │
+   │  --opacity                 Overall opacity of the entire wheel   │
+   │                            (0.0 = invisible, 1.0 = fully solid). │
+   │                            Applied to the root Item, so it dims  │
+   │                            every layer uniformly. Independent    │
+   │                            of the per-layer knobs below.         │
+   │                                                                  │
+   │  --blur                    Frosted-glass blur strength on the    │
+   │                            slice fill layer, in raw pixels       │
+   │                            (0–64, capped at blurMaxVal in the    │
+   │                            layout JSON). 0 = no blur (sharp).    │
+   │                            Useful for glassmorphism styles.      │
+   │                                                                  │
+   │  --dimness                 Opacity applied to all non-active     │
+   │                            slices when any slice is selected.    │
+   │                            0.0 = fully invisible, 1.0 = no dim. │
+   │                            0.4–0.5 gives a natural focus effect. │
+   │                                                                  │
+   └──────────────────────────────────────────────────────────────────┘
+
+   ┌─ PER-LAYER TRANSPARENCY GROUP ──────────────────────────────────┐
+   │                                                                  │
+   │  These three knobs scale the alpha of their respective layer     │
+   │  independently, on top of whatever alpha the layer's own color   │
+   │  already carries, and independently of the global --opacity      │
+   │  and --dimness. Range: 0.0 (fully transparent) → 1.0 (opaque).  │
+   │                                                                  │
+   │  --opacity-center          Center hub ring fill transparency.    │
+   │                            Set below 1.0 to make the disc see-   │
+   │                            through over your wallpaper/windows.  │
+   │                                                                  │
+   │  --opacity-slice           Donut slice fill transparency (active │
+   │                            + inactive slices together). Lowering │
+   │                            this lets the wallpaper bleed through │
+   │                            the ring — pairs well with --blur.    │
+   │                                                                  │
+   │  --opacity-background      The soft drop-shadow ring drawn just  │
+   │                            outside the wheel. 1.0 = fully solid  │
+   │                            halo, 0.0 = no halo at all.           │
+   │                                                                  │
+   └──────────────────────────────────────────────────────────────────┘
+
+   QUICK CUSTOMIZATION TIPS
+   ─────────────────────────
+   • For a dark theme: dark --color-ink, dark --color-ring-fill,
+     light --color-cream.
+   • For a glass/frosted look: set --blur 8–20, lower --opacity-slice
+     to ~0.7, keep --opacity-center around 0.85.
+   • For a minimal/borderless look: set --color-slice-stroke to
+     #00000000 (fully transparent) and --opacity-background to 0.
+
+   ===================================================================== */
+
+:root {
+  /* ── Colors (Nordic Teal & Warm Amber) ── */
+  --color-cream:              #f4ebd9;   /* primary text / icon glow (warm ivory) */
+  --color-red:                #e69875;   /* active-slice highlight outline (terracotta/amber) */
+  --color-ink:                #1e2326;   /* slice fill, inactive (deep slate background) */
+  --color-slice-active-fill:  #2d353b;   /* slice fill, active (elevated slate) */
+  --color-slice-stroke:       #80a7c080; /* slice border line (soft sage green) */
+  --color-text-secondary:     #83c092;   /* secondary text (bright mint green) */
+  --color-hint:                #859289;  /* hint text (subtle gray-green) */
+  --color-icon-bg:            #db272e33; /* icon badge background */
+  --color-ring-border:        #7fbbb3;   /* center ring + icon badge border (ice blue/teal) */
+  --color-ring-fill:          #7fbbb3;   /* center ring fill (teal) */
+
+  /* ── Size ── */
+  --scale: 1.0;
+
+  /* ── Effects ── */
+  --opacity: 1.0;
+  --blur:    0;
+  --dimness: 0.45;
+
+  /* ── Per-layer transparency (0 = fully transparent, 1 = fully opaque) ── */
+  --opacity-center:      1.0;  /* center hub ring fill */
+  --opacity-slice:       1.0;  /* donut slice fill (active + inactive) */
+  --opacity-background:  1.0;  /* soft shadow circle behind the ring */
+}
