@@ -6,27 +6,42 @@ This is just the beginning. More components are on the way.
 
 ---
 
+## 💬 Note
+
+I built this for personal use but decided to share it since a few people seemed to like it. Even though it started as a personal project, I've put effort into making it as customizable as possible given my current knowledge.
+
+Criticism is welcomed. Advice is welcomed. Collaboration is most welcomed.
+
+---
+
+## System
+
+- **Device:** HP Victus 15 fb0108ax
+- **OS:** Arch Linux
+- **WM:** Hyprland
+- **Terminal:** kitty 0.48.2
+- **Display:** 1920x1080 @ 144Hz (Built-in)
+- **CPU:** AMD Ryzen 5 5600H
+- **GPU:** AMD Radeon RX 6500M / AMD Radeon Vega (integrated)
+- **RAM:** 8GB
+- **Storage:** 512GB
+
+> Not tested on any other devices or distros.
+
+---
+
 ## 🗂️ Repository Index
 
 ```
 Arch-LINUX-rice/
-├── README.md                      ← repository overview & file index
+├── README.md
 └── Round launcher/
-    ├── README.md                  ← component documentation & Hyprland guide
-    ├── first_look.png             ← preview screenshot
-    ├── round launcher.qml         ← single-file launcher app (Quickshell / QML)
-    ├── rl_theme.css               ← color theme + effect variables (hot-reloaded)
-    └── rl_layout.json             ← cells + geometry config (hot-reloaded)
+    ├── README.md
+    ├── first_look.png
+    ├── round launcher.qml
+    ├── rl_theme.css
+    └── rl_layout.json
 ```
-
-| Path | Type | Description |
-| :--- | :--- | :--- |
-| [README.md](./README.md) | Markdown | Repository overview, index, and component list |
-| [Round launcher/README.md](./Round%20launcher/README.md) | Markdown | Comprehensive component documentation, controls, and Hyprland config |
-| [Round launcher/first_look.png](./Round%20launcher/first_look.png) | Image | Visual preview screenshot of the radial launcher |
-| [Round launcher/round launcher.qml](./Round%20launcher/round%20launcher.qml) | QML | Main radial quick-launcher application for Wayland layer-shell |
-| [Round launcher/rl_theme.css](./Round%20launcher/rl_theme.css) | CSS Variables | Complete theme definition and variable reference |
-| [Round launcher/rl_layout.json](./Round%20launcher/rl_layout.json) | JSON | Geometry knobs and active cell/command definitions |
 
 ---
 
