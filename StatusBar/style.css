@@ -1,31 +1,22 @@
-/* Overall Status Bar Container */
-#bar {
-    background-color: transparent;
-    height: 40px;
-}
+/* ===== Theme (used by Quickshell) ===== */
 
-/* Center Pill Container */
-#pill {
-    background-color: #1e1e2e;
-    border-color: #313244;
-    border-width: 1px;
-    border-radius: 16px;
-    height: 32px;
-    padding-left: 16px;
-    padding-right: 16px;
-}
+:root {
+    --bg:           #1e1e2e;
+    --surface:      #313244;
+    --border:       #313244;
+    --text:         #cdd6f4;
+    --text-muted:   #a6adc8;
+    --accent:       #89b4fa;
+    --green:        #a6e3a1;
+    --red:          #f38ba8;
+    --divider:      #45475a;
 
-/* Clock Icon Styling */
-#icon {
-    color: #89b4fa;
-    font-size: 15px;
-    font-family: "JetBrainsMono Nerd Font";
-}
+    --font-ui:      "Inter";
+    --font-icon:    "JetBrainsMono Nerd Font";
 
-/* Clock Text Styling */
-#clockText {
-    color: #cdd6f4;
-    font-size: 13px;
-    font-family: "JetBrainsMono Nerd Font";
-    font-weight: bold;
+    --bar-height:   40px;
+    --pill-height:  32px;
+    --pill-radius:  16px;
+    --popup-radius: 20px;
+    --tile-radius:  16px;
 }
