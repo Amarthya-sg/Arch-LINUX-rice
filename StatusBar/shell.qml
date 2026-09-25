@@ -13,6 +13,7 @@ ShellRoot {
         bg: "#000000",
         surface: "#1c1c1e",
         surface2: "#2c2c2e",
+        surface3: "#3a3a3c",
         border: "#3a3a3c",
         text: "#f5f5f7",
         textMuted: "#8e8e93",
@@ -29,10 +30,16 @@ ShellRoot {
 
     property string activeSection: "wifi"
 
-    // ── Volume / PipeWire ───────────────────────────────────────────
-    PwObjectTracker { objects: [Pipewire.defaultAudioSink] }
+    // ═══════════════════════════════════════════════════════════════
+    // AUDIO
+    // ═══════════════════════════════════════════════════════════════
+    PwObjectTracker { objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource] }
+
     property real volume: Pipewire.defaultAudioSink?.audio?.volume ?? 0
     property bool muted:  Pipewire.defaultAudioSink?.audio?.muted  ?? false
+    property real micVolume: Pipewire.defaultAudioSource?.audio?.volume ?? 0
+    property bool micMuted:  Pipewire.defaultAudioSource?.audio?.muted  ?? false
+
     function setVolume(v) {
         if (Pipewire.defaultAudioSink?.audio)
             Pipewire.defaultAudioSink.audio.volume = Math.max(0, Math.min(1.5, v))
@@ -41,8 +48,33 @@ ShellRoot {
         if (Pipewire.defaultAudioSink?.audio)
             Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted
     }
+    function setMicVolume(v) {
+        if (Pipewire.defaultAudioSource?.audio)
+            Pipewire.defaultAudioSource.audio.volume = Math.max(0, Math.min(1.5, v))
+    }
+    function toggleMicMute() {
+        if (Pipewire.defaultAudioSource?.audio)
+            Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted
+    }
 
-    // ── Brightness ──────────────────────────────────────────────────
+    property var sinksList: []
+    function refreshSinks() {
+        const out = []
+        const nodes = Pipewire.nodes ? Pipewire.nodes.values : []
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i]
+            if (n.isSink && !n.isStream)
+                out.push({ id: n.id, name: n.name, desc: n.description || n.name })
+        }
+        sinksList = out
+    }
+    function setDefaultSink(id) {
+        Quickshell.execDetached(["wpctl", "set-default", String(id)])
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // BRIGHTNESS
+    // ═══════════════════════════════════════════════════════════════
     property real brightness: 0.5
     Process {
         id: brightnessGet
@@ -68,15 +100,34 @@ ShellRoot {
         Quickshell.execDetached(["brightnessctl", "s", Math.round(v * 100) + "%"])
     }
 
-    // ── Wi-Fi ───────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // NIGHT LIGHT
+    // ═══════════════════════════════════════════════════════════════
+    property bool nightLight: false
+    property int nightTemp: 4000
+    function applyNightLight() {
+        Quickshell.execDetached(["pkill", "-x", "gammastep"])
+        if (nightLight) {
+            Quickshell.execDetached([
+                "gammastep", "-O", String(nightTemp),
+                "-l", "0", "-L", "0"
+            ])
+        }
+    }
+    function toggleNightLight() { nightLight = !nightLight; applyNightLight() }
+    function setNightTemp(t) { nightTemp = t; if (nightLight) applyNightLight() }
+
+    // ═══════════════════════════════════════════════════════════════
+    // WI-FI
+    // ═══════════════════════════════════════════════════════════════
     property bool wifiEnabled: false
     property string wifiSsid: "Not connected"
     property int wifiSignal: 0
     property string wifiIp: ""
     property var wifiNetworks: []
-    property string hiddenSsid: ""
-    property string hiddenPass: ""
-    property bool hotspotActive: false
+    property string pendingSsid: ""
+    property string pendingPassword: ""
+    property string captiveUrl: ""
 
     Process {
         id: wifiStatus
@@ -100,7 +151,7 @@ ShellRoot {
                         break
                     }
                 }
-                if (!found) { wifiSsid = "Not connected"; wifiSignal = 0 }
+                if (!found) { wifiSsid = "Not connected"; wifiSignal = 0; captiveUrl = "" }
             }
         }
     }
@@ -132,12 +183,22 @@ ShellRoot {
             }
         }
     }
+
     Process {
-        id: hotspotStatus
-        command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show", "--active"]
-        running: true
+        id: captiveProbe
+        command: ["sh", "-c",
+            "curl -s -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 5 http://connectivitycheck.gstatic.com/generate_204"]
         stdout: StdioCollector {
-            onStreamFinished: hotspotActive = text.indexOf("Hotspot") !== -1 || text.indexOf("hotspot") !== -1
+            onStreamFinished: {
+                const parts = text.trim().split(/\s+/)
+                const code = parts[0]
+                const redirect = parts[1] || ""
+                if (code !== "204") {
+                    captiveUrl = redirect || "http://connectivitycheck.gstatic.com/generate_204"
+                } else {
+                    captiveUrl = ""
+                }
+            }
         }
     }
 
@@ -146,41 +207,36 @@ ShellRoot {
         wifiEnabled = !wifiEnabled
         refreshWifi()
     }
-    function connectWifi(ssid) {
-        Quickshell.execDetached(["nmcli", "dev", "wifi", "connect", ssid])
-        Qt.callLater(refreshWifi)
+    function connectWifi(ssid, password) {
+        const args = ["nmcli", "dev", "wifi", "connect", ssid]
+        if (password) args.push("password", password)
+        Quickshell.execDetached(args)
+        pendingSsid = ""
+        pendingPassword = ""
+        Qt.callLater(() => { refreshWifi(); captiveProbe.running = true })
     }
     function forgetWifi(ssid) {
         Quickshell.execDetached(["nmcli", "connection", "delete", ssid])
         Qt.callLater(refreshWifi)
-    }
-    function connectHidden() {
-        if (!hiddenSsid) return
-        const args = ["nmcli", "dev", "wifi", "connect", hiddenSsid]
-        if (hiddenPass) args.push("password", hiddenPass)
-        Quickshell.execDetached(args)
-        hiddenSsid = ""; hiddenPass = ""
-        Qt.callLater(refreshWifi)
-    }
-    function toggleHotspot() {
-        if (hotspotActive)
-            Quickshell.execDetached(["nmcli", "connection", "down", "Hotspot"])
-        else
-            Quickshell.execDetached(["nmcli", "device", "wifi", "hotspot", "ssid", "QuickShell-Hotspot", "password", "quickshell123"])
-        Qt.callLater(() => { hotspotStatus.running = true })
     }
     function refreshWifi() {
         wifiStatus.running = true
         wifiCurrent.running = true
         wifiIpProc.running = true
         wifiScan.running = true
-        hotspotStatus.running = true
+    }
+    function openCaptive() {
+        if (captiveUrl)
+            Quickshell.execDetached(["xdg-open", captiveUrl])
     }
 
-    // ── Bluetooth ───────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // BLUETOOTH
+    // ═══════════════════════════════════════════════════════════════
     property bool btEnabled: false
     property bool btDiscoverable: false
     property var btDevices: []
+    property string btExpandedMac: ""
 
     Process {
         id: btStatus
@@ -200,9 +256,8 @@ ShellRoot {
             onStreamFinished: {
                 const list = []
                 for (let line of text.trim().split("\n")) {
-                    // Device XX:XX:XX:XX:XX:XX Name
                     const m = line.match(/^Device\s+([0-9A-F:]{17})\s+(.+)$/i)
-                    if (m) list.push({ mac: m[1], name: m[2], connected: false })
+                    if (m) list.push({ mac: m[1], name: m[2], connected: false, battery: -1, codec: "" })
                 }
                 btDevices = list
                 btConnected.running = true
@@ -219,9 +274,45 @@ ShellRoot {
                     const m = line.match(/^Device\s+([0-9A-F:]{17})/i)
                     if (m) connectedMacs[m[1]] = true
                 }
-                for (let i = 0; i < btDevices.length; i++)
-                    btDevices[i].connected = !!connectedMacs[btDevices[i].mac]
-                btDevices = btDevices.slice() // trigger update
+                const copy = btDevices.slice()
+                for (let i = 0; i < copy.length; i++)
+                    copy[i].connected = !!connectedMacs[copy[i].mac]
+                btDevices = copy
+                btInfoQueue = copy.filter(d => d.connected).map(d => d.mac)
+                if (btInfoQueue.length > 0) btInfoNext()
+            }
+        }
+    }
+    property var btInfoQueue: []
+    function btInfoNext() {
+        if (btInfoQueue.length === 0) return
+        const mac = btInfoQueue[0]
+        btInfoQueue = btInfoQueue.slice(1)
+        btInfo.mac = mac
+        btInfo.running = true
+    }
+    Process {
+        id: btInfo
+        property string mac: ""
+        command: ["bluetoothctl", "info", btInfo.mac]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const t = text
+                let battery = -1
+                const bm = t.match(/Battery Percentage:\s*0x[0-9A-Fa-f]+\s*\((\d+)\)/)
+                if (bm) battery = parseInt(bm[1])
+                let codec = ""
+                const cm = t.match(/Codec:\s*(.+)/i)
+                if (cm) codec = cm[1].trim()
+                const copy = btDevices.slice()
+                for (let i = 0; i < copy.length; i++) {
+                    if (copy[i].mac === btInfo.mac) {
+                        copy[i].battery = battery
+                        copy[i].codec = codec
+                    }
+                }
+                btDevices = copy
+                Qt.callLater(btInfoNext)
             }
         }
     }
@@ -243,15 +334,24 @@ ShellRoot {
         Quickshell.execDetached(["bluetoothctl", "disconnect", mac])
         Qt.callLater(() => { btScan.running = true })
     }
-    function pairBt(mac) {
-        Quickshell.execDetached(["bluetoothctl", "pair", mac])
-    }
     function removeBt(mac) {
         Quickshell.execDetached(["bluetoothctl", "remove", mac])
         Qt.callLater(() => { btScan.running = true })
     }
+    function sendFile(mac) {
+        Quickshell.execDetached(["bluetooth-sendto", "--device=" + mac])
+    }
+    function cycleCodec(mac) {
+        Quickshell.execDetached(["sh", "-c",
+            "card=$(pactl list cards short | awk '/bluez/{print $2; exit}'); " +
+            "[ -n \"$card\" ] && pactl set-card-profile \"$card\" a2dp-sink"]
+        )
+        Qt.callLater(() => { btInfo.mac = mac; btInfo.running = true })
+    }
 
-    // ── System ──────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // SYSTEM
+    // ═══════════════════════════════════════════════════════════════
     property int cpuUsage: 0
     property int memUsage: 0
     property string memUsed: "0"
@@ -319,13 +419,18 @@ ShellRoot {
         powerProfile = p
     }
 
-    // ── Notifications / DND ─────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // DND
+    // ═══════════════════════════════════════════════════════════════
     property bool dnd: false
     function toggleDnd() {
         Quickshell.execDetached(["swaync-client", dnd ? "-dnd_off" : "-dnd_on"])
         dnd = !dnd
     }
 
+    // ═══════════════════════════════════════════════════════════════
+    // Polling
+    // ═══════════════════════════════════════════════════════════════
     Timer {
         interval: 2000
         running: true
@@ -341,10 +446,13 @@ ShellRoot {
             wifiIpProc.running = true
             btStatus.running = true
             profileProc.running = true
+            refreshSinks()
         }
     }
 
-    // ── Bar + Dynamic Island ────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // BAR + DYNAMIC ISLAND
+    // ═══════════════════════════════════════════════════════════════
     PanelWindow {
         id: bar
         anchors { top: true; left: true; right: true }
@@ -356,11 +464,11 @@ ShellRoot {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             anchors.topMargin: 6
-            width: pillContent.implicitWidth + (popup.visible ? 48 : 36)
+            width: Math.max(120, pillContent.implicitWidth + 36)
             height: root.theme.pillHeight
             radius: height / 2
-            color: "#000000"
-            border.color: "#1c1c1e"
+            color: root.theme.bg
+            border.color: root.theme.surface
             border.width: 1
             Behavior on width { NumberAnimation { duration: 280; easing.type: Easing.OutCubic } }
             scale: pillMouse.pressed ? 0.96 : 1.0
@@ -389,6 +497,14 @@ ShellRoot {
                         onTriggered: clockText.text = Qt.formatDateTime(new Date(), "h:mm AP")
                     }
                 }
+                Text {
+                    visible: captiveUrl !== ""
+                    text: "󰖟"
+                    color: root.theme.orange
+                    font.family: root.theme.fontIcon
+                    font.pixelSize: 13
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
             MouseArea {
                 id: pillMouse
@@ -405,14 +521,13 @@ ShellRoot {
             }
         }
 
-        // ── Control Center ──────────────────────────────────────────
         PopupWindow {
             id: popup
             anchor.window: bar
             anchor.rect.x: bar.width / 2 - implicitWidth / 2
             anchor.rect.y: bar.height + 6
-            implicitWidth: 360
-            implicitHeight: 480
+            implicitWidth: 380
+            implicitHeight: 520
             visible: false
             color: "transparent"
 
@@ -428,24 +543,26 @@ ShellRoot {
                     anchors.margins: 12
                     spacing: 10
 
-                    // Tabs
+                    // ── Tabs ────────────────────────────────────────
                     RowLayout {
                         Layout.fillWidth: true
                         spacing: 5
                         Repeater {
                             model: [
-                                { id: "wifi", icon: "󰤨", label: "Wi-Fi" },
-                                { id: "bluetooth", icon: "󰂯", label: "BT" },
-                                { id: "sound", icon: "󰕾", label: "Sound" },
+                                { id: "wifi",       icon: "󰤨", label: "Wi-Fi" },
+                                { id: "bluetooth",  icon: "󰂯", label: "BT" },
+                                { id: "sound",      icon: "󰕾", label: "Sound" },
                                 { id: "brightness", icon: "󰃠", label: "Bright" },
-                                { id: "notif", icon: "󰂚", label: "Notif" },
-                                { id: "system", icon: "󰒓", label: "System" }
+                                { id: "notif",      icon: "󰂚", label: "Notif" },
+                                { id: "system",     icon: "󰒓", label: "System" }
                             ]
                             Rectangle {
                                 Layout.fillWidth: true
                                 Layout.preferredHeight: 48
                                 radius: 12
-                                color: activeSection === modelData.id ? root.theme.accent : root.theme.surface
+                                color: activeSection === modelData.id
+                                    ? root.theme.accent
+                                    : (tabHover.hovered ? root.theme.surface3 : root.theme.surface)
                                 Column {
                                     anchors.centerIn: parent
                                     spacing: 1
@@ -464,6 +581,7 @@ ShellRoot {
                                         font.pixelSize: 9
                                     }
                                 }
+                                HoverHandler { id: tabHover; cursorShape: Qt.PointingHandCursor }
                                 MouseArea {
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
@@ -477,7 +595,7 @@ ShellRoot {
                         }
                     }
 
-                    // Content
+                    // ── Content card ────────────────────────────────
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -489,15 +607,16 @@ ShellRoot {
                         Flickable {
                             visible: activeSection === "wifi"
                             anchors.fill: parent
-                            contentHeight: wifiCol.implicitHeight + 20
+                            contentWidth: width
+                            contentHeight: wifiCol.implicitHeight + 24
                             clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+
                             ColumnLayout {
                                 id: wifiCol
-                                width: parent.width
-                                anchors.margins: 12
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
+                                width: parent.width - 24
+                                x: 12
+                                y: 12
                                 spacing: 10
 
                                 RowLayout {
@@ -510,22 +629,43 @@ ShellRoot {
                                         font.weight: Font.DemiBold
                                         Layout.fillWidth: true
                                     }
-                                    // Toggle
-                                    Rectangle {
-                                        width: 46; height: 26; radius: 13
-                                        color: wifiEnabled ? root.theme.green : root.theme.surface2
-                                        Rectangle {
-                                            width: 22; height: 22; radius: 11
-                                            color: "#fff"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            x: wifiEnabled ? parent.width - 24 : 2
-                                            Behavior on x { NumberAnimation { duration: 160 } }
-                                        }
-                                        MouseArea { anchors.fill: parent; onClicked: toggleWifi() }
+                                    ToggleSwitch {
+                                        checked: wifiEnabled
+                                        onColor: root.theme.green
+                                        onToggled: toggleWifi()
                                     }
                                 }
 
-                                // Active connection card
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 44
+                                    radius: 10
+                                    color: Qt.rgba(1, 0.62, 0.04, 0.18)
+                                    visible: captiveUrl !== ""
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        Text {
+                                            text: "󰖟  Captive portal detected"
+                                            color: root.theme.orange
+                                            font.family: root.theme.fontUi
+                                            font.pixelSize: 12
+                                            Layout.fillWidth: true
+                                        }
+                                        Text {
+                                            text: "Open"
+                                            color: root.theme.accent
+                                            font.family: root.theme.fontUi
+                                            font.pixelSize: 12
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: openCaptive()
+                                            }
+                                        }
+                                    }
+                                }
+
                                 Rectangle {
                                     Layout.fillWidth: true
                                     Layout.preferredHeight: 64
@@ -571,75 +711,9 @@ ShellRoot {
                                     }
                                 }
 
-                                // Hotspot
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 40
-                                    radius: 10
-                                    color: hotspotActive ? root.theme.orange : root.theme.surface2
-                                    RowLayout {
-                                        anchors.fill: parent
-                                        anchors.margins: 10
-                                        Text {
-                                            text: "Hotspot"
-                                            color: hotspotActive ? "#000" : root.theme.text
-                                            font.family: root.theme.fontUi
-                                            font.pixelSize: 13
-                                            Layout.fillWidth: true
-                                        }
-                                        Text {
-                                            text: hotspotActive ? "ON" : "OFF"
-                                            color: hotspotActive ? "#000" : root.theme.textMuted
-                                            font.family: root.theme.fontUi
-                                            font.pixelSize: 12
-                                        }
-                                    }
-                                    MouseArea { anchors.fill: parent; onClicked: toggleHotspot() }
-                                }
-
-                                // Hidden network
-                                Text {
-                                    text: "Connect to Hidden Network"
-                                    color: root.theme.textMuted
-                                    font.family: root.theme.fontUi
-                                    font.pixelSize: 11
-                                }
-                                TextField {
-                                    Layout.fillWidth: true
-                                    placeholderText: "SSID"
-                                    color: root.theme.text
-                                    placeholderTextColor: root.theme.textMuted
-                                    background: Rectangle { color: root.theme.surface2; radius: 8 }
-                                    onTextChanged: hiddenSsid = text
-                                }
-                                TextField {
-                                    Layout.fillWidth: true
-                                    placeholderText: "Password (optional)"
-                                    echoMode: TextInput.Password
-                                    color: root.theme.text
-                                    placeholderTextColor: root.theme.textMuted
-                                    background: Rectangle { color: root.theme.surface2; radius: 8 }
-                                    onTextChanged: hiddenPass = text
-                                }
-                                Rectangle {
-                                    Layout.fillWidth: true
-                                    Layout.preferredHeight: 36
-                                    radius: 8
-                                    color: root.theme.accent
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: "Connect"
-                                        color: "#000"
-                                        font.family: root.theme.fontUi
-                                        font.pixelSize: 13
-                                        font.weight: Font.Medium
-                                    }
-                                    MouseArea { anchors.fill: parent; onClicked: connectHidden() }
-                                }
-
-                                // Scan header
                                 RowLayout {
                                     Layout.fillWidth: true
+                                    Layout.topMargin: 4
                                     Text {
                                         text: "Available Networks"
                                         color: root.theme.textMuted
@@ -663,45 +737,116 @@ ShellRoot {
                                 Repeater {
                                     model: wifiNetworks
                                     Rectangle {
+                                        id: netRow
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 48
+                                        Layout.preferredHeight: pendingSsid === modelData.ssid ? 96 : 48
                                         radius: 10
-                                        color: modelData.active ? Qt.rgba(0.04, 0.52, 1, 0.15) : "transparent"
-                                        RowLayout {
+                                        color: modelData.active
+                                            ? Qt.rgba(0.04, 0.52, 1, 0.15)
+                                            : (netHover.hovered ? root.theme.surface2 : "transparent")
+                                        Behavior on Layout.preferredHeight {
+                                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                                        }
+                                        clip: true
+
+                                        ColumnLayout {
                                             anchors.fill: parent
-                                            anchors.leftMargin: 8
-                                            anchors.rightMargin: 8
-                                            Text {
-                                                text: modelData.signal >= 70 ? "󰤨" : modelData.signal >= 40 ? "󰤥" : "󰤟"
-                                                color: modelData.active ? root.theme.accent : root.theme.textMuted
-                                                font.family: root.theme.fontIcon
-                                                font.pixelSize: 16
-                                            }
-                                            Column {
+                                            anchors.margins: 8
+                                            spacing: 4
+
+                                            RowLayout {
                                                 Layout.fillWidth: true
+                                                Layout.preferredHeight: 32
                                                 Text {
-                                                    text: modelData.ssid
-                                                    color: root.theme.text
-                                                    font.family: root.theme.fontUi
-                                                    font.pixelSize: 13
+                                                    text: modelData.signal >= 70 ? "󰤨" : modelData.signal >= 40 ? "󰤥" : "󰤟"
+                                                    color: modelData.active ? root.theme.accent : root.theme.textMuted
+                                                    font.family: root.theme.fontIcon
+                                                    font.pixelSize: 16
+                                                }
+                                                Column {
+                                                    Layout.fillWidth: true
+                                                    Text {
+                                                        text: modelData.ssid
+                                                        color: root.theme.text
+                                                        font.family: root.theme.fontUi
+                                                        font.pixelSize: 13
+                                                    }
+                                                    Text {
+                                                        text: modelData.security + " · " + modelData.signal + "%"
+                                                        color: root.theme.textMuted
+                                                        font.family: root.theme.fontUi
+                                                        font.pixelSize: 10
+                                                    }
                                                 }
                                                 Text {
-                                                    text: modelData.security + " · " + modelData.signal + "%"
-                                                    color: root.theme.textMuted
-                                                    font.family: root.theme.fontUi
-                                                    font.pixelSize: 10
+                                                    visible: modelData.active
+                                                    text: "✓"
+                                                    color: root.theme.accent
+                                                    font.pixelSize: 14
                                                 }
                                             }
-                                            Text {
-                                                visible: modelData.active
-                                                text: "✓"
-                                                color: root.theme.accent
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 38
+                                                visible: pendingSsid === modelData.ssid
+                                                spacing: 6
+                                                TextField {
+                                                    id: pwdField
+                                                    Layout.fillWidth: true
+                                                    placeholderText: "Password"
+                                                    echoMode: TextInput.Password
+                                                    color: root.theme.text
+                                                    placeholderTextColor: root.theme.textMuted
+                                                    font.family: root.theme.fontUi
+                                                    font.pixelSize: 12
+                                                    leftPadding: 10
+                                                    rightPadding: 10
+                                                    topPadding: 0
+                                                    bottomPadding: 0
+                                                    background: Rectangle {
+                                                        color: root.theme.surface3
+                                                        radius: 8
+                                                    }
+                                                    onTextChanged: pendingPassword = text
+                                                }
+                                                Rectangle {
+                                                    Layout.preferredWidth: 76
+                                                    Layout.fillHeight: true
+                                                    radius: 8
+                                                    color: root.theme.accent
+                                                    Text {
+                                                        anchors.centerIn: parent
+                                                        text: "Connect"
+                                                        color: "#000"
+                                                        font.family: root.theme.fontUi
+                                                        font.pixelSize: 12
+                                                        font.weight: Font.Medium
+                                                    }
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: connectWifi(modelData.ssid, pendingPassword)
+                                                    }
+                                                }
                                             }
                                         }
+
+                                        HoverHandler { id: netHover; cursorShape: Qt.PointingHandCursor }
                                         MouseArea {
                                             anchors.fill: parent
                                             cursorShape: Qt.PointingHandCursor
-                                            onClicked: if (!modelData.active) connectWifi(modelData.ssid)
+                                            enabled: pendingSsid !== modelData.ssid
+                                            onClicked: {
+                                                if (modelData.active) return
+                                                const open = modelData.security === "Open" || modelData.security === ""
+                                                if (open) {
+                                                    connectWifi(modelData.ssid, "")
+                                                } else {
+                                                    pendingSsid = modelData.ssid
+                                                    pendingPassword = ""
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -712,15 +857,16 @@ ShellRoot {
                         Flickable {
                             visible: activeSection === "bluetooth"
                             anchors.fill: parent
-                            contentHeight: btCol.implicitHeight + 20
+                            contentWidth: width
+                            contentHeight: btCol.implicitHeight + 24
                             clip: true
+                            boundsBehavior: Flickable.StopAtBounds
+
                             ColumnLayout {
                                 id: btCol
-                                width: parent.width
-                                anchors.margins: 12
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
+                                width: parent.width - 24
+                                x: 12
+                                y: 12
                                 spacing: 10
 
                                 RowLayout {
@@ -733,17 +879,10 @@ ShellRoot {
                                         font.weight: Font.DemiBold
                                         Layout.fillWidth: true
                                     }
-                                    Rectangle {
-                                        width: 46; height: 26; radius: 13
-                                        color: btEnabled ? root.theme.accent : root.theme.surface2
-                                        Rectangle {
-                                            width: 22; height: 22; radius: 11
-                                            color: "#fff"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            x: btEnabled ? parent.width - 24 : 2
-                                            Behavior on x { NumberAnimation { duration: 160 } }
-                                        }
-                                        MouseArea { anchors.fill: parent; onClicked: toggleBt() }
+                                    ToggleSwitch {
+                                        checked: btEnabled
+                                        onColor: root.theme.accent
+                                        onToggled: toggleBt()
                                     }
                                 }
 
@@ -757,17 +896,10 @@ ShellRoot {
                                         font.pixelSize: 13
                                         Layout.fillWidth: true
                                     }
-                                    Rectangle {
-                                        width: 46; height: 26; radius: 13
-                                        color: btDiscoverable ? root.theme.green : root.theme.surface2
-                                        Rectangle {
-                                            width: 22; height: 22; radius: 11
-                                            color: "#fff"
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            x: btDiscoverable ? parent.width - 24 : 2
-                                            Behavior on x { NumberAnimation { duration: 160 } }
-                                        }
-                                        MouseArea { anchors.fill: parent; onClicked: toggleDiscoverable() }
+                                    ToggleSwitch {
+                                        checked: btDiscoverable
+                                        onColor: root.theme.green
+                                        onToggled: toggleDiscoverable()
                                     }
                                 }
 
@@ -788,6 +920,7 @@ ShellRoot {
                                         font.pixelSize: 12
                                         MouseArea {
                                             anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
                                             onClicked: {
                                                 Quickshell.execDetached(["bluetoothctl", "scan", "on"])
                                                 Qt.callLater(() => btScan.running = true)
@@ -799,46 +932,129 @@ ShellRoot {
                                 Repeater {
                                     model: btDevices
                                     Rectangle {
+                                        id: devRow
                                         Layout.fillWidth: true
-                                        Layout.preferredHeight: 52
+                                        Layout.preferredHeight: btExpandedMac === modelData.mac ? 116 : 52
                                         radius: 10
-                                        color: modelData.connected ? Qt.rgba(0.04, 0.52, 1, 0.15) : "transparent"
+                                        color: modelData.connected
+                                            ? Qt.rgba(0.04, 0.52, 1, 0.15)
+                                            : (devHover.hovered ? root.theme.surface2 : "transparent")
                                         visible: btEnabled
-                                        RowLayout {
+                                        clip: true
+                                        Behavior on Layout.preferredHeight {
+                                            NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+                                        }
+
+                                        ColumnLayout {
                                             anchors.fill: parent
                                             anchors.margins: 8
-                                            Column {
+                                            spacing: 4
+
+                                            RowLayout {
                                                 Layout.fillWidth: true
-                                                Text {
-                                                    text: modelData.name
-                                                    color: root.theme.text
-                                                    font.family: root.theme.fontUi
-                                                    font.pixelSize: 13
+                                                Layout.preferredHeight: 36
+
+                                                Column {
+                                                    Layout.fillWidth: true
+                                                    Text {
+                                                        text: modelData.name
+                                                        color: root.theme.text
+                                                        font.family: root.theme.fontUi
+                                                        font.pixelSize: 13
+                                                    }
+                                                    Row {
+                                                        spacing: 6
+                                                        Text {
+                                                            text: modelData.mac
+                                                            color: root.theme.textMuted
+                                                            font.family: root.theme.fontUi
+                                                            font.pixelSize: 10
+                                                        }
+                                                        Text {
+                                                            visible: modelData.battery >= 0
+                                                            text: "· " + modelData.battery + "%"
+                                                            color: root.theme.green
+                                                            font.family: root.theme.fontUi
+                                                            font.pixelSize: 10
+                                                        }
+                                                    }
                                                 }
                                                 Text {
-                                                    text: modelData.mac + (modelData.connected ? " · Connected" : "")
+                                                    text: modelData.connected ? "Disconnect" : "Connect"
+                                                    color: root.theme.accent
+                                                    font.family: root.theme.fontUi
+                                                    font.pixelSize: 11
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: {
+                                                            if (modelData.connected) {
+                                                                disconnectBt(modelData.mac)
+                                                            } else {
+                                                                connectBt(modelData.mac)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                Text {
+                                                    text: "✕"
+                                                    color: root.theme.red
+                                                    font.pixelSize: 12
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: removeBt(modelData.mac)
+                                                    }
+                                                }
+                                            }
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                Layout.preferredHeight: 32
+                                                visible: btExpandedMac === modelData.mac && modelData.connected
+                                                spacing: 6
+                                                Text {
+                                                    text: modelData.codec ? "Codec: " + modelData.codec : "Codec: —"
                                                     color: root.theme.textMuted
                                                     font.family: root.theme.fontUi
                                                     font.pixelSize: 10
+                                                    Layout.fillWidth: true
+                                                }
+                                                Text {
+                                                    text: "Cycle"
+                                                    color: root.theme.accent
+                                                    font.family: root.theme.fontUi
+                                                    font.pixelSize: 11
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: cycleCodec(modelData.mac)
+                                                    }
+                                                }
+                                                Text {
+                                                    text: "Send File"
+                                                    color: root.theme.accent
+                                                    font.family: root.theme.fontUi
+                                                    font.pixelSize: 11
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: sendFile(modelData.mac)
+                                                    }
                                                 }
                                             }
-                                            Text {
-                                                text: modelData.connected ? "Disconnect" : "Connect"
-                                                color: root.theme.accent
-                                                font.family: root.theme.fontUi
-                                                font.pixelSize: 11
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    onClicked: modelData.connected ? disconnectBt(modelData.mac) : connectBt(modelData.mac)
-                                                }
-                                            }
-                                            Text {
-                                                text: "✕"
-                                                color: root.theme.red
-                                                font.pixelSize: 12
-                                                MouseArea {
-                                                    anchors.fill: parent
-                                                    onClicked: removeBt(modelData.mac)
+                                        }
+
+                                        HoverHandler { id: devHover; cursorShape: Qt.PointingHandCursor }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            enabled: btExpandedMac !== modelData.mac
+                                            onClicked: {
+                                                if (!modelData.connected) {
+                                                    btExpandedMac = modelData.mac
+                                                } else {
+                                                    btExpandedMac = btExpandedMac === modelData.mac ? "" : modelData.mac
                                                 }
                                             }
                                         }
@@ -860,6 +1076,7 @@ ShellRoot {
                                     }
                                     MouseArea {
                                         anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
                                         onClicked: Quickshell.execDetached(["blueman-manager"])
                                     }
                                 }
@@ -867,94 +1084,216 @@ ShellRoot {
                         }
 
                         // ═══════════════ Sound ═══════════════
-                        ColumnLayout {
+                        Flickable {
                             visible: activeSection === "sound"
                             anchors.fill: parent
-                            anchors.margins: 14
-                            spacing: 16
+                            contentWidth: width
+                            contentHeight: sndCol.implicitHeight + 24
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
 
-                            Text {
-                                text: "Sound"
-                                color: root.theme.text
-                                font.family: root.theme.fontUi
-                                font.pixelSize: 15
-                                font.weight: Font.DemiBold
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
+                            ColumnLayout {
+                                id: sndCol
+                                width: parent.width - 24
+                                x: 12
+                                y: 12
+                                spacing: 14
+
                                 Text {
-                                    text: muted ? "󰝟" : "󰕾"
+                                    text: "Sound"
                                     color: root.theme.text
-                                    font.family: root.theme.fontIcon
-                                    font.pixelSize: 22
-                                    MouseArea { anchors.fill: parent; onClicked: toggleMute() }
+                                    font.family: root.theme.fontUi
+                                    font.pixelSize: 15
+                                    font.weight: Font.DemiBold
                                 }
-                                Slider {
+
+                                Text {
+                                    text: "Output"
+                                    color: root.theme.textMuted
+                                    font.family: root.theme.fontUi
+                                    font.pixelSize: 11
+                                }
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    from: 0; to: 1.5
-                                    value: volume
-                                    onMoved: setVolume(value)
+                                    spacing: 10
+                                    Text {
+                                        text: muted ? "󰝟" : "󰕾"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontIcon
+                                        font.pixelSize: 22
+                                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: toggleMute() }
+                                    }
+                                    Slider {
+                                        Layout.fillWidth: true
+                                        from: 0; to: 1.5
+                                        value: volume
+                                        onMoved: setVolume(value)
+                                    }
+                                    Text {
+                                        text: Math.round(volume * 100) + "%"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontUi
+                                        font.pixelSize: 13
+                                        Layout.preferredWidth: 42
+                                    }
                                 }
+
                                 Text {
-                                    text: Math.round(volume * 100) + "%"
-                                    color: root.theme.text
+                                    text: "Input (Microphone)"
+                                    color: root.theme.textMuted
                                     font.family: root.theme.fontUi
-                                    font.pixelSize: 13
-                                    Layout.preferredWidth: 42
+                                    font.pixelSize: 11
+                                    Layout.topMargin: 6
                                 }
-                            }
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 42
-                                radius: 12
-                                color: muted ? root.theme.red : root.theme.surface2
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 10
+                                    Text {
+                                        text: micMuted ? "󰍭" : "󰍬"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontIcon
+                                        font.pixelSize: 22
+                                        MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: toggleMicMute() }
+                                    }
+                                    Slider {
+                                        Layout.fillWidth: true
+                                        from: 0; to: 1.5
+                                        value: micVolume
+                                        onMoved: setMicVolume(value)
+                                    }
+                                    Text {
+                                        text: Math.round(micVolume * 100) + "%"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontUi
+                                        font.pixelSize: 13
+                                        Layout.preferredWidth: 42
+                                    }
+                                }
+
                                 Text {
-                                    anchors.centerIn: parent
-                                    text: muted ? "Unmute" : "Mute"
-                                    color: muted ? "#fff" : root.theme.text
+                                    text: "Output Device"
+                                    color: root.theme.textMuted
                                     font.family: root.theme.fontUi
-                                    font.pixelSize: 13
+                                    font.pixelSize: 11
+                                    Layout.topMargin: 6
                                 }
-                                MouseArea { anchors.fill: parent; onClicked: toggleMute() }
+                                Repeater {
+                                    model: sinksList
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 40
+                                        radius: 8
+                                        color: sinkHover.hovered ? root.theme.surface3 : root.theme.surface2
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.margins: 10
+                                            Text {
+                                                text: modelData.desc
+                                                color: root.theme.text
+                                                font.family: root.theme.fontUi
+                                                font.pixelSize: 12
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+                                        }
+                                        HoverHandler { id: sinkHover; cursorShape: Qt.PointingHandCursor }
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: setDefaultSink(modelData.id)
+                                        }
+                                    }
+                                }
                             }
                         }
 
-                        // ═══════════════ Brightness ═══════════════
-                        ColumnLayout {
+                        // ═══════════════ Brightness + Night Light ═══════════════
+                        Flickable {
                             visible: activeSection === "brightness"
                             anchors.fill: parent
-                            anchors.margins: 14
-                            spacing: 16
+                            contentWidth: width
+                            contentHeight: brCol.implicitHeight + 24
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
 
-                            Text {
-                                text: "Brightness"
-                                color: root.theme.text
-                                font.family: root.theme.fontUi
-                                font.pixelSize: 15
-                                font.weight: Font.DemiBold
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
+                            ColumnLayout {
+                                id: brCol
+                                width: parent.width - 24
+                                x: 12
+                                y: 12
+                                spacing: 14
+
                                 Text {
-                                    text: "󰃠"
-                                    color: root.theme.text
-                                    font.family: root.theme.fontIcon
-                                    font.pixelSize: 22
-                                }
-                                Slider {
-                                    Layout.fillWidth: true
-                                    from: 0.01; to: 1
-                                    value: brightness
-                                    onMoved: setBrightness(value)
-                                }
-                                Text {
-                                    text: Math.round(brightness * 100) + "%"
+                                    text: "Brightness"
                                     color: root.theme.text
                                     font.family: root.theme.fontUi
-                                    font.pixelSize: 13
-                                    Layout.preferredWidth: 42
+                                    font.pixelSize: 15
+                                    font.weight: Font.DemiBold
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 10
+                                    Text {
+                                        text: "󰃠"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontIcon
+                                        font.pixelSize: 22
+                                    }
+                                    Slider {
+                                        Layout.fillWidth: true
+                                        from: 0.01; to: 1
+                                        value: brightness
+                                        onMoved: setBrightness(value)
+                                    }
+                                    Text {
+                                        text: Math.round(brightness * 100) + "%"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontUi
+                                        font.pixelSize: 13
+                                        Layout.preferredWidth: 42
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Layout.topMargin: 8
+                                    Text {
+                                        text: "Night Light"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontUi
+                                        font.pixelSize: 13
+                                        Layout.fillWidth: true
+                                    }
+                                    ToggleSwitch {
+                                        checked: nightLight
+                                        onColor: root.theme.orange
+                                        onToggled: toggleNightLight()
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    visible: nightLight
+                                    spacing: 10
+                                    Text {
+                                        text: "󰖔"
+                                        color: root.theme.orange
+                                        font.family: root.theme.fontIcon
+                                        font.pixelSize: 20
+                                    }
+                                    Slider {
+                                        Layout.fillWidth: true
+                                        from: 2500; to: 6500
+                                        value: nightTemp
+                                        onMoved: setNightTemp(Math.round(value))
+                                    }
+                                    Text {
+                                        text: nightTemp + "K"
+                                        color: root.theme.text
+                                        font.family: root.theme.fontUi
+                                        font.pixelSize: 12
+                                        Layout.preferredWidth: 52
+                                    }
                                 }
                             }
                         }
@@ -982,17 +1321,10 @@ ShellRoot {
                                     font.pixelSize: 13
                                     Layout.fillWidth: true
                                 }
-                                Rectangle {
-                                    width: 46; height: 26; radius: 13
-                                    color: dnd ? root.theme.orange : root.theme.surface2
-                                    Rectangle {
-                                        width: 22; height: 22; radius: 11
-                                        color: "#fff"
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        x: dnd ? parent.width - 24 : 2
-                                        Behavior on x { NumberAnimation { duration: 160 } }
-                                    }
-                                    MouseArea { anchors.fill: parent; onClicked: toggleDnd() }
+                                ToggleSwitch {
+                                    checked: dnd
+                                    onColor: root.theme.orange
+                                    onToggled: toggleDnd()
                                 }
                             }
                             Rectangle {
@@ -1009,98 +1341,108 @@ ShellRoot {
                                 }
                                 MouseArea {
                                     anchors.fill: parent
+                                    cursorShape: Qt.PointingHandCursor
                                     onClicked: Quickshell.execDetached(["swaync-client", "-t"])
                                 }
                             }
                         }
 
                         // ═══════════════ System ═══════════════
-                        ColumnLayout {
+                        Flickable {
                             visible: activeSection === "system"
                             anchors.fill: parent
-                            anchors.margins: 14
-                            spacing: 12
+                            contentWidth: width
+                            contentHeight: sysCol.implicitHeight + 24
+                            clip: true
+                            boundsBehavior: Flickable.StopAtBounds
 
-                            Text {
-                                text: "System"
-                                color: root.theme.text
-                                font.family: root.theme.fontUi
-                                font.pixelSize: 15
-                                font.weight: Font.DemiBold
-                            }
+                            ColumnLayout {
+                                id: sysCol
+                                width: parent.width - 24
+                                x: 12
+                                y: 12
+                                spacing: 12
 
-                            // CPU
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 64
-                                radius: 14
-                                color: root.theme.surface2
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 12
-                                    Column {
-                                        Layout.fillWidth: true
-                                        Text { text: "CPU"; color: root.theme.textMuted; font.family: root.theme.fontUi; font.pixelSize: 11 }
-                                        Text { text: cpuUsage + "%"; color: root.theme.accent; font.family: root.theme.fontUi; font.pixelSize: 20; font.weight: Font.Bold }
-                                    }
-                                    Text {
-                                        text: cpuTemp
-                                        color: root.theme.orange
-                                        font.family: root.theme.fontUi
-                                        font.pixelSize: 14
-                                    }
+                                Text {
+                                    text: "System"
+                                    color: root.theme.text
+                                    font.family: root.theme.fontUi
+                                    font.pixelSize: 15
+                                    font.weight: Font.DemiBold
                                 }
-                            }
 
-                            // RAM
-                            Rectangle {
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: 64
-                                radius: 14
-                                color: root.theme.surface2
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.margins: 12
-                                    Column {
-                                        Layout.fillWidth: true
-                                        Text { text: "Memory"; color: root.theme.textMuted; font.family: root.theme.fontUi; font.pixelSize: 11 }
-                                        Text { text: memUsage + "%"; color: root.theme.red; font.family: root.theme.fontUi; font.pixelSize: 20; font.weight: Font.Bold }
-                                        Text { text: memUsed + " / " + memTotal; color: root.theme.textMuted; font.family: root.theme.fontUi; font.pixelSize: 11 }
-                                    }
-                                }
-                            }
-
-                            // Power profile
-                            Text {
-                                text: "Power Profile"
-                                color: root.theme.textMuted
-                                font.family: root.theme.fontUi
-                                font.pixelSize: 11
-                            }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 6
-                                Repeater {
-                                    model: [
-                                        { id: "power-saver", label: "Saver" },
-                                        { id: "balanced", label: "Balanced" },
-                                        { id: "performance", label: "Perf" }
-                                    ]
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        Layout.preferredHeight: 36
-                                        radius: 10
-                                        color: powerProfile === modelData.id ? root.theme.accent : root.theme.surface2
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: modelData.label
-                                            color: powerProfile === modelData.id ? "#000" : root.theme.text
-                                            font.family: root.theme.fontUi
-                                            font.pixelSize: 12
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 64
+                                    radius: 14
+                                    color: root.theme.surface2
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        Column {
+                                            Layout.fillWidth: true
+                                            Text { text: "CPU"; color: root.theme.textMuted; font.family: root.theme.fontUi; font.pixelSize: 11 }
+                                            Text { text: cpuUsage + "%"; color: root.theme.accent; font.family: root.theme.fontUi; font.pixelSize: 20; font.weight: Font.Bold }
                                         }
-                                        MouseArea {
-                                            anchors.fill: parent
-                                            onClicked: setPowerProfile(modelData.id)
+                                        Text {
+                                            text: cpuTemp
+                                            color: root.theme.orange
+                                            font.family: root.theme.fontUi
+                                            font.pixelSize: 14
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 64
+                                    radius: 14
+                                    color: root.theme.surface2
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 12
+                                        Column {
+                                            Layout.fillWidth: true
+                                            Text { text: "Memory"; color: root.theme.textMuted; font.family: root.theme.fontUi; font.pixelSize: 11 }
+                                            Text { text: memUsage + "%"; color: root.theme.red; font.family: root.theme.fontUi; font.pixelSize: 20; font.weight: Font.Bold }
+                                            Text { text: memUsed + " / " + memTotal; color: root.theme.textMuted; font.family: root.theme.fontUi; font.pixelSize: 11 }
+                                        }
+                                    }
+                                }
+
+                                Text {
+                                    text: "Power Profile"
+                                    color: root.theme.textMuted
+                                    font.family: root.theme.fontUi
+                                    font.pixelSize: 11
+                                    Layout.topMargin: 6
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 6
+                                    Repeater {
+                                        model: [
+                                            { id: "power-saver", label: "Saver" },
+                                            { id: "balanced",    label: "Balanced" },
+                                            { id: "performance", label: "Perf" }
+                                        ]
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            Layout.preferredHeight: 36
+                                            radius: 10
+                                            color: powerProfile === modelData.id ? root.theme.accent : root.theme.surface2
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: modelData.label
+                                                color: powerProfile === modelData.id ? "#000" : root.theme.text
+                                                font.family: root.theme.fontUi
+                                                font.pixelSize: 12
+                                            }
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: setPowerProfile(modelData.id)
+                                            }
                                         }
                                     }
                                 }
