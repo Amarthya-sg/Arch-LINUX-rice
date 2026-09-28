@@ -1,0 +1,33 @@
+:root {
+  /* Shared visual tokens mirrored by core/Theme.qml for QtQuick. */
+  --cc-background: #0a0a0b;
+  --cc-surface: #141517;
+  --cc-surface-raised: #1c1e21;
+  --cc-surface-hover: #25272b;
+  --cc-outline: #2c2e33;
+  --cc-text: #eceeef;
+  --cc-text-muted: #8d9096;
+  --cc-primary: #ff9f0a;
+  --cc-primary-strong: #ffb340;
+  --cc-success: #5fd576;
+  --cc-warning: #ffcf4d;
+  --cc-error: #ff6b5f;
+  --cc-island-bg: #000000;
+  --cc-island-accent: #ff9f0a;
+  --cc-island-accent-strong: #ffb340;
+  --cc-island-muted: #8d9096;
+  --cc-island-muted-dim: #5f6268;
+  --cc-radius-panel: 26px;
+  --cc-radius-card: 18px;
+  --cc-radius-control: 12px;
+  --cc-space-xs: 6px;
+  --cc-space-sm: 10px;
+  --cc-space-md: 14px;
+  --cc-space-lg: 18px;
+  --cc-space-xl: 24px;
+  --cc-text-title: 22px;
+  --cc-text-section: 15px;
+  --cc-text-body: 13px;
+  --cc-text-caption: 11px;
+  --cc-control-height: 32px;
+}

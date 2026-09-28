@@ -1,0 +1,3 @@
+module ControlCenter.Panels
+ControlPanel 1.0 ControlPanel.qml
+NotificationPanel 1.0 NotificationPanel.qml
