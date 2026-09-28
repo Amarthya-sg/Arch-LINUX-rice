@@ -66,6 +66,9 @@ Round launcher/
 
 → **[Full documentation](./Round%20launcher/README.md)**
 
+STATUS BAR IS UNDER DEVELOPMENT 
+
+
 ---
 
 *More components coming soon.*
