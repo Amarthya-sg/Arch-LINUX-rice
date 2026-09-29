@@ -10,4 +10,3 @@ singleton NotificationService 1.0 NotificationService.qml
 singleton SystemService 1.0 SystemService.qml
 singleton LocationService 1.0 LocationService.qml
 singleton LockKeysService LockKeysService.qml
-singleton LockKeysService LockKeysService.qml

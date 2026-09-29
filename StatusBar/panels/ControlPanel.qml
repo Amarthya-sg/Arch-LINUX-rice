@@ -62,7 +62,11 @@ Item {
         layer.effect:  null             // Quickshell uses layer for clipping; shadow via Rectangle below
 
         // Open/close animation: opacity + translateY(-6px) → matches CSS closed state
-        opacity:   ShellState.popupOpen ? 1 : 0
+        // The panel is now created on open, so start at 0 for one frame to
+        // keep the original 200 ms fade-in.
+        property bool shown: false
+        Timer { interval: 16; running: true; onTriggered: card.shown = true }
+        opacity:   ShellState.popupOpen && shown ? 1 : 0
         transform: Translate { y: ShellState.popupOpen ? 0 : -6 }
         Behavior on opacity   { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
         Behavior on transform { } // transform Behavior must be on the value property — see y below
@@ -164,7 +168,7 @@ Item {
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 14; spacing: 12
                             Item { Layout.preferredWidth: 20; Layout.minimumWidth: 20; Layout.alignment: Qt.AlignVCenter
-                                SvgIcon { anchors.centerIn: parent; width: 20; height: 20; iconName: "wifi"; tone: NetworkService.wifiEnabled ? "accent" : "muted" }
+                                SvgIcon { anchors.centerIn: parent; width: 20; height: 20; iconName: "wifi"; tone: "fg" }
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true; Layout.minimumWidth: 0; spacing: 1
@@ -191,7 +195,7 @@ Item {
                         RowLayout {
                             anchors.fill: parent; anchors.margins: 14; spacing: 12
                             Item { Layout.preferredWidth: 20; Layout.minimumWidth: 20; Layout.alignment: Qt.AlignVCenter
-                                SvgIcon { anchors.centerIn: parent; width: 20; height: 20; iconName: "bluetooth"; tone: BluetoothService.enabled ? "accent" : "muted" }
+                                SvgIcon { anchors.centerIn: parent; width: 20; height: 20; iconName: "bluetooth"; tone: "fg" }
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true; Layout.minimumWidth: 0; spacing: 1
@@ -531,7 +535,7 @@ Item {
                                             Layout.fillWidth: true; spacing: 8
 
                                             // Signal icon
-                                            SvgIcon { width: 18; height: 18; iconName: "wifi"; tone: modelData.connected ? "accent" : "muted" }
+                                            SvgIcon { width: 18; height: 18; iconName: "wifi"; tone: "fg" }
 
                                             ColumnLayout { Layout.fillWidth: true; spacing: 1
                                                 Text { Layout.fillWidth: true; text: modelData.name || "Hidden network"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.DemiBold; elide: Text.ElideRight }
@@ -713,7 +717,7 @@ Item {
                                                     implicitWidth: joinLabel.implicitWidth + 20; implicitHeight: 34; radius: 10
                                                     color: joinHov.containsMouse && pwInput.length >= 8 ? Theme.acc : Theme.surfaceRaised
                                                     opacity: pwInput.text.length >= 8 ? 1 : 0.45
-                                                    Text { id: joinLabel; anchors.centerIn: parent; text: "Join"; color: joinHov.containsMouse && pwInput.text.length >= 8 ? "#111" : Theme.acc; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                                    Text { id: joinLabel; anchors.centerIn: parent; text: "Join"; color: joinHov.containsMouse && pwInput.text.length >= 8 ? Theme.islandBg : Theme.acc; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.DemiBold }
                                                     MouseArea {
                                                         id: joinHov; anchors.fill: parent; hoverEnabled: true
                                                         enabled: pwInput.text.length >= 8
@@ -984,7 +988,7 @@ Item {
                         MouseArea { id: sndBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                     }
                     Item { Layout.fillWidth: true }
-                    ToggleSwitch { checked: !AudioService.muted; onToggled: AudioService.toggleMute() }
+                    ToggleSwitch { checked: !AudioService.muted; onClicked: AudioService.setMuted(!checked) }
                 }
 
                 // Volume slider
@@ -1406,7 +1410,7 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: String(index + 1)
-                            color: itIsToday ? "#111" : Theme.fg
+                            color: itIsToday ? Theme.islandBg : Theme.fg
                             font.family: Theme.uiFont; font.pixelSize: 13; font.weight: itIsToday ? Font.DemiBold : Font.Normal
                             font.features: ({ "tnum": 1 })
                         }

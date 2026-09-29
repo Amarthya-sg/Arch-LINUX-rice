@@ -168,6 +168,7 @@ ColumnLayout {
                     visible: (card.appData.appIcon || "") !== ""
                     source:  Quickshell.iconPath(card.appData.appIcon || "", true)
                     width: 16; height: 16
+                    sourceSize: Qt.size(32, 32)
                     fillMode: Image.PreserveAspectFit
                     smooth: true; asynchronous: true
                 }

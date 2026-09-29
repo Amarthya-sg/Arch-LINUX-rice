@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell.Bluetooth
 import Quickshell.Io
+import "../core"
 
 QtObject {
     id: root
@@ -73,7 +74,6 @@ QtObject {
 
     function scan(): void {
         if (!adapter || !adapter.enabled) return
-        console.log("[SAT][Bluetooth] discovery started")
         adapter.discovering = true
         scanStop.restart()
         refreshDevices()
@@ -117,7 +117,6 @@ QtObject {
     // resolved, so connect always lands on a link that is still alive.
     function runPair(address): void {
         if (!isAddress(address) || pairProc.running) return
-        console.log("[SAT][Bluetooth] pair+trust+connect", address)
         pairProc.address = address
         pairProc.command = ["timeout", "45", "sh", "-c",
             'bluetoothctl pair "$1" && bluetoothctl trust "$1" && bluetoothctl connect "$1"',
@@ -211,8 +210,13 @@ QtObject {
         return icon.indexOf("audio-") === 0 || icon.indexOf("input-") === 0
     }
 
+    // True while pairing, reconnecting, or scanning; otherwise housekeeping
+    // only needs a slow tick.
+    property bool housekeepingBusy: false
+
     function housekeeping(): void {
         if (!adapter) return
+        let busy = adapter.discovering || pairProc.running
         refreshDevices()
         const all = adapter.devices?.values || []
         let pairingInProgress = pairProc.running
@@ -225,6 +229,7 @@ QtObject {
             if (!address) continue
             const job = updatedJobs[address]
             const name = displayName(device) || address
+            if (job?.state === "pairing" || job?.state === "paired") busy = true
             if (job?.state === "pairing") {
                 if (value(device, "paired")) {
                     updatedJobs[address] = { state: "paired", started: Date.now() }
@@ -258,6 +263,7 @@ QtObject {
                 updatedWanted[address] = { tries: 0, since: 0 }
                 continue
             }
+            busy = true   // wanted but not connected: keep retry timing accurate
             if (value(device, "state") === BluetoothDeviceState.Connecting || value(device, "pairing")) continue
             if (pairProc.running && pairProc.address === address) continue
             if (!wanted.since) {
@@ -268,7 +274,6 @@ QtObject {
             if (wanted.tries < 3) {
                 const tries = wanted.tries + 1
                 updatedWanted[address] = { tries: tries, since: Date.now() }
-                console.log("[SAT][Bluetooth] reconnect attempt", tries, "for", name)
                 device.connect()
             } else {
                 delete updatedWanted[address]
@@ -277,6 +282,7 @@ QtObject {
         }
         pairingJobs = updatedJobs
         wantedConnections = updatedWanted
+        housekeepingBusy = busy
     }
 
     property Process removeProc: Process {
@@ -293,14 +299,12 @@ QtObject {
         onExited: (code, status) => {
             const jobs = Object.assign({}, root.pairingJobs)
             if (code === 0) {
-                console.log("[SAT][Bluetooth] pair+connect finished for", address)
                 jobs[address] = { state: "done", started: Date.now() }
                 const wanted = Object.assign({}, root.wantedConnections)
                 wanted[address] = { tries: 0, since: 0 }
                 root.wantedConnections = wanted
                 root.stopScan()
             } else {
-                console.log("[SAT][Bluetooth] pair+connect failed for", address, "exit", code)
                 jobs[address] = { state: "failed", started: Date.now() }
                 root.errorMessage = code === 124
                     ? "Pairing timed out; put the device in pairing mode and try again"
@@ -326,11 +330,15 @@ QtObject {
         }
     }
     property Timer deviceTimer: Timer {
-        interval: 1000
+        interval: (ShellState.popupOpen || root.housekeepingBusy) ? 1000 : 5000
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: root.housekeeping()
+    }
+    property Connections popupWatch: Connections {
+        target: ShellState
+        function onPopupOpenChanged() { if (ShellState.popupOpen) root.housekeeping() }
     }
     property Timer powerEnableTimer: Timer {
         interval: 700

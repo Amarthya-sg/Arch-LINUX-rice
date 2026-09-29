@@ -2,9 +2,11 @@ pragma Singleton
 import QtQuick
 import Quickshell.Networking
 import Quickshell.Io
+import "../core"
 
 QtObject {
     id: root
+    Component.onCompleted: root.refreshDetails()   // one initial read
 
     readonly property bool available: Networking.backend !== NetworkBackendType.None
     readonly property var devices: Networking.devices.values
@@ -197,11 +199,9 @@ QtObject {
         if (savedPasswordQuery.running) savedPasswordQuery.running = false
     }
     function toggleWifi(): void {
-        console.log("[SAT][WiFi] toggle requested; current enabled=", wifiEnabled)
         if (available) Networking.wifiEnabled = !wifiEnabled
     }
     function scan(): void {
-        console.log("[SAT][WiFi] scan requested; enabled=", wifiEnabled, "device=", !!wifiDevice)
         if (!wifiEnabled || !wifiDevice) return
         if (wifiDevice.scannerEnabled) {
             scanning = true
@@ -212,21 +212,18 @@ QtObject {
         networkListUpdated()
     }
     function stopScan(): void {
-        console.log("[SAT][WiFi] scan stop requested")
         if (wifiDevice && wifiDevice.scannerEnabled) wifiDevice.scannerEnabled = false
         scanning = false
         networkListUpdated()
     }
     function connect(network, password = ""): void {
-        if (!network) { console.log("[SAT][WiFi] connect ignored: no network"); return }
-        if (connectingNetworkKey) { console.log("[SAT][WiFi] connect ignored: another connection is in progress"); return }
+        if (!network) return
+        if (connectingNetworkKey) return
         const ssid = String(network.ssid || network.name || "")
         const networkKey = root.networkKey(network)
         const securityName = root.security(network)
-        console.log("[SAT][WiFi] connect requested; ssid=", ssid, "key=", networkKey, "security=", securityName, "password supplied=", !!password)
-        if (!ssid || ssid === "(hidden)") { console.log("[SAT][WiFi] connect ignored: hidden/empty SSID"); return }
+        if (!ssid || ssid === "(hidden)") return
         if (securityName !== "Open" && !password && !network.known) {
-            console.log("[SAT][WiFi] secured connect waiting for inline password")
             return
         }
         connectionErrorKey = ""
@@ -251,7 +248,6 @@ QtObject {
     }
     function finishConnect(success: bool, message = ""): void {
         const key = connectingNetworkKey
-        console.log("[SAT][WiFi] connection flow finished; ssid=", connectingSsid, "success=", success)
         if (success) {
             connectionErrorKey = ""
             connectionError = ""
@@ -270,7 +266,6 @@ QtObject {
         connectionFinished(success, key)
     }
     function disconnect(network): void {
-        console.log("[SAT][WiFi] disconnect requested; ssid=", network?.ssid || network?.name || "")
         if (!network) return
         networkDisconnect.command = ["sh", "-c", "device=$(nmcli -t -f DEVICE,TYPE,STATE device status | awk -F: '$2==\"wifi\" && $3==\"connected\" {print $1; exit}'); [ -n \"$device\" ] && nmcli device disconnect \"$device\""]
         networkDisconnect.running = true
@@ -282,7 +277,6 @@ QtObject {
         const candidates = [network.connectionName || network.profileName || profileNameFor(network), ssid]
             .filter((name, index, all) => !!name && all.indexOf(name) === index)
         if (candidates.length === 0) return
-        console.log("[SAT][WiFi] forget requested; ssid=", ssid)
         forgetCandidates = candidates
         forgetCandidateIndex = 0
         forgetProfileUuid = ""
@@ -309,7 +303,6 @@ QtObject {
         command: []
         stderr: StdioCollector { onStreamFinished: root.lastConnectProcessError = text.trim() }
         onExited: (code, status) => {
-            console.log("[SAT][WiFi] profile create exited; code=", code, "status=", status)
             const createdProfile = root.connectingProfile
             command = []
             if (code === 0) {
@@ -442,7 +435,6 @@ QtObject {
     property Process networkDisconnect: Process {
         command: []
         onExited: (code, status) => {
-            console.log("[SAT][WiFi] disconnect process exited; code=", code, "status=", status)
             root.refreshDetails()
             root.networkListUpdated()
         }
@@ -475,7 +467,7 @@ QtObject {
         }
     }
     property Timer detailsTimer: Timer {
-        interval: 5000; running: true; repeat: true; triggeredOnStart: true
+        interval: 5000; running: ShellState.popupOpen; repeat: true; triggeredOnStart: true
         onTriggered: root.refreshDetails()
     }
 }

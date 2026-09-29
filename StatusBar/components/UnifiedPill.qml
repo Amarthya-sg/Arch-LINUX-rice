@@ -296,79 +296,69 @@ Rectangle {
         }
 
         // ── Wi-Fi ────────────────────────────────────────────────────────
-        Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99
-            color: wifiHov.containsMouse ? Theme.surfaceRaised : "transparent"; Layout.alignment: Qt.AlignVCenter
+        Item {
+            implicitWidth: 28; implicitHeight: 28
+            Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 16; height: 16
-                property bool on_: NetworkService.wifiEnabled
-                property bool connected_: !!NetworkService.activeNetwork
-                source: Qt.resolvedUrl(!on_ ? "../icons/wifi-muted.svg"
-                    : connected_ ? "../icons/wifi-accent.svg" : "../icons/wifi-fg.svg")
+                anchors.centerIn: parent; width: 18; height: 18
+                source: Qt.resolvedUrl(NetworkService.wifiEnabled
+                    ? "../icons/status-wifi-on.svg" : "../icons/status-wifi-off.svg")
             }
-            MouseArea { id: wifiHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("wifi") } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("wifi") } }
         }
 
         // ── Bluetooth ────────────────────────────────────────────────────
-        Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99
-            color: btHov.containsMouse ? Theme.surfaceRaised : "transparent"; Layout.alignment: Qt.AlignVCenter
+        Item {
+            implicitWidth: 28; implicitHeight: 28
+            Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 16; height: 16
-                property bool on_: BluetoothService.enabled
-                property bool connected_: BluetoothService.connectedDevices.length > 0
-                source: Qt.resolvedUrl(!on_ ? "../icons/bluetooth-muted.svg"
-                    : connected_ ? "../icons/bluetooth-accent.svg" : "../icons/bluetooth-fg.svg")
+                anchors.centerIn: parent; width: 18; height: 18
+                source: Qt.resolvedUrl(BluetoothService.enabled
+                    ? "../icons/status-bluetooth-on.svg" : "../icons/status-bluetooth-off.svg")
             }
-            MouseArea { id: btHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("bt") } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("bt") } }
         }
 
         // ── Volume ───────────────────────────────────────────────────────
-        Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99
-            color: volHov.containsMouse ? Theme.surfaceRaised : "transparent"; Layout.alignment: Qt.AlignVCenter
+        Item {
+            implicitWidth: 28; implicitHeight: 28
+            Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 16; height: 16
-                property bool muted_: AudioService.muted
-                source: Qt.resolvedUrl(muted_ ? "../icons/volume-x-error.svg" : "../icons/volume-2-fg.svg")
+                anchors.centerIn: parent; width: 18; height: 18
+                source: Qt.resolvedUrl(AudioService.muted
+                    ? "../icons/status-sound-off.svg" : "../icons/status-sound-on.svg")
             }
-            MouseArea { id: volHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("sound") } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("sound") } }
         }
 
         // ── Bell ─────────────────────────────────────────────────────────
         Item {
             implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
-            Rectangle {
-                anchors.fill: parent; radius: 99
-                color: bellHov.containsMouse ? Theme.surfaceRaised : "transparent"
-            }
             IconImage {
-                anchors.centerIn: parent; width: 16; height: 16
+                anchors.centerIn: parent; width: 18; height: 18
                 property bool dnd_: NotificationService.dndEnabled
-                source: Qt.resolvedUrl(dnd_ ? "../icons/bell-off-error.svg"
-                    : NotificationService.count > 0 ? "../icons/bell-fg.svg" : "../icons/bell-muted.svg")
+                source: Qt.resolvedUrl(dnd_
+                    ? "../icons/status-bell-off.svg" : "../icons/status-bell-on.svg")
             }
             // Badge
             Rectangle {
                 visible: NotificationService.count > 0
                 anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: -3; anchors.topMargin: -3
                 width: Math.max(13, badgeTxt.implicitWidth + 5); height: 13; radius: 7; color: Theme.acc
-                Text { id: badgeTxt; anchors.centerIn: parent; text: NotificationService.count > 99 ? "99+" : String(NotificationService.count); color: "#111"; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
+                Text { id: badgeTxt; anchors.centerIn: parent; text: NotificationService.count > 99 ? "99+" : String(NotificationService.count); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
             }
-            MouseArea { id: bellHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("alerts") } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("alerts") } }
         }
 
         // ── Coffee (keep-awake) ──────────────────────────────────────────
-        Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99; Layout.alignment: Qt.AlignVCenter
-            color: CaffeineService.enabled ? Theme.acc : coffeeHov.containsMouse ? Theme.surfaceRaised : "transparent"
-            Behavior on color { ColorAnimation { duration: 200 } }
+        Item {
+            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 16; height: 16
-                property bool on_: CaffeineService.enabled
-                source: Qt.resolvedUrl(on_ ? "../icons/coffee-ink.svg" : "../icons/coffee-muted.svg")
+                anchors.centerIn: parent; width: 18; height: 18
+                source: Qt.resolvedUrl(CaffeineService.enabled
+                    ? "../icons/status-coffee-on.svg" : "../icons/status-coffee-off.svg")
             }
-            MouseArea { id: coffeeHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; CaffeineService.toggle() } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; CaffeineService.toggle() } }
         }
 
         // ── Updates ──────────────────────────────────────────────────────
@@ -380,7 +370,7 @@ Rectangle {
             Rectangle {
                 anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: -3; anchors.topMargin: -3
                 width: Math.max(13, updBadgeTxt.implicitWidth + 5); height: 13; radius: 7; color: Theme.acc
-                Text { id: updBadgeTxt; anchors.centerIn: parent; text: root.pendingUpdates > 99 ? "99+" : String(root.pendingUpdates); color: "#111"; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
+                Text { id: updBadgeTxt; anchors.centerIn: parent; text: root.pendingUpdates > 99 ? "99+" : String(root.pendingUpdates); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
             }
             MouseArea { id: updHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.updatesClicked() } }
         }
@@ -453,7 +443,7 @@ Rectangle {
                 ? NotificationService.timeAgo(root.previewNotification.timestamp) : ""
             color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9
         }
-        IconImage { width: 14; height: 14; anchors.verticalCenter: parent.verticalCenter; source: Qt.resolvedUrl("../icons/chevron-right-muted.svg") }
+        IconImage { width: 14; height: 14; Layout.alignment: Qt.AlignVCenter; source: Qt.resolvedUrl("../icons/chevron-right-muted.svg") }
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -489,6 +479,7 @@ Rectangle {
                     Image {
                         anchors.fill: parent
                         source: MediaService.artUrl
+                        sourceSize: Qt.size(128, 128)
                         fillMode: Image.PreserveAspectCrop
                         visible: status === Image.Ready
                         smooth: true
@@ -539,7 +530,7 @@ Rectangle {
                 }
 
                 IconImage {
-                    width: 14; height: 14; anchors.verticalCenter: parent.verticalCenter
+                    width: 14; height: 14; Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(mediaCloseMouse.containsMouse ? "../icons/x-fg.svg" : "../icons/x-muted.svg")
                     MouseArea {
                         id: mediaCloseMouse; anchors.fill: parent; hoverEnabled: true
@@ -573,18 +564,18 @@ Rectangle {
             // Transport controls
             RowLayout {
                 Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; spacing: 28
-                IconImage { width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
+                IconImage { width: 16; height: 16; Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(mediaPrevMouse.containsMouse ? "../icons/skip-back-fg.svg" : "../icons/skip-back-muted.svg")
                     MouseArea { id: mediaPrevMouse; anchors.fill: parent; hoverEnabled: true
                         onClicked: (e) => { e.accepted = true; MediaService.previous(); root.restartMediaInactivity() } } }
-                IconImage { width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
+                IconImage { width: 16; height: 16; Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(MediaService.playing ? "../icons/pause-fg.svg" : "../icons/play-fg.svg")
                     MouseArea { anchors.fill: parent; onClicked: (e) => { e.accepted = true; MediaService.toggle(); root.restartMediaInactivity() } } }
-                IconImage { width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
+                IconImage { width: 16; height: 16; Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(mediaNextMouse.containsMouse ? "../icons/skip-forward-fg.svg" : "../icons/skip-forward-muted.svg")
                     MouseArea { id: mediaNextMouse; anchors.fill: parent; hoverEnabled: true
                         onClicked: (e) => { e.accepted = true; MediaService.next(); root.restartMediaInactivity() } } }
-                IconImage { width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter
+                IconImage { width: 18; height: 18; Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl("../icons/volume-2-muted.svg")
                     MouseArea { anchors.fill: parent; onClicked: (e) => { e.accepted = true; ShellState.goTo("sound"); root.restartMediaInactivity() } }
                 }
@@ -595,12 +586,19 @@ Rectangle {
     // ════════════════════════════════════════════════════════════════════
     // 4. WINDOW LIST
     // ════════════════════════════════════════════════════════════════════
-    Rectangle {
+    Loader {
         id: inlineWindowList
-        visible: root.windowListOpen
         anchors.fill: parent
-        radius: parent.radius
-        color: "#151517"
+        z: 3
+        active: root.windowListOpen
+        sourceComponent: windowListComponent
+    }
+    Component {
+      id: windowListComponent
+      Rectangle {
+        anchors.fill: parent
+        radius: root.radius
+        color: Theme.surface
         border.width: 1; border.color: Theme.outline
         z: 3
 
@@ -740,19 +738,38 @@ Rectangle {
                 }
             }
         }
+      }
     }
 
     // ════════════════════════════════════════════════════════════════════
     // 5. CONTROL PANEL (embedded, fills the pill when popupOpen)
     // ════════════════════════════════════════════════════════════════════
-    ControlPanel {
+    // Loaded by file path (not sourceComponent) so the panel's QML is not
+    // even compiled until the first time it is opened, and is destroyed when
+    // it closes. Frees the ~1500-line panel and the services only it uses.
+    Loader {
         id: inlineControlPanel
-        visible: root.controlPopupVisible
         anchors.fill: parent
-        focus: root.controlPopupVisible
         z: 3
-        pendingUpdates: root.pendingUpdates
-        updateTooltip:  root.updateTooltip
+        active: root.controlPopupVisible
+        visible: root.controlPopupVisible
+        focus: root.controlPopupVisible
+        source: Qt.resolvedUrl("../panels/ControlPanel.qml")
+
+        // The panel's own scan-stop handler can't run once it is destroyed,
+        // so stop the Wi-Fi scan here when it closes.
+        onActiveChanged: if (!active) { NetworkService.stopScan(); panelGcTimer.restart() }
+        // Give the destroyed panel a moment to be released, then collect it.
+        Timer { id: panelGcTimer; interval: 400; onTriggered: gc() }
+        onLoaded: item.focus = true
+
+        // Props previously passed inline.
+        Binding { target: inlineControlPanel.item; property: "pendingUpdates"
+                  value: root.pendingUpdates; when: inlineControlPanel.item !== null }
+        Binding { target: inlineControlPanel.item; property: "updateTooltip"
+                  value: root.updateTooltip;  when: inlineControlPanel.item !== null }
+
+        // Key events the panel doesn't consume bubble up to the Loader.
         Keys.onEscapePressed: ShellState.popupOpen = false
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_S && event.modifiers === Qt.NoModifier) {

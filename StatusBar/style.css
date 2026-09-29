@@ -1,22 +1,22 @@
 :root {
-  /* Shared visual tokens mirrored by core/Theme.qml for QtQuick. */
-  --cc-background: #0e0e10;
-  --cc-surface: #18181b;
-  --cc-surface-raised: #232327;
-  --cc-surface-hover: #2d2d32;
-  --cc-outline: #ffffff14;
-  --cc-text: #eeeeee;
-  --cc-text-muted: #8f8f96;
-  --cc-primary: #ff9f0a;
-  --cc-primary-strong: #ffb020;
-  --cc-success: #5fd576;
-  --cc-warning: #ffcf4d;
-  --cc-error: #ff6b5f;
-  --cc-island-bg: #000000;
-  --cc-island-accent: #ff9f0a;
-  --cc-island-accent-strong: #ffb340;
-  --cc-island-muted: #8d9096;
-  --cc-island-muted-dim: #5f6268;
+  /* Authoritative design tokens loaded by core/Theme.qml for QtQuick. */
+  --cc-background: #0b111b;
+  --cc-surface: #111a27;
+  --cc-surface-raised: #192638;
+  --cc-surface-hover: #22344a;
+  --cc-outline: #ffffff24;
+  --cc-text: #eaf2fb;
+  --cc-text-muted: #a0afc1;
+  --cc-primary: #5bd6e8;
+  --cc-primary-strong: #8ce9f3;
+  --cc-success: #57d7a4;
+  --cc-warning: #f2c66d;
+  --cc-error: #ff7c8c;
+  --cc-island-bg: #060b12;
+  --cc-island-accent: #5bd6e8;
+  --cc-island-accent-strong: #9beef3;
+  --cc-island-muted: #a9b7c8;
+  --cc-island-muted-dim: #687c94;
   --cc-radius-panel: 22px;
   --cc-radius-card: 14px;
   --cc-radius-control: 10px;

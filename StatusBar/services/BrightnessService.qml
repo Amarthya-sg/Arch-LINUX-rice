@@ -1,9 +1,11 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Io
+import "../core"
 
 QtObject {
     id: root
+    Component.onCompleted: query.running = true   // one initial read
 
     property bool available: false
     property int percent: 0
@@ -25,7 +27,7 @@ QtObject {
         setProcess.running = true
     }
     property Timer refreshTimer: Timer { interval: 3000
- running: true
+ running: ShellState.popupOpen
  repeat: true
  triggeredOnStart: true
  onTriggered: query.running = true }

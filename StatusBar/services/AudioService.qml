@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell.Services.Pipewire
 import Quickshell.Io
+import "../core"
 
 QtObject {
     id: root
@@ -9,6 +10,9 @@ QtObject {
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property var source: Pipewire.defaultAudioSource
     readonly property bool available: Pipewire.ready && !!sink?.audio
+    property PwObjectTracker audioNodeTracker: PwObjectTracker {
+        objects: [root.sink, root.source]
+    }
     readonly property real volume: sink?.audio?.volume ?? 0
     readonly property bool muted: sink?.audio?.muted ?? false
     readonly property real inputVolume: source?.audio?.volume ?? 0
@@ -16,7 +20,6 @@ QtObject {
     property var outputs: []
     property var inputs: []
     property var cards: []
-    property string lastOutputSignature: ""
 
     function profileKey(name, isOutput): string {
         const value = String(name || "")
@@ -152,6 +155,8 @@ QtObject {
     property real pendingInputVolume: 0
     property bool outputVolumePending: false
     property bool inputVolumePending: false
+    property bool muteCommandPending: false
+    property bool pendingMutedValue: false
 
     function channelVolumeArgs(master, balance, stereo): var {
         const level = Math.max(0, Math.min(1, Number(master) || 0))
@@ -193,10 +198,9 @@ QtObject {
         }
     }
 
-    // Default PipeWire nodes can briefly be unbound while WirePlumber
-    // re-announces them. Mutate through pactl, not sink.audio/source.audio.
-    // Slider changes are debounced and serialized; only the latest pending
-    // value is sent when a previous pactl command has finished.
+    // Volume changes use pactl because default nodes can briefly be unbound
+    // while WirePlumber re-announces them. The mute path uses a tracked node
+    // when ready and falls back to pactl during that brief rebinding window.
     function setVolume(value): void {
         root.pendingOutputVolume = Math.max(0, Math.min(1, value))
         root.outputVolumePending = true
@@ -239,13 +243,32 @@ QtObject {
         root.inputVolumeProcess.command = ["pactl", "set-source-volume", "@DEFAULT_SOURCE@"].concat(args)
         root.inputVolumeProcess.running = true
     }
-    function toggleMute(): void {
-        console.log("[SAT][Audio] output mute toggle requested")
-        outputMute.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"]
+    function setMuted(value): void {
+        root.pendingMutedValue = Boolean(value)
+        root.muteCommandPending = true
+        root.flushMute()
+    }
+    function flushMute(): void {
+        if (!root.muteCommandPending || outputMute.running) return
+        const node = root.sink
+        if (node && node.ready && node.audio) {
+            const requestedMuted = root.pendingMutedValue
+            root.muteCommandPending = false
+            node.audio.muted = requestedMuted
+            return
+        }
+        const requestedMuted = root.pendingMutedValue
+        root.muteCommandPending = false
+        console.warn("[SAT][Audio] PipeWire sink is not ready; using pactl fallback")
+        outputMute.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", requestedMuted ? "1" : "0"]
         outputMute.running = true
     }
+    function toggleMute(): void {
+        const currentTarget = root.muteCommandPending || outputMute.running
+            ? root.pendingMutedValue : root.muted
+        root.setMuted(!currentTarget)
+    }
     function toggleInputMute(): void {
-        console.log("[SAT][Audio] input mute toggle requested")
         inputMute.command = ["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"]
         inputMute.running = true
     }
@@ -377,9 +400,6 @@ QtObject {
     }
     function selectOutput(node): void {
         if (!node) return
-        console.log("[SAT][Audio] output selected; name=", node.sinkName || node.name || node.cardName,
-                    "port=", node.portName || "default", "profile=", node.profileName || "",
-                    "description=", node.description || "")
         if (node.kind === "profile") {
             outputSelect.command = root.profileSwitchCommand(node.cardName, node.profileName)
         } else {
@@ -389,9 +409,6 @@ QtObject {
     }
     function selectInput(node): void {
         if (!node) return
-        console.log("[SAT][Audio] input selected; name=", node.sourceName || node.name || node.cardName,
-                    "port=", node.portName || "default", "profile=", node.profileName || "",
-                    "description=", node.description || "")
         inputSelect.command = node.kind === "profile"
             ? root.inputProfileSwitchCommand(node.cardName, node.profileName)
             : root.routeSourceCommand(node.sourceName || node.name, node.portName)
@@ -413,8 +430,6 @@ QtObject {
         const card = root.cards.find(item => item.name === output.cardName)
         const speakerProfile = root.speakerFallbackProfile(output, card)
         if (!speakerProfile || card.activeProfile === speakerProfile.name) return
-        console.log("[SAT][Audio] headphone port unavailable; switching to speakers; card=",
-                    card.name, "profile=", speakerProfile.name)
         root.selectOutput({ kind: "profile", cardName: card.name,
                             profileName: speakerProfile.name,
                             description: speakerProfile.description })
@@ -522,44 +537,34 @@ QtObject {
                 root.inputs = root.parseBlocks(sourceAndCards[0] || "", "Source")
                 root.cards = root.parseCards(cardsAndOutput[0] || "")
                 root.syncStereoVolumes(outputAndInput[0] || "", outputAndInput[1] || "")
-                const signature = root.outputNames.join(" | ")
-                if (signature !== root.lastOutputSignature) {
-                    root.lastOutputSignature = signature
-                    console.log("[SAT][Audio] output devices detected; count=", root.outputChoices.length,
-                                "devices=", signature || "none")
-                }
                 root.maybeAutoSwitchToSpeakers()
             }
         }
     }
     property Process outputSelect: Process {
         command: []
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const result = text.trim()
-                if (result.length > 0) console.log("[SAT][Audio] route result:", result)
-            }
-        }
         onExited: (code, status) => {
-            console.log("[SAT][Audio] output selection exited; code=", code, "status=", status)
             root.refresh()
         }
     }
     property Process inputSelect: Process {
         command: []
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const result = text.trim()
-                if (result.length > 0) console.log("[SAT][Audio] input route result:", result)
-            }
-        }
         onExited: (code, status) => {
-            console.log("[SAT][Audio] input selection exited; code=", code, "status=", status)
             root.refresh()
         }
     }
-    property Process outputMute: Process { command: []; onExited: (code, status) => { console.log("[SAT][Audio] output mute exited; code=", code, "status=", status); root.refresh() } }
-    property Process inputMute: Process { command: []; onExited: (code, status) => { console.log("[SAT][Audio] input mute exited; code=", code, "status=", status); root.refresh() } }
+    property Process outputMute: Process {
+        command: []
+        onExited: (code, status) => {
+            if (code !== 0) console.warn("[SAT][Audio] output mute command failed; code=", code, "status=", status)
+            if (root.muteCommandPending) root.flushMute()
+            else root.refresh()
+        }
+    }
+    property Process inputMute: Process {
+        command: []
+        onExited: (code, status) => root.refresh()
+    }
     property Timer outputVolumeTimer: Timer { interval: 100; repeat: false; onTriggered: root.flushOutputVolume() }
     property Timer inputVolumeTimer: Timer { interval: 100; repeat: false; onTriggered: root.flushInputVolume() }
     property Process outputVolumeProcess: Process {
@@ -584,8 +589,29 @@ QtObject {
             }
         }
     }
+    // The bar only needs Pipewire's reactive volume/mute. The heavy pactl scan
+    // runs fast (3 s) only while the control center is open; when closed it is
+    // a slow safety net that still drives the headphone-unplug auto-switch.
     property Timer refreshTimer: Timer {
-        interval: 3000; running: true; repeat: true; triggeredOnStart: true
+        interval: ShellState.popupOpen ? 3000 : 20000
+        running: true; repeat: true; triggeredOnStart: true
         onTriggered: root.refresh()
+    }
+    property Connections sinkWatch: Connections {
+        target: root
+        function onSinkChanged() {
+            root.refresh()
+            if (root.muteCommandPending) root.flushMute()
+        }
+    }
+    property Connections sinkReadyWatch: Connections {
+        target: root.sink
+        function onReadyChanged() {
+            if (root.muteCommandPending) root.flushMute()
+        }
+    }
+    property Connections popupWatch: Connections {
+        target: ShellState
+        function onPopupOpenChanged() { if (ShellState.popupOpen) root.refresh() }
     }
 }

@@ -1,7 +1,7 @@
 // ToggleSwitch.qml — pixel-perfect port of .sw from the HTML prototype.
 // CSS spec: width 36px, height 20px, border-radius 99px.
 //   OFF: background var(--line), knob var(--fg)
-//   ON:  background var(--acc),  knob #111111
+//   ON:  background var(--acc),  dark knob
 // Knob translate animation: 0.2s ease-in-out (QML: InOutQuad ≈ CSS ease-in-out).
 import QtQuick
 import QtQuick.Controls
@@ -10,7 +10,7 @@ import "../core"
 Switch {
     id: root
 
-    // Allow callers to override the accent colour (default: Theme.acc = #ff9f0a).
+    // Allow callers to override the accent colour (default: Theme.acc).
     property color accent: Theme.acc
 
     implicitWidth:  36
@@ -34,7 +34,7 @@ Switch {
             y:      2                // (20 - 16) / 2 = 2
             // OFF: sits at x=2; ON: slides to x=18 (36 - 16 - 2)
             x:      root.checked ? 18 : 2
-            color:  root.checked ? "#111111" : Theme.fg
+            color:  root.checked ? Theme.islandBg : Theme.fg
             Behavior on x     { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
             Behavior on color { ColorAnimation   { duration: 200 } }
         }

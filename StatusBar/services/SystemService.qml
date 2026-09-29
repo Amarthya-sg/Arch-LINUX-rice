@@ -1,9 +1,11 @@
 pragma Singleton
 import QtQuick
 import Quickshell.Io
+import "../core"
 
 QtObject {
     id: root
+    Component.onCompleted: root.refresh()   // one initial read so the first open has data
 
     property real cpuPercent: 0
     property string cpuModel: "Unavailable"
@@ -266,9 +268,9 @@ done
     }
     property Timer refreshTimer: Timer {
         interval: 3000
-        running: true
+        running: ShellState.popupOpen   // only poll while the control panel is open
         repeat: true
-        triggeredOnStart: true
+        triggeredOnStart: true          // immediate refresh each time it opens
         onTriggered: root.refresh()
     }
 }

@@ -73,10 +73,16 @@ QtObject {
     }
 
     // ── Clock timer ────────────────────────────────────────────────────────
+    // The UI only shows h:mm and the date, so wake once a minute, aligned to
+    // the minute boundary, instead of every second.
     property Timer clockTimer: Timer {
-        interval:         1000
+        interval:         60050 - (new Date().getSeconds() * 1000 + new Date().getMilliseconds())
         repeat:           true
         running:          true
-        onTriggered:      ShellState.now = new Date()
+        onTriggered: {
+            const d = new Date()
+            ShellState.now = d
+            interval = 60050 - (d.getSeconds() * 1000 + d.getMilliseconds())
+        }
     }
 }
