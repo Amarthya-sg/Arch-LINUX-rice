@@ -1,73 +1,140 @@
+// LevelSlider.qml: smooth port of input[type=range] from the HTML prototype.
+//
+// API:
+//   value      - 0..1 current level
+//   valueEdited(v) - emitted on user interaction
+//   title      - optional leading label text (shown above row when set)
+//   valueLabel - formatted string shown at the right, e.g. "68%"
+//   accent     - filled-track colour (defaults to Theme.fg)
 import QtQuick
 import QtQuick.Controls
 import "../core"
 
-Column {
+Item {
     id: root
-    property string title: ""
-    property string valueLabel: ""
-    property real value: 0
-    property color accent: Theme.primary
-    signal valueEdited(real value)
-    spacing: 8
 
-    Row {
-        width: parent.width
-        spacing: 8
-        Label {
-            id: titleLabel
-            text: root.title
-            color: Theme.text
-            font.family: Theme.uiFont
-            font.pixelSize: 13
-            font.weight: 600
-        }
-        Item { width: parent.width - titleLabel.width - valueLabelItem.width - 16 }
-        Label {
-            id: valueLabelItem
-            text: root.valueLabel
-            color: root.accent
-            font.family: Theme.iconFont
-            font.pixelSize: 11
-            font.weight: 600
+    // ── Public API ──────────────────────────────────────────────────────
+    property string title:      ""
+    property string valueLabel: ""
+    property real   value:      0        // 0..1
+    property color  accent:     Theme.fg
+
+    signal valueEdited(real value)
+
+    implicitWidth:  200
+    implicitHeight: title !== "" ? 44 : 24
+
+    // ── Local display state ─────────────────────────────────────────────
+    // What is actually drawn. Follows `value`, except while dragging,
+    // when it follows the cursor immediately (no backend round trip).
+    property real shown: 0
+    readonly property bool dragging: dragArea.pressed
+    readonly property real thumbSize: 14
+
+    Component.onCompleted: shown = value
+    onValueChanged: if (!dragging) shown = value
+    onDraggingChanged: if (!dragging) shown = value
+
+    // Short trailing while dragging, longer ease for external changes
+    Behavior on shown {
+        NumberAnimation {
+            duration: root.dragging ? 60 : 200
+            easing.type: Easing.OutCubic
         }
     }
 
-    Slider {
-        id: slider
-        width: parent.width
-        height: 30
-        implicitHeight: 30
-        from: 0
-        to: 1
-        value: root.value
-        onMoved: root.valueEdited(value)
-        background: Rectangle {
-            x: 0
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            width: slider.availableWidth
-            height: 7
-            radius: 4
-            color: Theme.surfaceRaised
-            border.width: 1
-            border.color: Theme.outline
+    // ── Optional title row ──────────────────────────────────────────────
+    Item {
+        id: titleRow
+        visible: root.title !== ""
+        anchors.top:   parent.top
+        anchors.left:  parent.left
+        anchors.right: parent.right
+        height: 16
+
+        Text {
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            text:  root.title
+            color: Theme.fg
+            font.family:    Theme.uiFont
+            font.pixelSize: 12
+            font.weight:    Font.Medium
+        }
+        Text {
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            text:  root.valueLabel
+            color: root.accent
+            font.family:    Theme.uiFont
+            font.pixelSize: 12
+            font.weight:    Font.DemiBold
+        }
+    }
+
+    // ── Slider row ──────────────────────────────────────────────────────
+    Item {
+        id: sliderRow
+        anchors.top:       root.title !== "" ? titleRow.bottom : parent.top
+        anchors.topMargin: root.title !== "" ? 4 : 0
+        anchors.left:      parent.left
+        anchors.right:     parent.right
+        anchors.bottom:    parent.bottom
+
+        // Track (unfilled)
+        Rectangle {
+            id: track
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left:  parent.left
+            anchors.right: parent.right
+            height: 3
+            radius: 9
+            color:  Theme.line
+
+            // Filled portion, ends at the thumb's center
             Rectangle {
-                width: slider.visualPosition * parent.width
-                height: parent.height
+                anchors.left:   parent.left
+                anchors.top:    parent.top
+                anchors.bottom: parent.bottom
+                width:  Math.max(0, Math.min(1, root.shown))
+                        * (track.width - root.thumbSize) + root.thumbSize / 2
                 radius: parent.radius
-                color: root.accent
+                color:  root.accent
             }
         }
-        handle: Rectangle {
-            x: slider.leftPadding + slider.visualPosition
-                * (slider.availableWidth - width)
-            y: slider.topPadding + slider.availableHeight / 2 - height / 2
-            width: 18
-            height: 18
-            radius: 9
-            color: Theme.background
-            border.width: 3
-            border.color: root.accent
+
+        // Thumb
+        Rectangle {
+            id: thumb
+            width:  root.thumbSize
+            height: root.thumbSize
+            radius: width / 2
+            color:  Theme.fg
+            anchors.verticalCenter: track.verticalCenter
+            x: Math.max(0, Math.min(1, root.shown)) * (track.width - width)
+        }
+
+        // Hit area (full row height for easy dragging)
+        MouseArea {
+            id: dragArea
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            preventStealing: true
+
+            // Inverse of the thumb mapping, so the thumb stays under the cursor
+            function posToValue(mx) {
+                const v = (mx - root.thumbSize / 2) / (track.width - root.thumbSize)
+                return Math.max(0, Math.min(1, v))
+            }
+
+            function update(mx) {
+                const v = posToValue(mx)
+                root.shown = v          // instant local feedback
+                root.valueEdited(v)     // tell the backend
+            }
+
+            onPressed: (mouse) => update(mouse.x)
+            onPositionChanged: (mouse) => { if (pressed) update(mouse.x) }
         }
     }
 }

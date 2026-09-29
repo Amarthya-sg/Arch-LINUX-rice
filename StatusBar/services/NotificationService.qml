@@ -12,7 +12,7 @@ QtObject {
     property var  mutedApps:   []
     property var  notifList:   []          // flat list, newest first
     property var  queuedList:  []          // held during DND
-    property var  toastList:   []          // currently visible toasts
+    property var  toastList:   []          // transient in-pill notification previews
     property var  groupedNotifications: [] // rebuilt by rebuildGroups()
 
     // backward-compat alias used by the bar pill / tab badge
@@ -152,7 +152,7 @@ QtObject {
     function showToast(entry) {
         if (root.dndEnabled) return
         root.toastList = [entry].concat(root.toastList)
-        // Toasts time out in shell.qml; panel history stays until explicitly cleared.
+        // The pill preview is temporary; panel history stays until explicitly cleared.
     }
 
     function removeToast(id) {

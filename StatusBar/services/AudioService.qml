@@ -29,7 +29,6 @@ QtObject {
         if (value.indexOf("headset-head-unit") === 0) return "headset-head-unit"
         return value
     }
-
     readonly property var outputChoices: {
         const choices = []
         for (const output of outputs) {
@@ -71,13 +70,20 @@ QtObject {
                                isBluetooth: card.isBluetooth })
             }
         }
-        return choices
+        return choices.sort((a, b) => {
+            if (a.active === b.active) return 0
+            return a.active ? -1 : 1
+        })
     }
-
     readonly property var inputChoices: {
         const choices = []
         for (const input of inputs) {
-            if (input.name.endsWith(".monitor") || input.monitorOfSink) continue
+            // pactl reports `Monitor of Sink: n/a` for ordinary microphones.
+            // Only exclude real monitor sources; otherwise every hardware mic
+            // is incorrectly removed from the input list.
+            const monitorRef = String(input.monitorOfSink || "").trim().toLowerCase()
+            if (input.name.endsWith(".monitor")
+                    || (monitorRef !== "" && monitorRef !== "n/a" && monitorRef !== "none" && monitorRef !== "-")) continue
             const ports = (input.ports || []).filter(port => port.availability !== "no")
             if (ports.length === 0) {
                 choices.push({ kind: "device", name: input.name, sourceName: input.name, portName: "",
@@ -115,11 +121,13 @@ QtObject {
                                isBluetooth: card.isBluetooth })
             }
         }
-        return choices
+        return choices.sort((a, b) => {
+            if (a.active === b.active) return 0
+            return a.active ? -1 : 1
+        })
     }
-
     readonly property var outputNames: outputChoices.map(n => n.description || n.name || "Output")
-    readonly property var inputNames:  inputChoices.map(n => n.description || n.name || "Input")
+    readonly property var inputNames: inputChoices.map(n => n.description || n.name || "Input")
     readonly property int outputIndex: {
         const index = outputChoices.findIndex(n => n.active)
         return index >= 0 ? index : Math.max(0, outputChoices.findIndex(n => n.sinkName === sink?.name))
@@ -128,7 +136,6 @@ QtObject {
         const index = inputChoices.findIndex(n => n.active)
         return index >= 0 ? index : Math.max(0, inputChoices.findIndex(n => n.sourceName === source?.name))
     }
-
     property real outputBalance: 0
     property real inputBalance: 0
     property real outputMasterValue: 0
@@ -140,54 +147,54 @@ QtObject {
     property bool outputBalanceDirty: false
     property bool inputBalanceDirty: false
     readonly property real outputMaster: outputChannelsKnown ? outputMasterValue : volume
-    readonly property real inputMaster:  inputChannelsKnown  ? inputMasterValue  : inputVolume
+    readonly property real inputMaster: inputChannelsKnown ? inputMasterValue : inputVolume
     property real pendingOutputVolume: 0
     property real pendingInputVolume: 0
     property bool outputVolumePending: false
     property bool inputVolumePending: false
 
     function channelVolumeArgs(master, balance, stereo): var {
-        const level   = Math.max(0, Math.min(1, Number(master)  || 0))
+        const level = Math.max(0, Math.min(1, Number(master) || 0))
         const percent = Math.round(level * 100)
         if (!stereo) return [percent + "%"]
-        const pan   = Math.max(-1, Math.min(1, Number(balance) || 0))
-        const left  = Math.round(level * (pan > 0 ? 1 - pan : 1) * 100)
+        const pan = Math.max(-1, Math.min(1, Number(balance) || 0))
+        const left = Math.round(level * (pan > 0 ? 1 - pan : 1) * 100)
         const right = Math.round(level * (pan < 0 ? 1 + pan : 1) * 100)
         return [left + "%", right + "%"]
     }
-
     function parseStereoVolume(text): var {
-        const left  = String(text).match(/front-left:\s*(?:[0-9]+(?:\.[0-9]+)?\s*\/\s*)?([0-9]+(?:\.[0-9]+)?)\s*%/i)
+        const left = String(text).match(/front-left:\s*(?:[0-9]+(?:\.[0-9]+)?\s*\/\s*)?([0-9]+(?:\.[0-9]+)?)\s*%/i)
         const right = String(text).match(/front-right:\s*(?:[0-9]+(?:\.[0-9]+)?\s*\/\s*)?([0-9]+(?:\.[0-9]+)?)\s*%/i)
         if (!left || !right) return { supported: false, master: 0, balance: 0 }
-        const l      = Math.max(0, Number(left[1])  / 100)
-        const r      = Math.max(0, Number(right[1]) / 100)
+        const l = Math.max(0, Number(left[1]) / 100)
+        const r = Math.max(0, Number(right[1]) / 100)
         const master = Math.max(l, r)
         const balance = master > 0 ? Math.max(-1, Math.min(1, (r - l) / master)) : 0
         return { supported: true, master: master, balance: balance }
     }
-
     function syncStereoVolumes(outputText, inputText): void {
         const out = root.parseStereoVolume(outputText)
         if (!root.outputBalanceDirty && !root.outputVolumePending && !root.outputVolumeProcess.running) {
             root.outputBalanceSupported = out.supported
-            root.outputChannelsKnown   = out.supported
+            root.outputChannelsKnown = out.supported
             if (out.supported) {
                 root.outputMasterValue = out.master
-                root.outputBalance     = out.balance
+                root.outputBalance = out.balance
             }
         }
         const input = root.parseStereoVolume(inputText)
         if (!root.inputBalanceDirty && !root.inputVolumePending && !root.inputVolumeProcess.running) {
             root.inputBalanceSupported = input.supported
-            root.inputChannelsKnown   = input.supported
+            root.inputChannelsKnown = input.supported
             if (input.supported) {
                 root.inputMasterValue = input.master
-                root.inputBalance     = input.balance
+                root.inputBalance = input.balance
             }
         }
     }
 
+    // Default PipeWire nodes can briefly be unbound while WirePlumber
+    // re-announces them. Mutate through pactl, not sink.audio/source.audio.
     // Slider changes are debounced and serialized; only the latest pending
     // value is sent when a previous pactl command has finished.
     function setVolume(value): void {
@@ -202,7 +209,7 @@ QtObject {
     }
     function setOutputBalance(value): void {
         if (!root.outputBalanceSupported) return
-        root.outputBalance     = Math.max(-1, Math.min(1, value))
+        root.outputBalance = Math.max(-1, Math.min(1, value))
         root.outputBalanceDirty = true
         root.pendingOutputVolume = root.outputMaster
         root.outputVolumePending = true
@@ -210,7 +217,7 @@ QtObject {
     }
     function setInputBalance(value): void {
         if (!root.inputBalanceSupported) return
-        root.inputBalance     = Math.max(-1, Math.min(1, value))
+        root.inputBalance = Math.max(-1, Math.min(1, value))
         root.inputBalanceDirty = true
         root.pendingInputVolume = root.inputMaster
         root.inputVolumePending = true
@@ -233,14 +240,15 @@ QtObject {
         root.inputVolumeProcess.running = true
     }
     function toggleMute(): void {
+        console.log("[SAT][Audio] output mute toggle requested")
         outputMute.command = ["pactl", "set-sink-mute", "@DEFAULT_SINK@", "toggle"]
         outputMute.running = true
     }
     function toggleInputMute(): void {
+        console.log("[SAT][Audio] input mute toggle requested")
         inputMute.command = ["pactl", "set-source-mute", "@DEFAULT_SOURCE@", "toggle"]
         inputMute.running = true
     }
-
     function routeSinkCommand(sinkName, portName): var {
         const script = [
             "set -e",
@@ -259,7 +267,6 @@ QtObject {
         ].join("\n")
         return ["sh", "-c", script, "sh", sinkName, portName || ""]
     }
-
     function routeSourceCommand(sourceName, portName): var {
         const script = [
             "set -e",
@@ -278,7 +285,6 @@ QtObject {
         ].join("\n")
         return ["sh", "-c", script, "sh", sourceName, portName || ""]
     }
-
     function profileSwitchCommand(cardName, profileName): var {
         const script = [
             'set -e',
@@ -288,7 +294,7 @@ QtObject {
             'pactl set-card-profile "$card" "$profile"',
             'sink=""',
             "for attempt in $(seq 1 20); do",
-            '    sink=$(pactl list sinks 2>/dev/null | awk -v card="$card" \'',
+            '    sink=$(pactl list sinks 2>/dev/null | awk -v card="$card" \'' ,
             '        function emit() { if (matches && name != "") print name }',
             '        /^Sink #[0-9]+/ { emit(); name=""; matches=0; next }',
             '        /^[[:space:]]*Name:/ { name=$2 }',
@@ -338,7 +344,6 @@ QtObject {
         ].join("\n")
         return ["sh", "-c", script, "sh", cardName, profileName]
     }
-
     function inputProfileSwitchCommand(cardName, profileName): var {
         const script = [
             "set -e",
@@ -370,7 +375,6 @@ QtObject {
         ].join("\n")
         return ["sh", "-c", script, "sh", cardName, profileName]
     }
-
     function selectOutput(node): void {
         if (!node) return
         console.log("[SAT][Audio] output selected; name=", node.sinkName || node.name || node.cardName,
@@ -383,7 +387,6 @@ QtObject {
         }
         outputSelect.running = true
     }
-
     function selectInput(node): void {
         if (!node) return
         console.log("[SAT][Audio] input selected; name=", node.sourceName || node.name || node.cardName,
@@ -394,7 +397,6 @@ QtObject {
             : root.routeSourceCommand(node.sourceName || node.name, node.portName)
         inputSelect.running = true
     }
-
     function speakerFallbackProfile(output, card): var {
         if (!output || output.isBluetooth || !card || !/headphones?/i.test(card.activeProfile)) return null
         const headphonePort = output.ports.find(port => port.name === output.activePort)
@@ -404,7 +406,6 @@ QtObject {
             && profile.sinks > 0 && profile.available !== "no")
             || null
     }
-
     function maybeAutoSwitchToSpeakers(): void {
         if (root.outputSelect.running || !root.sink?.name) return
         const output = root.outputs.find(item => item.name === root.sink.name)
@@ -418,13 +419,15 @@ QtObject {
                             profileName: speakerProfile.name,
                             description: speakerProfile.description })
     }
-
     function parsePorts(block): var {
         const result = []
         let inPorts = false
         let portIndent = -1
         for (const line of block.split("\n")) {
-            if (/^\s*Ports:\s*$/.test(line)) { inPorts = true; continue }
+            if (/^\s*Ports:\s*$/.test(line)) {
+                inPorts = true
+                continue
+            }
             if (inPorts && /^\s*Active Port:/.test(line)) break
             if (!inPorts) continue
             const match = line.match(/^\s+(.+?):\s*(.*)$/)
@@ -432,10 +435,10 @@ QtObject {
             const indent = (line.match(/^[ \t]*/) || [""])[0].length
             if (portIndent < 0) portIndent = indent
             if (indent !== portIndent) continue
-            const details     = match[2]
-            const portName    = match[1].replace(/^\*\s*/, "").trim()
+            const details = match[2]
+            const portName = match[1].replace(/^\*\s*/, "").trim()
             const description = details.split(/\s+\(type:/i)[0].trim()
-            const type        = (details.match(/\(type:\s*([^,\)]+)/i) || ["", ""])[1].trim()
+            const type = (details.match(/\(type:\s*([^,\)]+)/i) || ["", ""])[1].trim()
             const availability = /\bnot available\b/i.test(details) ? "no"
                 : /\bavailable\b/i.test(details) ? "yes" : "unknown"
             result.push({ name: portName, description: description || portName,
@@ -443,19 +446,21 @@ QtObject {
         }
         return result
     }
-
     function parseCards(text): var {
         const result = []
         const blocks = text.split(/\n(?=Card #)/)
         for (const block of blocks) {
-            const name          = (block.match(/\n\s*Name:\s*(\S+)/)                          || ["", ""])[1]
+            const name = (block.match(/\n\s*Name:\s*(\S+)/) || ["", ""])[1]
             if (!name) continue
-            const description   = (block.match(/\n\s*device\.description\s*=\s*"([^"]+)"/)   || ["", name])[1]
-            const activeProfile = (block.match(/\n\s*Active Profile:\s*(.+)/)                 || ["", ""])[1].trim()
+            const description = (block.match(/\n\s*device\.description\s*=\s*"([^"]+)"/) || ["", name])[1]
+            const activeProfile = (block.match(/\n\s*Active Profile:\s*(.+)/) || ["", ""])[1].trim()
             const profiles = []
             let inProfiles = false
             for (const line of block.split("\n")) {
-                if (/^\s*Profiles:\s*$/.test(line)) { inProfiles = true; continue }
+                if (/^\s*Profiles:\s*$/.test(line)) {
+                    inProfiles = true
+                    continue
+                }
                 if (inProfiles && /^\s*Active Profile:/.test(line)) break
                 if (!inProfiles) continue
                 const match = line.match(/^\s{2,}(.+?):\s*(.*?)\s+\(sinks:\s*(\d+),\s*sources:\s*(\d+),\s*priority:\s*(-?\d+),\s*available:\s*(yes|no|unknown)\)\s*$/)
@@ -469,7 +474,6 @@ QtObject {
         }
         return result
     }
-
     function parseVolumeSummary(block): string {
         if (/\n\s*Mute:\s*yes\b/i.test(block)) return "Muted"
         const volumeStart = block.search(/\n\s*Volume:/i)
@@ -483,19 +487,18 @@ QtObject {
         if (highest < 0) return ""
         return Math.round(highest) + "%"
     }
-
     function parseBlocks(text, prefix): var {
         const result = []
-        const blocks = text.split(new RegExp("\n(?=" + prefix + " #)"))
+        const blocks = text.split(new RegExp("\\n(?=" + prefix + " #)"))
         for (const block of blocks) {
-            const name          = (block.match(/\n\s*Name:\s*(\S+)/)              || ["", ""])[1]
+            const name = (block.match(/\n\s*Name:\s*(\S+)/) || ["", ""])[1]
             if (!name) continue
-            const description   = (block.match(/\n\s*Description:\s*(.+)/)        || ["", name])[1].trim()
-            const state         = (block.match(/\n\s*State:\s*(\S+)/)             || ["", "UNKNOWN"])[1]
-            const port          = (block.match(/\n\s*Active Port:\s*(.+)/)        || ["", ""])[1].trim()
-            const cardName      = (block.match(/\n\s*device\.name\s*=\s*"([^"]+)"/) || ["", ""])[1]
-            const monitorOfSink = (block.match(/\n\s*Monitor of Sink:\s*(.+)/)    || ["", ""])[1].trim()
-            const bluetooth     = /bluez|bluetooth/i.test(block)
+            const description = (block.match(/\n\s*Description:\s*(.+)/) || ["", name])[1].trim()
+            const state = (block.match(/\n\s*State:\s*(\S+)/) || ["", "UNKNOWN"])[1]
+            const port = (block.match(/\n\s*Active Port:\s*(.+)/) || ["", ""])[1].trim()
+            const cardName = (block.match(/\n\s*device\.name\s*=\s*"([^"]+)"/) || ["", ""])[1]
+            const monitorOfSink = (block.match(/\n\s*Monitor of Sink:\s*(.+)/) || ["", ""])[1].trim()
+            const bluetooth = /bluez|bluetooth/i.test(block)
             result.push({ name: name, description: description, state: state, activePort: port,
                           cardName: cardName, monitorOfSink: monitorOfSink,
                           muted: /\n\s*Mute:\s*yes\b/i.test(block),
@@ -504,31 +507,20 @@ QtObject {
         }
         return result
     }
-
     function refresh(): void { if (!deviceScan.running) deviceScan.running = true }
 
     property Process deviceScan: Process {
         id: deviceScan
-        command: ["sh", "-c",
-            "pactl list sinks 2>/dev/null;" +
-            " printf '\\n---SOURCES---\\n';" +
-            " pactl list sources 2>/dev/null;" +
-            " printf '\\n---CARDS---\\n';" +
-            " pactl list cards 2>/dev/null;" +
-            " printf '\\n---OUTPUT-VOLUME---\\n';" +
-            " pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null;" +
-            " printf '\\n---INPUT-VOLUME---\\n';" +
-            " pactl get-source-volume @DEFAULT_SOURCE@ 2>/dev/null"
-        ]
+        command: ["sh", "-c", "pactl list sinks 2>/dev/null; printf '\\n---SOURCES---\\n'; pactl list sources 2>/dev/null; printf '\\n---CARDS---\\n'; pactl list cards 2>/dev/null; printf '\\n---OUTPUT-VOLUME---\\n'; pactl get-sink-volume @DEFAULT_SINK@ 2>/dev/null; printf '\\n---INPUT-VOLUME---\\n'; pactl get-source-volume @DEFAULT_SOURCE@ 2>/dev/null"]
         stdout: StdioCollector {
             onStreamFinished: {
-                const parts          = text.split("\n---SOURCES---\n")
+                const parts = text.split("\n---SOURCES---\n")
                 const sourceAndCards = (parts[1] || "").split("\n---CARDS---\n")
                 const cardsAndOutput = (sourceAndCards[1] || "").split("\n---OUTPUT-VOLUME---\n")
                 const outputAndInput = (cardsAndOutput[1] || "").split("\n---INPUT-VOLUME---\n")
                 root.outputs = root.parseBlocks(parts[0] || "", "Sink")
-                root.inputs  = root.parseBlocks(sourceAndCards[0] || "", "Source")
-                root.cards   = root.parseCards(cardsAndOutput[0] || "")
+                root.inputs = root.parseBlocks(sourceAndCards[0] || "", "Source")
+                root.cards = root.parseCards(cardsAndOutput[0] || "")
                 root.syncStereoVolumes(outputAndInput[0] || "", outputAndInput[1] || "")
                 const signature = root.outputNames.join(" | ")
                 if (signature !== root.lastOutputSignature) {
@@ -540,7 +532,6 @@ QtObject {
             }
         }
     }
-
     property Process outputSelect: Process {
         command: []
         stdout: StdioCollector {
@@ -554,7 +545,6 @@ QtObject {
             root.refresh()
         }
     }
-
     property Process inputSelect: Process {
         command: []
         stdout: StdioCollector {
@@ -568,37 +558,19 @@ QtObject {
             root.refresh()
         }
     }
-
-    property Process outputMute: Process {
-        command: []
-        onExited: (code, status) => {
-            console.log("[SAT][Audio] output mute exited; code=", code, "status=", status)
-            root.refresh()
-        }
-    }
-    property Process inputMute: Process {
-        command: []
-        onExited: (code, status) => {
-            console.log("[SAT][Audio] input mute exited; code=", code, "status=", status)
-            root.refresh()
-        }
-    }
-
-    property Timer outputVolumeTimer: Timer {
-        interval: 100; repeat: false
-        onTriggered: root.flushOutputVolume()
-    }
-    property Timer inputVolumeTimer: Timer {
-        interval: 100; repeat: false
-        onTriggered: root.flushInputVolume()
-    }
-
+    property Process outputMute: Process { command: []; onExited: (code, status) => { console.log("[SAT][Audio] output mute exited; code=", code, "status=", status); root.refresh() } }
+    property Process inputMute: Process { command: []; onExited: (code, status) => { console.log("[SAT][Audio] input mute exited; code=", code, "status=", status); root.refresh() } }
+    property Timer outputVolumeTimer: Timer { interval: 100; repeat: false; onTriggered: root.flushOutputVolume() }
+    property Timer inputVolumeTimer: Timer { interval: 100; repeat: false; onTriggered: root.flushInputVolume() }
     property Process outputVolumeProcess: Process {
         command: []
         onExited: (code, status) => {
             if (code !== 0) console.warn("[SAT][Audio] output volume command failed; code=", code, "status=", status)
             if (root.outputVolumePending) root.outputVolumeTimer.restart()
-            else { root.outputBalanceDirty = false; root.refresh() }
+            else {
+                root.outputBalanceDirty = false
+                root.refresh()
+            }
         }
     }
     property Process inputVolumeProcess: Process {
@@ -606,10 +578,12 @@ QtObject {
         onExited: (code, status) => {
             if (code !== 0) console.warn("[SAT][Audio] input volume command failed; code=", code, "status=", status)
             if (root.inputVolumePending) root.inputVolumeTimer.restart()
-            else { root.inputBalanceDirty = false; root.refresh() }
+            else {
+                root.inputBalanceDirty = false
+                root.refresh()
+            }
         }
     }
-
     property Timer refreshTimer: Timer {
         interval: 3000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: root.refresh()

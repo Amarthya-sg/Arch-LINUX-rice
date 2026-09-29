@@ -1,105 +1,368 @@
 pragma Singleton
 import QtQuick
+import Quickshell.Bluetooth
 import Quickshell.Io
 
 QtObject {
     id: root
 
-    property bool available: true
-    property bool enabled: true
-    property bool scanning: false
-    property bool scanRequested: false
+    readonly property var adapter: Bluetooth.defaultAdapter
+    readonly property bool available: !!adapter
+    readonly property bool enabled: adapter ? adapter.enabled : false
+    readonly property bool scanning: adapter ? adapter.discovering : false
+    property bool autoPairEnabled: false
     property var devices: []
-    readonly property var connectedDevices: devices.filter(d => d.connected)
-    readonly property string status: connectedDevices.length + " connected"
+    property var wantedConnections: ({})
+    property var pairingJobs: ({})
+    property bool hardwareBlocked: false
+    property string errorMessage: ""
+    // Device waiting for discovery to fully stop before connect() is issued
+    property var pendingConnect: null
+    readonly property var connectedDevices: devices.filter(device => root.value(device, "connected"))
+    readonly property string status: !available ? "Bluetooth unavailable"
+        : !enabled ? "Bluetooth off"
+        : connectedDevices.length > 0 ? connectedDevices.length + " connected"
+        : devices.length + " known device" + (devices.length === 1 ? "" : "s")
+
+    readonly property var defaults: ({
+        address: "", name: "", deviceName: "", icon: "", connected: false,
+        paired: false, pairing: false, batteryAvailable: false, battery: 0, state: 0
+    })
+
+    function value(device, key) {
+        try {
+            const v = device ? device[key] : undefined
+            return v === undefined || v === null ? defaults[key] : v
+        } catch (error) {
+            return defaults[key]
+        }
+    }
+
+    function isAddress(value): bool {
+        return /^([0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$/.test(String(value || ""))
+    }
+
+    function displayName(device): string {
+        const name = String(value(device, "name") || value(device, "deviceName") || "")
+        return name && !isAddress(name) ? name : ""
+    }
+
+    function deviceStatus(device): string {
+        const address = String(value(device, "address") || "")
+        const job = pairingJobs[address]
+        if (value(device, "pairing") || job?.state === "pairing") return "Pairing…"
+        if (value(device, "state") === BluetoothDeviceState.Connecting) return "Connecting…"
+        if (value(device, "state") === BluetoothDeviceState.Disconnecting) return "Disconnecting…"
+        if (value(device, "connected")) return "Connected"
+        if (value(device, "paired")) return "Paired"
+        return "Not paired"
+    }
+
+    function refreshDevices(): void {
+        if (!adapter) {
+            devices = []
+            return
+        }
+        const all = adapter.devices?.values || []
+        devices = all.filter(device => value(device, "paired") || value(device, "connected")
+            || displayName(device) !== "")
+            .sort((a, b) => Number(value(b, "connected")) - Number(value(a, "connected"))
+                || Number(value(b, "paired")) - Number(value(a, "paired"))
+                || displayName(a).localeCompare(displayName(b)))
+    }
 
     function scan(): void {
-        console.log("[SAT][Bluetooth] scan requested; enabled=", enabled, "running=", scanProcess.running)
-        if (scanRequested || scanProcess.running) return
-        scanRequested = true
-        scanning = true
-        scanProcess.running = true
-    }
-    function stopScan(): void {
-        console.log("[SAT][Bluetooth] scan stop requested")
-        scanProcess.running = false
-        scanRequested = false
-        scanning = false
-    }
-    function toggle(): void {
-        console.log("[SAT][Bluetooth] power toggle requested; current enabled=", enabled)
-        adapterCommand.command = ["bluetoothctl", "power", enabled ? "off" : "on"]
-        adapterCommand.running = true
-        enabled = !enabled
-    }
-    function toggleDiscoverable(): void {}
-    function activate(device): void {
-        console.log("[SAT][Bluetooth] device action requested; name=", device?.name || "unknown", "address=", device?.address || "", "connected=", !!device?.connected, "paired=", !!device?.paired)
-        if (!device) return
-        deviceCommand.command = ["bluetoothctl", device.connected ? "disconnect" : (device.paired ? "connect" : "pair"), device.address]
-        deviceCommand.running = true
-    }
-    function forget(device): void {
-        console.log("[SAT][Bluetooth] forget requested; name=", device?.name || "unknown", "address=", device?.address || "")
-        if (!device) return
-        deviceCommand.command = ["bluetoothctl", "remove", device.address]
-        deviceCommand.running = true
+        if (!adapter || !adapter.enabled) return
+        console.log("[SAT][Bluetooth] discovery started")
+        adapter.discovering = true
+        scanStop.restart()
+        refreshDevices()
     }
 
-    property Process scanProcess: Process {
-        id: scanProcess
-        // Power the adapter on before discovery, keep the scan active long
-        // enough for slow advertisers, then merge discovered, cached, and
-        // paired devices. Querying only `bluetoothctl devices` after a short
-        // scan can miss a device that has just started advertising.
-        command: ["bash", "-c", "set -o pipefail; bluetoothctl power on >/dev/null 2>&1 || true; bluetoothctl --timeout 20 scan on >/dev/null 2>&1 || true; { bluetoothctl devices; bluetoothctl devices Paired 2>/dev/null || true; } | awk 'NF >= 2 && $2 ~ /^[[:xdigit:]]{2}(:[[:xdigit:]]{2}){5}$/ { if (!seen[$2]++) print $2 }' | while read -r mac; do name=$(bluetoothctl info \"$mac\" 2>/dev/null | sed -n 's/^[[:space:]]*Name: //p' | head -n 1); alias=$(bluetoothctl info \"$mac\" 2>/dev/null | sed -n 's/^[[:space:]]*Alias: //p' | head -n 1); [ -n \"$name\" ] || name=\"$alias\"; [ -n \"$name\" ] || name=\"Bluetooth device\"; printf 'DEVICE|%s|%s\\n' \"$mac\" \"$name\"; bluetoothctl info \"$mac\" 2>/dev/null | grep -E 'Connected:|Paired:|Bonded:|Icon:|RSSI:' || true; done"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const result = []
-                let current = null
-                for (const raw of text.split("\n")) {
-                    const line = raw.trim()
-                    if (line.startsWith("DEVICE|")) {
-                        if (current) result.push(current)
-                        const p = line.split("|")
-                        let deviceName = p.slice(2).join("|").trim()
-                        if (!deviceName || /^\d+$/.test(deviceName)) deviceName = "Bluetooth device"
-                        current = { address: p[1] || "", name: deviceName, deviceName: deviceName, paired: false, bonded: false, connected: false, icon: "" }
-                        console.log("[SAT][Bluetooth] detected; name=", deviceName, "address=", p[1] || "")
-                    } else if (current) {
-                        if (line.startsWith("Connected:") && line.includes("yes")) current.connected = true
-                        if (line.startsWith("Paired:") && line.includes("yes")) current.paired = true
-                        if (line.startsWith("Bonded:") && line.includes("yes")) current.bonded = true
-                        if (line.startsWith("Icon:")) current.icon = line.split(":").slice(1).join(":").trim()
-                        if (line.startsWith("RSSI:")) current.rssi = line.split(":").slice(1).join(":").trim()
-                    }
-                }
-                if (current) result.push(current)
-                root.devices = result
-                console.log("[SAT][Bluetooth] scan complete; detected count=", result.length)
-                root.scanning = false
-                root.scanRequested = false
+    function stopScan(): void {
+        if (adapter && adapter.discovering) adapter.discovering = false
+        scanStop.stop()
+        refreshDevices()
+    }
+
+    function toggleScan(): void {
+        if (scanning) stopScan()
+        else scan()
+    }
+
+    function toggle(): void {
+        setPower(!enabled)
+    }
+
+    function setPower(on): void {
+        if (!adapter) {
+            errorMessage = "No Bluetooth adapter found"
+            return
+        }
+        errorMessage = ""
+        if (!on) {
+            connectDelay.stop()
+            pendingConnect = null
+            stopScan()
+            adapter.enabled = false
+            return
+        }
+        hardwareBlocked = false
+        rfkillCheck.command = ["rfkill", "-n", "-o", "SOFT,HARD", "list", "bluetooth"]
+        rfkillCheck.running = true
+    }
+
+    // Runs pair -> trust -> connect as one sequence (same as the working
+    // terminal flow). `bluetoothctl pair` only returns once services are
+    // resolved, so connect always lands on a link that is still alive.
+    function runPair(address): void {
+        if (!isAddress(address) || pairProc.running) return
+        console.log("[SAT][Bluetooth] pair+trust+connect", address)
+        pairProc.address = address
+        pairProc.command = ["timeout", "45", "sh", "-c",
+            'bluetoothctl pair "$1" && bluetoothctl trust "$1" && bluetoothctl connect "$1"',
+            "sh", address]
+        pairProc.running = true
+    }
+
+    function pair(device): void {
+        if (!device || !value(device, "address")) return
+        if (pairProc.running) return
+        const address = String(value(device, "address"))
+        const jobs = Object.assign({}, pairingJobs)
+        jobs[address] = { state: "pairing", started: Date.now() }
+        pairingJobs = jobs
+        errorMessage = ""
+        runPair(address)
+        refreshDevices()
+    }
+
+    function activate(device): void {
+        if (!device) return
+        if (!value(device, "paired")) {
+            pair(device)
+            return
+        }
+        // Remember whether discovery was running: connecting while inquiry is
+        // still active makes some controllers drop the link.
+        const wasScanning = scanning
+        stopScan()
+        const address = String(value(device, "address"))
+        if (value(device, "state") === BluetoothDeviceState.Connecting
+                || value(device, "state") === BluetoothDeviceState.Disconnecting
+                || value(device, "pairing")) return
+        const wanted = Object.assign({}, wantedConnections)
+        if (value(device, "connected")) {
+            delete wanted[address]
+            wantedConnections = wanted
+            connectDelay.stop()
+            pendingConnect = null
+            device.disconnect()
+        } else {
+            device.trusted = true
+            wanted[address] = { tries: 0, since: 0 }
+            wantedConnections = wanted
+            if (wasScanning) {
+                pendingConnect = device
+                connectDelay.restart()      // let discovery actually stop first
+            } else {
+                device.connect()
             }
         }
-        onExited: (code, status) => { console.log("[SAT][Bluetooth] scan process exited; code=", code, "status=", status); root.scanning = false; root.scanRequested = false }
+        refreshDevices()
     }
-    property Process deviceCommand: Process {
+
+    function forget(device): void {
+        if (!device) return
+        const address = String(value(device, "address"))
+        const wanted = Object.assign({}, wantedConnections)
+        delete wanted[address]
+        wantedConnections = wanted
+        if (pendingConnect && String(value(pendingConnect, "address")) === address) {
+            connectDelay.stop()
+            pendingConnect = null
+        }
+        // device.forget() fails with "Resource Not Ready" while the link is up,
+        // so disconnect and remove through bluetoothctl instead.
+        if (isAddress(address) && !removeProc.running) {
+            const jobs = Object.assign({}, pairingJobs)
+            delete jobs[address]
+            pairingJobs = jobs
+            removeProc.address = address
+            removeProc.command = ["sh", "-c",
+                'bluetoothctl disconnect "$1" >/dev/null 2>&1; bluetoothctl remove "$1"',
+                "sh", address]
+            removeProc.running = true
+        } else {
+            device.forget()
+        }
+        refreshDevices()
+    }
+
+    function toggleAutoPair(): void {
+        autoPairEnabled = !autoPairEnabled
+    }
+
+    function autoPairEligible(device): bool {
+        const icon = String(value(device, "icon") || "")
+        const address = String(value(device, "address") || "00")
+        // Do not automatically pair randomized LE addresses (e.g. trackers/watches).
+        if ((parseInt(address.substring(0, 2), 16) & 0x02) !== 0) return false
+        return icon.indexOf("audio-") === 0 || icon.indexOf("input-") === 0
+    }
+
+    function housekeeping(): void {
+        if (!adapter) return
+        refreshDevices()
+        const all = adapter.devices?.values || []
+        let pairingInProgress = pairProc.running
+            || Object.keys(pairingJobs).some(key => pairingJobs[key].state === "pairing")
+        const updatedJobs = Object.assign({}, pairingJobs)
+        const updatedWanted = Object.assign({}, wantedConnections)
+
+        for (const device of all) {
+            const address = String(value(device, "address") || "")
+            if (!address) continue
+            const job = updatedJobs[address]
+            const name = displayName(device) || address
+            if (job?.state === "pairing") {
+                if (value(device, "paired")) {
+                    updatedJobs[address] = { state: "paired", started: Date.now() }
+                    device.trusted = true
+                    // If the link drops later, the retry logic below reconnects.
+                    updatedWanted[address] = { tries: 0, since: 0 }
+                    stopScan()
+                    // No connect() here: pairProc issues the connect itself.
+                } else if (!pairProc.running && !value(device, "pairing")
+                           && Date.now() - job.started > 8000) {
+                    updatedJobs[address] = { state: "failed", started: Date.now() }
+                    errorMessage = "Pairing with " + name + " failed"
+                }
+            } else if (job?.state === "paired") {
+                if (value(device, "connected")) updatedJobs[address] = { state: "done", started: Date.now() }
+                else if (value(device, "state") !== BluetoothDeviceState.Connecting
+                         && Date.now() - job.started > 5000) {
+                    updatedJobs[address] = { state: "done", started: Date.now() }
+                }
+            } else if (!job && !pairingInProgress && autoPairEnabled && adapter.discovering
+                       && !value(device, "paired") && !value(device, "pairing")
+                       && displayName(device) && autoPairEligible(device)) {
+                pairingInProgress = true
+                updatedJobs[address] = { state: "pairing", started: Date.now() }
+                runPair(address)
+            }
+
+            const wanted = updatedWanted[address]
+            if (!wanted) continue
+            if (value(device, "connected")) {
+                updatedWanted[address] = { tries: 0, since: 0 }
+                continue
+            }
+            if (value(device, "state") === BluetoothDeviceState.Connecting || value(device, "pairing")) continue
+            if (pairProc.running && pairProc.address === address) continue
+            if (!wanted.since) {
+                updatedWanted[address] = { tries: wanted.tries, since: Date.now() }
+                continue
+            }
+            if (Date.now() - wanted.since < 4000) continue
+            if (wanted.tries < 3) {
+                const tries = wanted.tries + 1
+                updatedWanted[address] = { tries: tries, since: Date.now() }
+                console.log("[SAT][Bluetooth] reconnect attempt", tries, "for", name)
+                device.connect()
+            } else {
+                delete updatedWanted[address]
+                errorMessage = "Couldn't keep " + name + " connected; reconnect manually"
+            }
+        }
+        pairingJobs = updatedJobs
+        wantedConnections = updatedWanted
+    }
+
+    property Process removeProc: Process {
+        property string address: ""
         command: []
         onExited: (code, status) => {
-            console.log("[SAT][Bluetooth] device command exited; code=", code, "status=", status)
-            // bluetoothctl's connection state needs a moment to settle before
-            // a rescan reflects it; without this the device list stays
-            // stale (e.g. still "available" right after a successful pair).
-            deviceCommandRescan.restart()
+            if (code !== 0) root.errorMessage = "Could not remove device (bluetoothctl exit " + code + ")"
+            root.refreshDevices()
         }
     }
-    property Timer deviceCommandRescan: Timer {
-        interval: 600
-        repeat: false
-        onTriggered: root.scan()
-    }
-    property Process adapterCommand: Process {
+    property Process pairProc: Process {
+        property string address: ""
         command: []
-        onExited: (code, status) => console.log("[SAT][Bluetooth] adapter command exited; code=", code, "status=", status)
+        onExited: (code, status) => {
+            const jobs = Object.assign({}, root.pairingJobs)
+            if (code === 0) {
+                console.log("[SAT][Bluetooth] pair+connect finished for", address)
+                jobs[address] = { state: "done", started: Date.now() }
+                const wanted = Object.assign({}, root.wantedConnections)
+                wanted[address] = { tries: 0, since: 0 }
+                root.wantedConnections = wanted
+                root.stopScan()
+            } else {
+                console.log("[SAT][Bluetooth] pair+connect failed for", address, "exit", code)
+                jobs[address] = { state: "failed", started: Date.now() }
+                root.errorMessage = code === 124
+                    ? "Pairing timed out; put the device in pairing mode and try again"
+                    : "Pairing failed (bluetoothctl exit " + code + ")"
+            }
+            root.pairingJobs = jobs
+            root.refreshDevices()
+        }
     }
+    property Timer scanStop: Timer {
+        interval: 60000
+        repeat: false
+        onTriggered: if (root.adapter && root.adapter.discovering) root.adapter.discovering = false
+    }
+    property Timer connectDelay: Timer {
+        interval: 800
+        repeat: false
+        onTriggered: {
+            const d = root.pendingConnect
+            root.pendingConnect = null
+            if (d && root.value(d, "state") !== BluetoothDeviceState.Connecting)
+                d.connect()
+        }
+    }
+    property Timer deviceTimer: Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.housekeeping()
+    }
+    property Timer powerEnableTimer: Timer {
+        interval: 700
+        repeat: false
+        onTriggered: if (root.adapter) root.adapter.enabled = true
+    }
+    property Process rfkillCheck: Process {
+        command: []
+        stdout: StdioCollector {
+            onStreamFinished: root.hardwareBlocked = text.split("\n").some(line =>
+                line.trim().split(/\s+/)[1] === "blocked")
+        }
+        onExited: (code, status) => {
+            if (root.hardwareBlocked) {
+                root.errorMessage = "Bluetooth is hard-blocked by a hardware switch or firmware"
+                return
+            }
+            if (code !== 0) {
+                root.powerEnableTimer.restart()
+                return
+            }
+            rfkillUnblock.command = ["rfkill", "unblock", "bluetooth"]
+            rfkillUnblock.running = true
+        }
+    }
+    property Process rfkillUnblock: Process {
+        command: []
+        onExited: (code, status) => {
+            if (code !== 0) root.errorMessage = "Could not unblock Bluetooth"
+            root.powerEnableTimer.restart()
+        }
+    }
+
+    onAdapterChanged: refreshDevices()
 }

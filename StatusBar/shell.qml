@@ -6,7 +6,6 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.UPower
-import Quickshell.Services.Notifications
 import "core"
 import "components"
 import "panels"
@@ -25,19 +24,19 @@ Scope {
     readonly property var batteryDevice: UPower.displayDevice
     readonly property int batteryPercent: batteryDevice
         ? Math.max(0, Math.min(100, Math.round((Number(batteryDevice.percentage) || 0) * 100))) : -1
-    readonly property bool batteryCharging: batteryDevice && batteryDevice.state === UPowerDeviceState.Charging
+    readonly property bool batteryCharging: batteryDevice && batteryDevice.state === 1
 
-    function batteryIconFor(percent, charging): string {
-        if (charging) return "󰂄"
-        if (percent >= 90) return "󰁹"
-        if (percent >= 80) return "󰂁"
-        if (percent >= 70) return "󰂀"
-        if (percent >= 60) return "󰁿"
-        if (percent >= 50) return "󰁾"
-        if (percent >= 40) return "󰁽"
-        if (percent >= 30) return "󰁼"
-        if (percent >= 20) return "󰁻"
-        return "󰁺"
+    function batteryIconName(percent, charging): string {
+        if (charging) return "battery-charging"
+        if (percent <= 15) return "battery-low"
+        if (percent < 40) return "battery-medium"
+        return "battery-full"
+    }
+    function batteryIconTone(percent, charging): string {
+        if (charging) return "success"
+        if (percent <= 15) return "error"
+        if (percent < 40) return "warning"
+        return "muted"
     }
 
     // ── Icon resolution (port of illogical-impulse's guessIcon cascade) ─
@@ -360,6 +359,12 @@ Scope {
         exclusiveZone: 44
         color: "transparent"
         WlrLayershell.layer: WlrLayer.Top
+        // The Wi-Fi password editor is hosted inside this layer surface.
+        // Request on-demand keyboard focus while the control center is open;
+        // without this, the TextField can focus visually but never receives
+        // keyboard events from the compositor.
+        WlrLayershell.keyboardFocus: unifiedPill.controlPopupVisible
+            ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
         // HyprlandFocusGrab only sees clicks outside the whole bar window.
         // While media is expanded, catch clicks in the bar's empty space so
@@ -398,7 +403,10 @@ Scope {
                 ShellState.open(tab)
             }
             onWorkspaceClicked: (workspaceId) => rootScope.switchWorkspace(workspaceId)
-            onHamburgerClicked: rootScope.windowPopupOpen = !rootScope.windowPopupOpen
+            onHamburgerClicked: {
+                ShellState.popupOpen = false
+                unifiedPill.windowListOpen = !unifiedPill.windowListOpen
+            }
             onTimeClicked: rootScope.toggleCalendar()
             onPowerClicked: rootScope.launchPowerMenu()
             onUpdatesClicked: rootScope.launchSystemUpdater()
@@ -445,17 +453,11 @@ Scope {
                     width: 20; height: 20
                     Layout.alignment: Qt.AlignVCenter
 
-                    Column {
+                    SvgIcon {
                         anchors.centerIn: parent
-                        spacing: 3
-                        Repeater {
-                            model: 3
-                            delegate: Rectangle {
-                                width: 13; height: 2; radius: 1
-                                color: hamburgerMA.containsMouse ? Theme.islandAccent : "#9399b2"
-                                Behavior on color { ColorAnimation { duration: 120 } }
-                            }
-                        }
+                        width: 16; height: 16
+                        iconName: "menu"
+                        tone: hamburgerMA.containsMouse ? "accent" : "muted"
                     }
                     MouseArea {
                         id: hamburgerMA
@@ -495,7 +497,7 @@ Scope {
                             Text {
                                 anchors.centerIn: parent
                                 text: modelData.id
-                                font.family: Theme.iconFont
+                                font.family: Theme.uiFont
                                 font.pixelSize: 12
                                 font.weight: 600
                                 color: modelData.id === activeWorkspaceId ? "#181825" : "#9399b2"
@@ -619,7 +621,7 @@ Scope {
                 Text {
                     text: ShellState.time
                     color: Theme.text
-                    font.family: Theme.iconFont
+                    font.family: Theme.uiFont
                     font.pixelSize: 12
                     font.weight: 600
                     anchors.verticalCenter: parent.verticalCenter
@@ -761,14 +763,18 @@ Scope {
                                 : modelData.id === "bluetooth" ? BluetoothService.enabled
                                 : modelData.id === "sound" ? AudioService.muted
                                 : NotificationService.doNotDisturb
-                            property string icon: modelData.id === "updates" ? "󰮯"
-                                : modelData.id === "wifi"
-                                ? (NetworkService.wifiEnabled ? "󰖩" : "󰖪")
-                                : modelData.id === "bluetooth"
-                                    ? (BluetoothService.enabled ? "󰂯" : "󰂲")
-                                    : modelData.id === "sound"
-                                        ? (AudioService.muted ? "󰝟" : "󰕾")
-                                        : (NotificationService.doNotDisturb ? "󰂛" : "󰂚")
+                            property string iconName: modelData.id === "updates" ? "download"
+                                : modelData.id === "wifi" ? "wifi"
+                                : modelData.id === "bluetooth" ? "bluetooth"
+                                : modelData.id === "sound"
+                                    ? (AudioService.muted ? "volume-x" : "volume-2")
+                                    : (NotificationService.doNotDisturb ? "bell-off" : "bell")
+                            property string iconTone: modelData.id === "updates"
+                                ? (pendingUpdates > 0 ? "accent" : "muted")
+                                : modelData.id === "wifi" ? (NetworkService.wifiEnabled ? "accent" : "muted")
+                                : modelData.id === "bluetooth" ? (BluetoothService.enabled ? "accent" : "muted")
+                                : modelData.id === "sound" ? (AudioService.muted ? "error" : "muted")
+                                : NotificationService.doNotDisturb ? "warning" : "muted"
                             width: 19; height: 19; radius: 7
                             color: active
                                 ? (modelData.id === "sound"
@@ -777,14 +783,11 @@ Scope {
                                 : Qt.rgba(1, 1, 1, 0.07)
                             Behavior on color { ColorAnimation { duration: 150 } }
 
-                            Text {
+                            SvgIcon {
                                 anchors.centerIn: parent
-                                text: icon
-                                color: active
-                                    ? (modelData.id === "sound" ? Theme.error : Theme.islandAccent)
-                                    : Theme.islandMuted
-                                font.family: Theme.iconFont; font.pixelSize: 12
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                width: 13; height: 13
+                                iconName: parent.iconName
+                                tone: parent.iconTone
                             }
                             Rectangle {
                                 visible: modelData.id === "updates" && pendingUpdates > 0
@@ -867,13 +870,11 @@ Scope {
                         id: batteryContent
                         anchors.centerIn: parent
                         spacing: 4
-                        Text {
+                        SvgIcon {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: batteryIconFor(batteryPercent, batteryCharging)
-                            color: batteryPercent <= 15 ? Theme.error
-                                : batteryCharging ? Theme.success : Theme.islandMuted
-                            font.family: Theme.iconFont
-                            font.pixelSize: 12
+                            width: 14; height: 14
+                            iconName: rootScope.batteryIconName(batteryPercent, batteryCharging)
+                            tone: rootScope.batteryIconTone(batteryPercent, batteryCharging)
                         }
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
@@ -910,12 +911,11 @@ Scope {
                         : Qt.rgba(1, 1, 1, 0.07)
                     anchors.verticalCenter: parent.verticalCenter
                     Behavior on color { ColorAnimation { duration: 130 } }
-                    Text {
+                    SvgIcon {
                         anchors.centerIn: parent
-                        text: "󰐥"
-                        color: powerMouse.containsMouse ? Theme.error : Theme.islandMuted
-                        font.family: Theme.iconFont
-                        font.pixelSize: 13
+                        width: 14; height: 14
+                        iconName: "power"
+                        tone: powerMouse.containsMouse ? "error" : "muted"
                     }
                     MouseArea {
                         id: powerMouse
@@ -1000,7 +1000,7 @@ Scope {
                         Label {
                             text: ShellState.time
                             color: Theme.text
-                            font.family: Theme.iconFont
+                            font.family: Theme.uiFont
                             font.pixelSize: 21
                             font.weight: 600
                         }
@@ -1011,24 +1011,7 @@ Scope {
                             font.pixelSize: 10
                         }
                     }
-                    Rectangle {
-                        width: 26; height: 26; radius: 8
-                        color: closeCalendarMouse.containsMouse ? Theme.surfaceHover : Theme.surface
-                        Text {
-                            anchors.centerIn: parent
-                            text: "×"; color: Theme.muted; font.pixelSize: 16
-                        }
-                        MouseArea {
-                            id: closeCalendarMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            onClicked: {
-                                calendarPopupOpen = false
-                                island.mediaInfoVisible = false
-                                island.mediaPanelOpen = false
-                            }
-                        }
-                    }
+                    Item { width: 26; height: 26 }
                 }
 
                 Rectangle { Layout.fillWidth: true; height: 1; color: Theme.outline }
@@ -1038,9 +1021,9 @@ Scope {
                     Rectangle {
                         width: 28; height: 26; radius: 8
                         color: prevMonthMouse.containsMouse ? Theme.surfaceHover : "transparent"
-                        Text {
+                        SvgIcon {
                             anchors.centerIn: parent
-                            text: "‹"; color: Theme.text; font.pixelSize: 18
+                            width: 16; height: 16; iconName: "chevron-left"; tone: "fg"
                         }
                         MouseArea {
                             id: prevMonthMouse
@@ -1061,9 +1044,9 @@ Scope {
                     Rectangle {
                         width: 28; height: 26; radius: 8
                         color: nextMonthMouse.containsMouse ? Theme.surfaceHover : "transparent"
-                        Text {
+                        SvgIcon {
                             anchors.centerIn: parent
-                            text: "›"; color: Theme.text; font.pixelSize: 18
+                            width: 16; height: 16; iconName: "chevron-right"; tone: "fg"
                         }
                         MouseArea {
                             id: nextMonthMouse
@@ -1153,9 +1136,9 @@ Scope {
                     Rectangle {
                         width: 38; height: 38; radius: 11
                         color: Theme.surfaceRaised
-                        Text {
+                        SvgIcon {
                             anchors.centerIn: parent
-                            text: "♫"; color: Theme.islandAccent; font.pixelSize: 20
+                            width: 20; height: 20; iconName: "music-2"; tone: "accent"
                         }
                     }
                     ColumnLayout {
@@ -1186,9 +1169,9 @@ Scope {
                     spacing: 14
                     Repeater {
                         model: [
-                            { action: "previous", icon: "󰒮", size: 30 },
-                            { action: "toggle", icon: MediaService.playing ? "󰏤" : "󰐊", size: 38 },
-                            { action: "next", icon: "󰒭", size: 30 }
+                            { action: "previous", iconName: "skip-back", size: 30 },
+                            { action: "toggle", iconName: MediaService.playing ? "pause" : "play", size: 38 },
+                            { action: "next", iconName: "skip-forward", size: 30 }
                         ]
                         delegate: Rectangle {
                             required property var modelData
@@ -1196,11 +1179,11 @@ Scope {
                             radius: width / 2
                             color: mediaHoverControl.containsMouse
                                 ? Theme.surfaceHover : Theme.surfaceRaised
-                            Text {
+                            SvgIcon {
                                 anchors.centerIn: parent
-                                text: modelData.icon
-                                color: Theme.text
-                                font.family: Theme.iconFont; font.pixelSize: 14
+                                width: 16; height: 16
+                                iconName: modelData.iconName
+                                tone: "fg"
                             }
                             MouseArea {
                                 id: mediaHoverControl
@@ -1356,9 +1339,9 @@ Scope {
                     spacing: 14
                     Repeater {
                         model: [
-                            { action: "previous", icon: "󰒮", size: 36 },
-                            { action: "toggle", icon: MediaService.playing ? "󰏤" : "󰐊", size: 50 },
-                            { action: "next", icon: "󰒭", size: 36 }
+                            { action: "previous", iconName: "skip-back", size: 36 },
+                            { action: "toggle", iconName: MediaService.playing ? "pause" : "play", size: 50 },
+                            { action: "next", iconName: "skip-forward", size: 36 }
                         ]
                         delegate: Rectangle {
                             required property var modelData
@@ -1368,12 +1351,12 @@ Scope {
                                 ? (fullMediaControl.containsMouse ? Theme.primaryStrong : Theme.primary)
                                 : (fullMediaControl.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised)
                             Behavior on color { ColorAnimation { duration: 160 } }
-                            Text {
+                            SvgIcon {
                                 anchors.centerIn: parent
-                                text: modelData.icon
-                                color: modelData.action === "toggle" ? Theme.background : Theme.text
-                                font.family: Theme.iconFont
-                                font.pixelSize: modelData.action === "toggle" ? 19 : 16
+                                width: modelData.action === "toggle" ? 22 : 18
+                                height: width
+                                iconName: modelData.iconName
+                                tone: modelData.action === "toggle" ? "ink" : "fg"
                             }
                             MouseArea {
                                 id: fullMediaControl
@@ -1504,6 +1487,18 @@ Scope {
             active:  false
             onCleared: windowPopupOpen = false
         }
+        Item {
+            anchors.fill: parent
+            focus: windowPopupOpen
+            enabled: windowPopupOpen
+            Keys.onPressed: (event) => {
+                if (event.key === Qt.Key_S && event.modifiers === Qt.NoModifier
+                        && activeAddress !== "") {
+                    event.accepted = true
+                    killClient(activeAddress)
+                }
+            }
+        }
 
         // The visible card
         Rectangle {
@@ -1518,6 +1513,7 @@ Scope {
             ScrollView {
                 anchors.fill: parent; anchors.margins: 10
                 clip: true
+                contentWidth: availableWidth
                 ScrollBar.vertical.policy:   ScrollBar.AlwaysOff
                 ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -1532,8 +1528,22 @@ Scope {
                             required property var modelData
                             Layout.fillWidth: true
                             spacing: 2
+                            Layout.topMargin: 6
+                            Layout.bottomMargin: 2
+
+                            Rectangle {
+                                anchors.fill: parent
+                                z: -1
+                                radius: 10
+                                color: modelData.id === activeWorkspaceId
+                                    ? Qt.rgba(1,0.62,0.04,0.055) : Qt.rgba(1,1,1,0.025)
+                                border.width: 1
+                                border.color: modelData.id === activeWorkspaceId
+                                    ? Qt.rgba(1,0.62,0.04,0.24) : Qt.rgba(1,1,1,0.08)
+                            }
 
                             Text {
+                                Layout.leftMargin: 8; Layout.rightMargin: 8; Layout.topMargin: 8
                                 text: (modelData.id > 0
                                     ? "Workspace " + modelData.id
                                     : "Scratchpad") +
@@ -1550,8 +1560,11 @@ Scope {
                                 delegate: RowLayout {
                                     required property var modelData
                                     Layout.fillWidth: true
-                                    Layout.leftMargin: 6
-                                    spacing: 6
+                                    Layout.minimumWidth: 0
+                                    Layout.leftMargin: 8; Layout.rightMargin: 8; Layout.bottomMargin: 4
+                                    spacing: 5
+                                    width: Math.max(0, parent.width - 16)
+                                    HoverHandler { id: popupAppHover }
 
                                     Image {
                                         Layout.minimumWidth: 14
@@ -1566,17 +1579,37 @@ Scope {
                                         fillMode: Image.PreserveAspectFit
                                         smooth: true; asynchronous: true
                                     }
-                                    Text {
-                                        text: modelData.appClass
-                                        color: modelData.address === activeAddress
-                                            ? "#89b4fa" : "#f5e0dc"
-                                        font.family: Theme.uiFont
-                                        font.pixelSize: 9; font.weight: 600
-                                        Layout.preferredWidth: 68
-                                        Layout.maximumWidth: 68
-                                        elide: Text.ElideRight
+                                    SvgIcon {
+                                        visible: !modelData.iconPath
+                                        Layout.preferredWidth: 14; Layout.preferredHeight: 14
+                                        iconName: "app-window"; tone: "muted"
+                                    }
+                                    Item {
+                                        id: popupAppNameViewport
+                                        Layout.preferredWidth: 58; Layout.minimumWidth: 40; Layout.maximumWidth: 58
+                                        Layout.alignment: Qt.AlignVCenter
+                                        height: 18; clip: true
+                                        Text {
+                                            id: popupAppNameText
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            text: modelData.appClass
+                                            color: modelData.address === activeAddress ? "#89b4fa" : "#f5e0dc"
+                                            font.family: Theme.uiFont; font.pixelSize: 9; font.weight: 600
+                                            width: Math.max(implicitWidth, popupAppNameViewport.width)
+                                            elide: Text.ElideRight
+                                        }
+                                        SequentialAnimation {
+                                            running: popupAppHover.hovered && popupAppNameText.implicitWidth > popupAppNameViewport.width
+                                            loops: Animation.Infinite
+                                            PauseAnimation { duration: 450 }
+                                            NumberAnimation { target: popupAppNameText; property: "x"; from: 0; to: -(popupAppNameText.implicitWidth - popupAppNameViewport.width); duration: Math.max(850, popupAppNameText.implicitWidth * 35); easing.type: Easing.InOutSine }
+                                            PauseAnimation { duration: 450 }
+                                            NumberAnimation { target: popupAppNameText; property: "x"; to: 0; duration: 300; easing.type: Easing.InOutSine }
+                                        }
                                     }
                                     Text {
+                                        Layout.minimumWidth: 0
+                                        Layout.alignment: Qt.AlignVCenter
                                         Layout.fillWidth: true
                                         text: modelData.title
                                         color: "#a6adc8"
@@ -1585,13 +1618,15 @@ Scope {
                                         elide: Text.ElideRight
                                     }
                                     Rectangle {
+                                        Layout.minimumWidth: 16; Layout.preferredWidth: 16; Layout.maximumWidth: 16
+                                        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                                         width: 16; height: 16; radius: 5
                                         color: killMA.containsMouse
                                             ? "#f38ba8" : Qt.rgba(0.95, 0.55, 0.62, 0.12)
-                                        Text {
+                                        SvgIcon {
                                             anchors.centerIn: parent
-                                            text: "×"; font.pixelSize: 10; font.weight: 700
-                                            color: killMA.containsMouse ? "#181825" : "#f38ba8"
+                                            width: 10; height: 10; iconName: "x"
+                                            tone: killMA.containsMouse ? "ink" : "error"
                                         }
                                         MouseArea {
                                             id: killMA
@@ -1624,120 +1659,4 @@ Scope {
         }
     }
 
-    // ── Toast popup — top-right corner ──────────────────────────────────
-    PanelWindow {
-        id: toastWindow
-        visible: NotificationService.toastList.length > 0
-        anchors.top: true
-        anchors.right: true
-        margins.right: 16
-        margins.top: 48
-        exclusiveZone: 0
-        color: "transparent"
-        WlrLayershell.layer: WlrLayer.Overlay
-        implicitWidth:  360
-        implicitHeight: toastCol.implicitHeight + 8
-
-        ColumnLayout {
-            id: toastCol
-            width: 360
-            anchors.top: parent.top
-            anchors.right: parent.right
-            anchors.topMargin: 4
-            spacing: 6
-
-            Repeater {
-                model: NotificationService.toastList
-                delegate: Rectangle {
-                    required property var modelData
-                    Layout.fillWidth: true
-                    radius: 18
-                    color: "#151517"
-                    border.width: 1
-                    border.color: modelData.urgency === NotificationUrgency.Critical ? Theme.error
-                        : Qt.rgba(1, 1, 1, 0.12)
-                    implicitHeight: toastInner.implicitHeight + 24
-                    opacity: 0
-                    Component.onCompleted: opacity = 1
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
-
-                    Timer {
-                        interval: 6000
-                        running: true
-                        repeat: false
-                        onTriggered: NotificationService.removeToast(modelData.notifId)
-                    }
-
-                    // Drop shadow
-                    layer.enabled: true
-
-                    ColumnLayout {
-                        id: toastInner
-                        anchors { left: parent.left; right: parent.right; top: parent.top }
-                        anchors.margins: 12
-                        spacing: 4
-
-                        RowLayout {
-                            Layout.fillWidth: true; spacing: 6
-                            Text {
-                                text: "󰂚"
-                                color: modelData.urgency === NotificationUrgency.Critical ? Theme.error : Theme.muted
-                                font.family: Theme.iconFont; font.pixelSize: 12
-                            }
-                            Text {
-                                text: modelData.appName
-                                color: Theme.muted
-                                font.family: Theme.uiFont; font.pixelSize: 11; font.weight: 600
-                                Layout.fillWidth: true; elide: Text.ElideRight
-                            }
-                            Text {
-                                text: NotificationService.timeAgo(modelData.timestamp)
-                                color: Theme.muted
-                                font.family: Theme.uiFont; font.pixelSize: 10
-                            }
-                            Rectangle {
-                                width: 20; height: 20; radius: 5
-                                color: toastCloseMA.containsMouse
-                                    ? Qt.rgba(0.94, 0.44, 0.44, 0.20) : "transparent"
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: "×"
-                                    color: toastCloseMA.containsMouse ? Theme.error : Theme.muted
-                                    font.pixelSize: 12; font.weight: 700
-                                }
-                                MouseArea {
-                                    id: toastCloseMA
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: (m) => {
-                                        m.accepted = true
-                                        NotificationService.removeToast(modelData.notifId)
-                                    }
-                                }
-                            }
-                        }
-
-                        Text {
-                            visible: modelData.summary !== ""
-                            text: modelData.summary
-                            color: Theme.text
-                            font.family: Theme.uiFont; font.pixelSize: 13; font.weight: 600
-                            wrapMode: Text.Wrap; Layout.fillWidth: true
-                        }
-
-                        Text {
-                            visible: (modelData.body || "") !== ""
-                            text: modelData.body
-                            color: Theme.muted
-                            font.family: Theme.uiFont; font.pixelSize: 11
-                            wrapMode: Text.Wrap; Layout.fillWidth: true
-                            maximumLineCount: 3; elide: Text.ElideRight
-                        }
-                    }
-
-                }
-            }
-        }
-    }
 }

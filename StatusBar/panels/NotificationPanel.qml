@@ -13,16 +13,6 @@ ColumnLayout {
     id: root
     spacing: 8
 
-    // Expand/collapse state per app. Group objects are rebuilt on every
-    // notification event (which recreates the delegates), so the state
-    // must live here, keyed by app name, to survive rebuilds.
-    property var expandedApps: ({})
-    function setAppExpanded(appName, value) {
-        const copy = Object.assign({}, expandedApps)
-        copy[appName] = value
-        expandedApps = copy
-    }
-
     // ── Header card: DND toggle + count ──────────────────────────────────
     Rectangle {
         Layout.fillWidth: true
@@ -40,12 +30,10 @@ ColumnLayout {
             anchors.margins: 14
             spacing: 10
 
-            Text {
-                text: "!"
-                color: NotificationService.dndEnabled ? Theme.warning : Theme.islandAccent
-                font.family: Theme.iconFont
-                font.pixelSize: 18
-                Behavior on color { ColorAnimation { duration: 180 } }
+            SvgIcon {
+                width: 18; height: 18
+                iconName: NotificationService.dndEnabled ? "bell-off" : "bell"
+                tone: NotificationService.dndEnabled ? "warning" : "accent"
             }
 
             ColumnLayout {
@@ -106,11 +94,10 @@ ColumnLayout {
         Layout.topMargin: 12
         spacing: 6
 
-        Text {
+        SvgIcon {
             Layout.alignment: Qt.AlignHCenter
-            text: "✓"
-            color: Theme.muted
-            font.family: Theme.iconFont; font.pixelSize: 28
+            iconName: "check"; tone: "muted"
+            width: 28; height: 28
             opacity: 0.4
         }
         Text {
@@ -145,9 +132,6 @@ ColumnLayout {
                     required property var modelData
                     Layout.fillWidth: true
                     appData: modelData
-                    expandedOverride: root.expandedApps.hasOwnProperty(modelData.appName)
-                        ? root.expandedApps[modelData.appName] : undefined
-                    onExpandRequested: (value) => root.setAppExpanded(modelData.appName, value)
                 }
             }
         }
@@ -158,11 +142,10 @@ ColumnLayout {
     // ══════════════════════════════════════════════════════════════════════
     component AppGroupCard: Rectangle {
         id: card
+        objectName: "notificationGroupCard"
         property var  appData
-        property var expandedOverride: undefined
-        signal expandRequested(bool value)
-        readonly property bool expanded: expandedOverride !== undefined
-            ? expandedOverride : appData.items.length === 1
+        property bool expanded: false
+        readonly property bool canExpand: appData.items.length > 1
 
         radius: Theme.radius
         color:  Theme.surfaceRaised
@@ -188,11 +171,10 @@ ColumnLayout {
                     fillMode: Image.PreserveAspectFit
                     smooth: true; asynchronous: true
                 }
-                Text {
-                    text: "•"
+                SvgIcon {
                     visible: (card.appData.appIcon || "") === ""
-                    color: Theme.muted
-                    font.family: Theme.iconFont; font.pixelSize: 14
+                    width: 14; height: 14
+                    iconName: "app-window"; tone: "muted"
                 }
 
                 Text {
@@ -223,11 +205,11 @@ ColumnLayout {
                     color: muteHov.containsMouse
                         ? Theme.surfaceHover : "transparent"
                     Behavior on color { ColorAnimation { duration: 110 } }
-                    Text {
+                    SvgIcon {
                         anchors.centerIn: parent
-                        text: card.appData.muted ? "×" : "♪"
-                        color: card.appData.muted ? Theme.warning : Theme.muted
-                        font.family: Theme.iconFont; font.pixelSize: 12
+                        width: 14; height: 14
+                        iconName: card.appData.muted ? "bell-off" : "bell"
+                        tone: card.appData.muted ? "warning" : "muted"
                     }
                     MouseArea {
                         id: muteHov; anchors.fill: parent; hoverEnabled: true
@@ -242,11 +224,11 @@ ColumnLayout {
                     color: clearHov.containsMouse
                         ? Qt.rgba(0.95, 0.44, 0.44, 0.18) : "transparent"
                     Behavior on color { ColorAnimation { duration: 110 } }
-                    Text {
+                    SvgIcon {
                         anchors.centerIn: parent
-                        text: "×"
-                        color: clearHov.containsMouse ? Theme.error : Theme.muted
-                        font.family: Theme.iconFont; font.pixelSize: 12
+                        width: 12; height: 12
+                        iconName: "x"
+                        tone: clearHov.containsMouse ? "error" : "muted"
                     }
                     MouseArea {
                         id: clearHov; anchors.fill: parent; hoverEnabled: true
@@ -255,22 +237,23 @@ ColumnLayout {
                     }
                 }
 
-                // Expand/collapse (only when > 1)
+                // Expand the full message, and all messages in a grouped card.
                 Rectangle {
-                    visible: card.appData.items.length > 1
+                    objectName: "notificationGroupExpand"
+                    visible: card.canExpand
                     width: 26; height: 26; radius: 6
                     color: expandHov.containsMouse ? Theme.surfaceHover : "transparent"
                     Behavior on color { ColorAnimation { duration: 110 } }
-                    Text {
+                    SvgIcon {
                         anchors.centerIn: parent
-                        text: card.expanded ? "⌃" : "⌄"
-                        color: Theme.muted
-                        font.family: Theme.iconFont; font.pixelSize: 12
+                        width: 14; height: 14
+                        iconName: card.expanded ? "chevron-up" : "chevron-down"
+                        tone: "muted"
                     }
                     MouseArea {
                         id: expandHov; anchors.fill: parent; hoverEnabled: true
                         propagateComposedEvents: false
-                        onClicked: (m) => { m.accepted = true; card.expandRequested(!card.expanded) }
+                        onClicked: (m) => { m.accepted = true; card.expanded = !card.expanded }
                     }
                 }
             }
@@ -281,6 +264,7 @@ ColumnLayout {
                 delegate: NotificationRow {
                     Layout.fillWidth: true
                     entry: modelData
+                    groupExpanded: card.expanded
                 }
             }
         }
@@ -291,7 +275,11 @@ ColumnLayout {
     // ══════════════════════════════════════════════════════════════════════
     component NotificationRow: Rectangle {
         id: row
+        objectName: "notificationRow"
         property var entry
+        property bool bodyExpanded: false
+        property bool groupExpanded: false
+        readonly property bool fullContentExpanded: bodyExpanded || groupExpanded
 
         readonly property color urgencyAccent:
             entry.urgency === NotificationUrgency.Critical ? Theme.error
@@ -322,10 +310,10 @@ ColumnLayout {
             color: Theme.error
             opacity: Math.min(1, Math.abs(row.x) / 50)
             visible: row.x !== 0
-            Text {
+            SvgIcon {
                 anchors.centerIn: parent
-                text: "×"; color: "#fff"
-                font.family: Theme.iconFont; font.pixelSize: 14
+                width: 14; height: 14
+                iconName: "x"; tone: "fg"
             }
         }
 
@@ -336,12 +324,8 @@ ColumnLayout {
             onReleased: {
                 if (Math.abs(row.x) > row.width * 0.35)
                     NotificationService.removeNotification(row.entry.notifId)
-                else {
-                    // drag.target writes x directly and detaches the x: dragX
-                    // binding, so reset x itself (Behavior animates the snap-back).
+                else
                     row.dragX = 0
-                    row.x = 0
-                }
             }
             onPositionChanged: row.dragX = row.x
         }
@@ -375,10 +359,10 @@ ColumnLayout {
                     color: dismissHov.containsMouse
                         ? Qt.rgba(0.94, 0.44, 0.44, 0.20) : "transparent"
                     Behavior on color { ColorAnimation { duration: 100 } }
-                    Text {
-                        anchors.centerIn: parent; text: "✕"
-                        font.pixelSize: 9; font.weight: 700
-                        color: dismissHov.containsMouse ? Theme.error : Theme.muted
+                    SvgIcon {
+                        anchors.centerIn: parent; width: 11; height: 11
+                        iconName: "x"
+                        tone: dismissHov.containsMouse ? "error" : "muted"
                     }
                     MouseArea {
                         id: dismissHov; anchors.fill: parent; hoverEnabled: true
@@ -391,29 +375,37 @@ ColumnLayout {
                 }
             }
 
-            // Summary — full width, wraps up to 2 lines
+            // Summary preview is concise until the notification is expanded.
             Text {
                 visible: row.entry.summary !== ""
                 text: row.entry.summary
                 color: Theme.text
                 font.family: Theme.uiFont; font.pixelSize: 12; font.weight: 600
                 wrapMode: Text.Wrap
-                maximumLineCount: 2
-                elide: Text.ElideRight
+                maximumLineCount: row.fullContentExpanded ? -1 : 2
+                elide: row.fullContentExpanded ? Text.ElideNone : Text.ElideRight
                 Layout.fillWidth: true
             }
 
-            // Body — first 2 lines visible, click anywhere to expand
-            // Body — always fully visible in panel
+            // Message bodies are revealed explicitly, or by expanding their app group.
             Text {
-                visible: row.entry.body !== ""
+                objectName: "notificationMessageBody"
+                visible: row.entry.body !== "" && row.fullContentExpanded
                 text: row.entry.body
                 color: Theme.muted
                 font.family: Theme.uiFont; font.pixelSize: 11
-                wrapMode: Text.Wrap; Layout.fillWidth: true
-                // No line limit – always show full body
-                maximumLineCount: 999
-                elide: Text.ElideRight
+                textFormat: Text.AutoText
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+
+            StyledButton {
+                objectName: "notificationBodyExpand"
+                visible: row.entry.body !== "" && !row.groupExpanded
+                compact: true
+                text: row.bodyExpanded ? "Show less" : "Show message"
+                Layout.alignment: Qt.AlignLeft
+                onClicked: row.bodyExpanded = !row.bodyExpanded
             }
 
             // Action buttons

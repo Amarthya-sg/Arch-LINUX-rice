@@ -27,7 +27,7 @@ ColumnLayout {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             color: Theme.muted
-            font.family: Theme.iconFont
+            font.family: Theme.uiFont
             font.pixelSize: 9
             text: !root.supported ? "Stereo balance unavailable"
                 : Math.abs(root.value) < 0.005 ? "Center"

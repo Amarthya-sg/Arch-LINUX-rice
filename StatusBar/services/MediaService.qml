@@ -31,6 +31,9 @@ QtObject {
     readonly property real progress: length > 0
         ? Math.max(0, Math.min(1, displayPosition / length)) : 0
     property real displayPosition: 0
+    property real positionAnchor: 0
+    property real lastObservedPosition: 0
+    property double positionAnchorTime: 0
     readonly property bool available: hasTrack
 
     function resolveActivePlayer() {
@@ -47,9 +50,49 @@ QtObject {
     function updateDisplayPosition(): void {
         if (!root.hasTrack) {
             root.displayPosition = 0
+            root.positionAnchor = 0
+            root.lastObservedPosition = 0
+            root.positionAnchorTime = 0
             return
         }
-        root.displayPosition = root.position
+        const observed = root.position
+        root.displayPosition = observed
+        root.positionAnchor = observed
+        root.lastObservedPosition = observed
+        root.positionAnchorTime = Date.now()
+    }
+
+    // Some MPRIS players expose position but do not emit positionChanged on
+    // every tick. Keep the UI live locally and resync whenever the reported
+    // position jumps (track changes, seeking, or player-side updates).
+    function advanceDisplayPosition(): void {
+        if (!root.hasTrack) {
+            root.displayPosition = 0
+            return
+        }
+        const observed = root.position
+        const now = Date.now()
+        if (!root.playing) {
+            root.displayPosition = observed
+            root.positionAnchor = observed
+            root.lastObservedPosition = observed
+            root.positionAnchorTime = now
+            return
+        }
+
+        // A player-side seek or track transition is a real discontinuity.
+        // Otherwise use wall-clock time so timer scheduling jitter cannot
+        // accumulate into visible drift.
+        if (root.positionAnchorTime <= 0
+                || Math.abs(observed - root.lastObservedPosition) > 500000) {
+            root.positionAnchor = observed
+            root.positionAnchorTime = now
+            root.lastObservedPosition = observed
+        }
+        const projected = root.positionAnchor
+            + Math.max(0, now - root.positionAnchorTime) * 1000
+        root.displayPosition = root.length > 0
+            ? Math.min(root.length, projected) : projected
     }
 
     function toggle(): void {
@@ -79,10 +122,10 @@ QtObject {
     }
 
     property Timer progressTimer: Timer {
-        interval: 250
-        running: root.hasTrack && root.playing
+        interval: 1000
+        running: root.hasTrack
         repeat: true
         triggeredOnStart: true
-        onTriggered: root.updateDisplayPosition()
+        onTriggered: root.advanceDisplayPosition()
     }
 }
