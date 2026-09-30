@@ -12,48 +12,50 @@ QtObject {
     property var tokens: ({})
     property string loadError: ""
 
-    // Palette tokens (fallbacks keep the shell usable if Python/CSS loading fails).
-    property color background: tokens.background !== undefined ? tokens.background : "#0b111b"
-    property color surface: tokens.surface !== undefined ? tokens.surface : "#111a27"
-    property color surfaceRaised: tokens.surfaceRaised !== undefined ? tokens.surfaceRaised : "#192638"
-    property color surfaceHover: tokens.surfaceHover !== undefined ? tokens.surfaceHover : "#22344a"
-    property color outline: tokens.outline !== undefined ? tokens.outline : "#24ffffff"
-    property color text: tokens.text !== undefined ? tokens.text : "#eaf2fb"
-    property color textMuted: tokens.textMuted !== undefined ? tokens.textMuted : "#a0afc1"
-    property color primary: tokens.primary !== undefined ? tokens.primary : "#5bd6e8"
-    property color primaryStrong: tokens.primaryStrong !== undefined ? tokens.primaryStrong : "#8ce9f3"
-    property color success: tokens.success !== undefined ? tokens.success : "#57d7a4"
-    property color warning: tokens.warning !== undefined ? tokens.warning : "#f2c66d"
-    property color error: tokens.error !== undefined ? tokens.error : "#ff7c8c"
-    property color islandBg: tokens.islandBg !== undefined ? tokens.islandBg : "#060b12"
-    property color islandAccent: tokens.islandAccent !== undefined ? tokens.islandAccent : "#5bd6e8"
-    property color islandAccentStrong: tokens.islandAccentStrong !== undefined ? tokens.islandAccentStrong : "#9beef3"
-    property color islandMuted: tokens.islandMuted !== undefined ? tokens.islandMuted : "#a9b7c8"
-    property color islandMutedDim: tokens.islandMutedDim !== undefined ? tokens.islandMutedDim : "#687c94"
+    // Palette tokens — defaults are the style.css fallback values.
+    // applyCssTokens() overwrites each property directly after the parser runs,
+    // which is the only reliable way to trigger QML property-change notifications.
+    property color background:         "#0b111b"
+    property color surface:            "#111a27"
+    property color surfaceRaised:      "#192638"
+    property color surfaceHover:       "#22344a"
+    property color outline:            "#24ffffff"
+    property color text:               "#eaf2fb"
+    property color textMuted:          "#a0afc1"
+    property color primary:            "#5bd6e8"
+    property color primaryStrong:      "#8ce9f3"
+    property color success:            "#57d7a4"
+    property color warning:            "#f2c66d"
+    property color error:              "#ff7c8c"
+    property color islandBg:           "#060b12"
+    property color islandAccent:       "#5bd6e8"
+    property color islandAccentStrong: "#9beef3"
+    property color islandMuted:        "#a9b7c8"
+    property color islandMutedDim:     "#687c94"
 
     // Layout and typography tokens.
-    property int radiusPanel: tokens.radiusPanel !== undefined ? tokens.radiusPanel : 22
-    property int radiusCard: tokens.radiusCard !== undefined ? tokens.radiusCard : 14
-    property int radiusControl: tokens.radiusControl !== undefined ? tokens.radiusControl : 10
-    property int spaceXs: tokens.spaceXs !== undefined ? tokens.spaceXs : 6
-    property int spaceSm: tokens.spaceSm !== undefined ? tokens.spaceSm : 10
-    property int spaceMd: tokens.spaceMd !== undefined ? tokens.spaceMd : 14
-    property int spaceLg: tokens.spaceLg !== undefined ? tokens.spaceLg : 18
-    property int spaceXl: tokens.spaceXl !== undefined ? tokens.spaceXl : 24
-    property int textTitle: tokens.textTitle !== undefined ? tokens.textTitle : 22
-    property int textSection: tokens.textSection !== undefined ? tokens.textSection : 15
-    property int textBody: tokens.textBody !== undefined ? tokens.textBody : 13
-    property int textCaption: tokens.textCaption !== undefined ? tokens.textCaption : 11
-    property int controlHeight: tokens.controlHeight !== undefined ? tokens.controlHeight : 40
-    property int statusIconSize: tokens.statusIconSize !== undefined ? tokens.statusIconSize : 18
-    property int statusIconButtonSize: tokens.statusIconButtonSize !== undefined ? tokens.statusIconButtonSize : 28
-    property int fontWeightLight: tokens.fontWeightLight !== undefined ? Number(tokens.fontWeightLight) : Font.Light
-    property int fontWeightRegular: tokens.fontWeightRegular !== undefined ? Number(tokens.fontWeightRegular) : Font.Normal
-    property int fontWeightMedium: tokens.fontWeightMedium !== undefined ? Number(tokens.fontWeightMedium) : Font.Medium
-    property int fontWeightSemibold: tokens.fontWeightSemibold !== undefined ? Number(tokens.fontWeightSemibold) : Font.DemiBold
-    property int fontWeightBold: tokens.fontWeightBold !== undefined ? Number(tokens.fontWeightBold) : Font.Bold
-    property real scrollTitleRate: tokens.scrollTitleRate !== undefined ? Number(tokens.scrollTitleRate) : 45
-    property real scrollAppRate: tokens.scrollAppRate !== undefined ? Number(tokens.scrollAppRate) : 35
+    property int  radiusPanel:         22
+    property int  radiusCard:          14
+    property int  radiusControl:       10
+    property int  spaceXs:             6
+    property int  spaceSm:             10
+    property int  spaceMd:             14
+    property int  spaceLg:             18
+    property int  spaceXl:             24
+    property int  textTitle:           22
+    property int  textSection:         15
+    property int  textBody:            13
+    property int  textCaption:         11
+    property int  controlHeight:       40
+    property int  statusIconSize:      18
+    property int  statusIconButtonSize: 28
+    property int  fontWeightLight:     Font.Light
+    property int  fontWeightRegular:   Font.Normal
+    property int  fontWeightMedium:    Font.Medium
+    property int  fontWeightSemibold:  Font.DemiBold
+    property int  fontWeightBold:      Font.Bold
+    property real scrollTitleRate:     45
+    property real scrollAppRate:       35
 
     // Non-token compatibility values retained for existing components.
     readonly property color surfaceHigh: surfaceRaised
@@ -116,7 +118,54 @@ QtObject {
             if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)
                     || Object.keys(parsed).length === 0)
                 throw new Error("parser returned no token object")
+
+            // Store the raw map for Theme.tokens.<name> and numericStyleValue().
             tokens = parsed
+
+            // Explicitly assign each typed property so QML propagates the change
+            // to all bindings. A plain `tokens = parsed` replacement breaks the
+            // property color bindings that evaluated when tokens was still empty.
+            if (parsed.background      !== undefined) background      = parsed.background
+            if (parsed.surface         !== undefined) surface         = parsed.surface
+            if (parsed.surfaceRaised   !== undefined) surfaceRaised   = parsed.surfaceRaised
+            if (parsed.surfaceHover    !== undefined) surfaceHover    = parsed.surfaceHover
+            if (parsed.outline         !== undefined) outline         = parsed.outline
+            if (parsed.text            !== undefined) text            = parsed.text
+            if (parsed.textMuted       !== undefined) textMuted       = parsed.textMuted
+            if (parsed.primary         !== undefined) primary         = parsed.primary
+            if (parsed.primaryStrong   !== undefined) primaryStrong   = parsed.primaryStrong
+            if (parsed.success         !== undefined) success         = parsed.success
+            if (parsed.warning         !== undefined) warning         = parsed.warning
+            if (parsed.error           !== undefined) error           = parsed.error
+            if (parsed.islandBg        !== undefined) islandBg        = parsed.islandBg
+            if (parsed.islandAccent    !== undefined) islandAccent    = parsed.islandAccent
+            if (parsed.islandAccentStrong !== undefined) islandAccentStrong = parsed.islandAccentStrong
+            if (parsed.islandMuted     !== undefined) islandMuted     = parsed.islandMuted
+            if (parsed.islandMutedDim  !== undefined) islandMutedDim  = parsed.islandMutedDim
+
+            if (parsed.radiusPanel     !== undefined) radiusPanel     = parsed.radiusPanel
+            if (parsed.radiusCard      !== undefined) radiusCard      = parsed.radiusCard
+            if (parsed.radiusControl   !== undefined) radiusControl   = parsed.radiusControl
+            if (parsed.spaceXs         !== undefined) spaceXs         = parsed.spaceXs
+            if (parsed.spaceSm         !== undefined) spaceSm         = parsed.spaceSm
+            if (parsed.spaceMd         !== undefined) spaceMd         = parsed.spaceMd
+            if (parsed.spaceLg         !== undefined) spaceLg         = parsed.spaceLg
+            if (parsed.spaceXl         !== undefined) spaceXl         = parsed.spaceXl
+            if (parsed.textTitle       !== undefined) textTitle       = parsed.textTitle
+            if (parsed.textSection     !== undefined) textSection     = parsed.textSection
+            if (parsed.textBody        !== undefined) textBody        = parsed.textBody
+            if (parsed.textCaption     !== undefined) textCaption     = parsed.textCaption
+            if (parsed.controlHeight   !== undefined) controlHeight   = parsed.controlHeight
+            if (parsed.statusIconSize  !== undefined) statusIconSize  = parsed.statusIconSize
+            if (parsed.statusIconButtonSize !== undefined) statusIconButtonSize = parsed.statusIconButtonSize
+            if (parsed.fontWeightLight    !== undefined) fontWeightLight    = Number(parsed.fontWeightLight)
+            if (parsed.fontWeightRegular  !== undefined) fontWeightRegular  = Number(parsed.fontWeightRegular)
+            if (parsed.fontWeightMedium   !== undefined) fontWeightMedium   = Number(parsed.fontWeightMedium)
+            if (parsed.fontWeightSemibold !== undefined) fontWeightSemibold = Number(parsed.fontWeightSemibold)
+            if (parsed.fontWeightBold     !== undefined) fontWeightBold     = Number(parsed.fontWeightBold)
+            if (parsed.scrollTitleRate !== undefined) scrollTitleRate = Number(parsed.scrollTitleRate)
+            if (parsed.scrollAppRate   !== undefined) scrollAppRate   = Number(parsed.scrollAppRate)
+
             loadError = ""
         } catch (error) {
             loadError = String(error)
