@@ -8,9 +8,9 @@ Rectangle {
 
     visible: active
     implicitWidth: badgeText.implicitWidth + 10
-    implicitHeight: 16
-    radius: 5
-    color: Qt.rgba(Theme.acc.r, Theme.acc.g, Theme.acc.b, 0.18)
+    implicitHeight: Theme.dimensionSize(16)
+    radius: Theme.radiusSize(5)
+    color: Qt.rgba(Theme.acc.r, Theme.acc.g, Theme.acc.b, Theme.opacityValue(0.18))
 
     Text {
         id: badgeText
@@ -18,7 +18,7 @@ Rectangle {
         text: root.label
         color: Theme.acc
         font.family: Theme.uiFont
-        font.pixelSize: 9
-        font.weight: Font.DemiBold
+        font.pixelSize: Theme.fontSize(9)
+        font.weight: Theme.fontWeightSemibold
     }
 }

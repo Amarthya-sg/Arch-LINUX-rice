@@ -80,15 +80,15 @@ Rectangle {
     color:        controlPopupVisible || windowListOpen
                       ? Theme.surface
                       : pillMouse.containsMouse ? Theme.surfaceRaised : Theme.surface
-    radius:       19   // border-radius: 19px  (.pill spec)
-    border.width: 1
+    radius:       Theme.radiusSize(19)   // border-radius: 19px  (.pill spec)
+    border.width: Theme.dimensionSize(1)
     border.color: pillMouse.containsMouse
-                      ? Qt.rgba(1, 0.62, 0.04, 0.42) : Theme.line
+                      ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.42)) : Theme.line
     layer.enabled: true
     clip: true
 
-    Behavior on color        { ColorAnimation  { duration: 140 } }
-    Behavior on border.color { ColorAnimation  { duration: 140 } }
+    Behavior on color        { ColorAnimation  { duration: Theme.duration(140) } }
+    Behavior on border.color { ColorAnimation  { duration: Theme.duration(140) } }
     // Keep popup geometry immediate; animated size changes make expandable
     // Wi-Fi details appear to open in two separate steps.
     // Do not tween the shell height while expandable Wi-Fi rows are being
@@ -98,11 +98,11 @@ Rectangle {
     SequentialAnimation on mediaBreath {
         running: root.mediaPreviewVisible && MediaService.playing
         loops:   Animation.Infinite
-        NumberAnimation { to: 1; duration: 520; easing.type: Easing.InOutSine }
-        NumberAnimation { to: 0; duration: 520; easing.type: Easing.InOutSine }
+        NumberAnimation { to: 1; duration: Theme.duration(520); easing.type: Easing.InOutSine }
+        NumberAnimation { to: 0; duration: Theme.duration(520); easing.type: Easing.InOutSine }
     }
     scale: 1 + (mediaPreviewVisible && MediaService.playing ? mediaBreath * 0.006 : 0)
-    Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutSine } }
+    Behavior on scale { NumberAnimation { duration: Theme.duration(120); easing.type: Easing.OutSine } }
 
     onMediaPreviewVisibleChanged: {
         if (!mediaPreviewVisible) {
@@ -170,7 +170,7 @@ Rectangle {
         visible:  !root.notificationPreviewVisible && !root.mediaPopupVisible
                   && !root.controlPopupVisible     && !root.windowListOpen
         anchors.centerIn: parent
-        spacing: 2
+        spacing: Theme.spacingSize(2)
 
         // ── Helper: flat icon button (Rectangle + SVG IconImage + MouseArea) ──
         // Each button below uses this exact same pattern inline.
@@ -178,74 +178,74 @@ Rectangle {
 
         // ── Hamburger ────────────────────────────────────────────────────
         Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99
+            implicitWidth: Theme.dimensionSize(28); implicitHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(99)
             color: menuHov.containsMouse ? Theme.surfaceRaised : "transparent"
             Layout.alignment: Qt.AlignVCenter
-            IconImage { anchors.centerIn: parent; width: 16; height: 16; source: Qt.resolvedUrl("../icons/menu-muted.svg") }
+            IconImage { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); source: Qt.resolvedUrl("../icons/menu-muted.svg") }
             MouseArea { id: menuHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.hamburgerClicked() } }
         }
 
         // ── Workspace dots ───────────────────────────────────────────────
         Row {
-            spacing: 5; Layout.leftMargin: 4; Layout.rightMargin: 4; Layout.alignment: Qt.AlignVCenter
+            spacing: Theme.spacingSize(5); Layout.leftMargin: Theme.marginSize(4); Layout.rightMargin: Theme.marginSize(4); Layout.alignment: Qt.AlignVCenter
             Repeater {
                 model: root.workspaces.length > 0 ? root.workspaces : [{ id: root.activeWorkspaceId }]
                 delegate: Rectangle {
                     readonly property int wsId: Number(modelData?.id || (index + 1))
-                    width: wsId === root.activeWorkspaceId ? 16 : 8; height: 8; radius: 99
+                    width: wsId === root.activeWorkspaceId ? 16 : 8; height: Theme.dimensionSize(8); radius: Theme.radiusSize(99)
                     color: wsId === root.activeWorkspaceId ? Theme.fg : Theme.muted
-                    Behavior on width { NumberAnimation { duration: 200; easing.type: Easing.InOutQuad } }
+                    Behavior on width { NumberAnimation { duration: Theme.duration(200); easing.type: Easing.InOutQuad } }
                     MouseArea { anchors.fill: parent; onClicked: (e) => { e.accepted = true; root.workspaceClicked(wsId) } }
                 }
             }
         }
 
         // ── Separator ────────────────────────────────────────────────────
-        Rectangle { width: 1; height: 14; color: Theme.line; opacity: 0.5; Layout.alignment: Qt.AlignVCenter }
+        Rectangle { width: Theme.dimensionSize(1); height: Theme.dimensionSize(14); color: Theme.line; opacity: Theme.opacityValue(0.5); Layout.alignment: Qt.AlignVCenter }
 
         // ── Now-playing (EQ + track name) ────────────────────────────────
         Item {
             visible: MediaService.hasTrack
             Layout.preferredWidth: visible ? nowRow.implicitWidth + 16 : 0
-            Layout.preferredHeight: 30; Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: Theme.dimensionSize(30); Layout.alignment: Qt.AlignVCenter
             Row {
-                id: nowRow; anchors.centerIn: parent; spacing: 4
+                id: nowRow; anchors.centerIn: parent; spacing: Theme.spacingSize(4)
                 Row {
-                    spacing: 2; anchors.verticalCenter: parent.verticalCenter
+                    spacing: Theme.spacingSize(2); anchors.verticalCenter: parent.verticalCenter
                     Repeater {
                         model: 3
                         delegate: Rectangle {
                             required property int index
-                            width: 2; height: 12; radius: 2; color: Theme.acc; anchors.bottom: parent.bottom
+                            width: Theme.dimensionSize(2); height: Theme.dimensionSize(12); radius: Theme.radiusSize(2); color: Theme.acc; anchors.bottom: parent.bottom
                             SequentialAnimation on height {
                                 loops: Animation.Infinite; running: MediaService.playing
-                                PauseAnimation { duration: [0, 400, 750][index] }
-                                NumberAnimation { to: 12; duration: 500; easing.type: Easing.InOutSine }
-                                NumberAnimation { to: 3;  duration: 500; easing.type: Easing.InOutSine }
+                                PauseAnimation { duration: [Theme.duration(0), Theme.duration(400), Theme.duration(750)][index] }
+                                NumberAnimation { to: 12; duration: Theme.duration(500); easing.type: Easing.InOutSine }
+                                NumberAnimation { to: 3;  duration: Theme.duration(500); easing.type: Easing.InOutSine }
                             }
                         }
                     }
                 }
                 Item {
                     id: pillTitleViewport
-                    width: 120; height: 18; clip: true
+                    width: Theme.dimensionSize(120); height: Theme.dimensionSize(18); clip: true
                     anchors.verticalCenter: parent.verticalCenter
                     Text {
                         id: pillTitleText
                         y: 1
                         text: MediaService.title
                         color: Theme.fg
-                        font.family: Theme.uiFont; font.pixelSize: 11
+                        font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11)
                         width: Math.max(implicitWidth, pillTitleViewport.width)
                         elide: Text.ElideNone
                     }
                     SequentialAnimation {
                         running: MediaService.hasTrack && MediaService.playing && pillTitleText.implicitWidth > pillTitleViewport.width
                         loops: Animation.Infinite
-                        PauseAnimation { duration: 800 }
-                        NumberAnimation { target: pillTitleText; property: "x"; from: 0; to: -(pillTitleText.implicitWidth - pillTitleViewport.width); duration: Math.max(1800, pillTitleText.implicitWidth * 45); easing.type: Easing.Linear }
-                        PauseAnimation { duration: 800 }
-                        NumberAnimation { target: pillTitleText; property: "x"; to: 0; duration: 450; easing.type: Easing.InOutSine }
+                        PauseAnimation { duration: Theme.duration(800) }
+                        NumberAnimation { target: pillTitleText; property: "x"; from: 0; to: -(pillTitleText.implicitWidth - pillTitleViewport.width); duration: Math.max(Theme.duration(1800), pillTitleText.implicitWidth * Theme.scrollTitleRate); easing.type: Easing.Linear }
+                        PauseAnimation { duration: Theme.duration(800) }
+                        NumberAnimation { target: pillTitleText; property: "x"; to: 0; duration: Theme.duration(450); easing.type: Easing.InOutSine }
                     }
                 }
             }
@@ -257,37 +257,37 @@ Rectangle {
 
         // ── Clock ────────────────────────────────────────────────────────
         Rectangle {
-            implicitWidth: clockText.implicitWidth + 16; implicitHeight: 28; radius: 99
+            implicitWidth: clockText.implicitWidth + 16; implicitHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(99)
             color: clockHov.containsMouse ? Theme.surfaceRaised : "transparent"
             Layout.alignment: Qt.AlignVCenter
-            Text { id: clockText; anchors.centerIn: parent; text: ShellState.time; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.DemiBold; font.features: ({ "tnum": 1 }) }
+            Text { id: clockText; anchors.centerIn: parent; text: ShellState.time; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightSemibold; font.features: ({ "tnum": 1 }) }
             MouseArea { id: clockHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.timeClicked() } }
         }
 
         // ── Separator ────────────────────────────────────────────────────
-        Rectangle { width: 1; height: 14; color: Theme.line; opacity: 0.5; Layout.alignment: Qt.AlignVCenter }
+        Rectangle { width: Theme.dimensionSize(1); height: Theme.dimensionSize(14); color: Theme.line; opacity: Theme.opacityValue(0.5); Layout.alignment: Qt.AlignVCenter }
 
         // ── Quick Settings ───────────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
-            IconImage { anchors.centerIn: parent; width: 18; height: 18; source: Qt.resolvedUrl("../icons/status-settings.svg") }
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize; Layout.alignment: Qt.AlignVCenter
+            IconImage { anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize; source: Qt.resolvedUrl("../icons/status-settings.svg") }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("main") } }
         }
 
         // ── Battery (icon + %) ───────────────────────────────────────────
         Item {
-            implicitWidth: battRow.implicitWidth + 16; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
+            implicitWidth: battRow.implicitWidth + 16; implicitHeight: Theme.statusIconButtonSize; Layout.alignment: Qt.AlignVCenter
             Row {
-                id: battRow; anchors.centerIn: parent; spacing: 4
+                id: battRow; anchors.centerIn: parent; spacing: Theme.spacingSize(4)
                 IconImage {
-                    width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter
+                    width: Theme.statusIconSize; height: Theme.statusIconSize; anchors.verticalCenter: parent.verticalCenter
                     source: Qt.resolvedUrl(root.batteryCharging ? "../icons/status-battery-charging.svg"
                         : root.batteryPercent < 0 ? "../icons/status-battery-unknown.svg"
                         : root.batteryPercent <= 15 ? "../icons/status-battery-low.svg"
                         : root.batteryPercent < 40 ? "../icons/status-battery-medium.svg"
                         : "../icons/status-battery-full.svg")
                 }
-                Text { text: root.batteryPercent < 0 ? "n/a" : root.batteryPercent + "%"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.DemiBold; font.features: ({ "tnum": 1 }); anchors.verticalCenter: parent.verticalCenter }
+                Text { text: root.batteryPercent < 0 ? "n/a" : root.batteryPercent + "%"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightSemibold; font.features: ({ "tnum": 1 }); anchors.verticalCenter: parent.verticalCenter }
                 LockBadge { active: LockKeysService.numLock; anchors.verticalCenter: parent.verticalCenter }
             }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("batt") } }
@@ -295,10 +295,10 @@ Rectangle {
 
         // ── Wi-Fi ────────────────────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize
             Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 18; height: 18
+                anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize
                 source: Qt.resolvedUrl(NetworkService.wifiEnabled
                     ? "../icons/status-wifi-on.svg" : "../icons/status-wifi-off.svg")
             }
@@ -307,10 +307,10 @@ Rectangle {
 
         // ── Bluetooth ────────────────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize
             Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 18; height: 18
+                anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize
                 source: Qt.resolvedUrl(BluetoothService.enabled
                     ? "../icons/status-bluetooth-on.svg" : "../icons/status-bluetooth-off.svg")
             }
@@ -319,10 +319,10 @@ Rectangle {
 
         // ── Volume ───────────────────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize
             Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 18; height: 18
+                anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize
                 source: Qt.resolvedUrl(AudioService.muted
                     ? "../icons/status-sound-off.svg" : "../icons/status-sound-on.svg")
             }
@@ -331,9 +331,9 @@ Rectangle {
 
         // ── Bell ─────────────────────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize; Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 18; height: 18
+                anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize
                 property bool dnd_: NotificationService.dndEnabled
                 source: Qt.resolvedUrl(dnd_
                     ? "../icons/status-bell-off.svg" : "../icons/status-bell-on.svg")
@@ -341,18 +341,18 @@ Rectangle {
             // Badge
             Rectangle {
                 visible: NotificationService.count > 0
-                anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: -3; anchors.topMargin: -3
-                width: Math.max(13, badgeTxt.implicitWidth + 5); height: 13; radius: 7; color: Theme.acc
-                Text { id: badgeTxt; anchors.centerIn: parent; text: NotificationService.count > 99 ? "99+" : String(NotificationService.count); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
+                anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: Theme.marginSize(-3); anchors.topMargin: Theme.marginSize(-3)
+                width: Math.max(13, badgeTxt.implicitWidth + 5); height: Theme.dimensionSize(13); radius: Theme.radiusSize(7); color: Theme.acc
+                Text { id: badgeTxt; anchors.centerIn: parent; text: NotificationService.count > 99 ? "99+" : String(NotificationService.count); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(7); font.weight: Theme.fontWeightBold }
             }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("alerts") } }
         }
 
         // ── Coffee (keep-awake) ──────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize; Layout.alignment: Qt.AlignVCenter
             IconImage {
-                anchors.centerIn: parent; width: 18; height: 18
+                anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize
                 source: Qt.resolvedUrl(CaffeineService.enabled
                     ? "../icons/status-coffee-on.svg" : "../icons/status-coffee-off.svg")
             }
@@ -362,20 +362,20 @@ Rectangle {
         // ── Updates ──────────────────────────────────────────────────────
         Item {
             visible: root.pendingUpdates > 0
-            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
-            IconImage { anchors.centerIn: parent; width: 18; height: 18; source: Qt.resolvedUrl("../icons/status-download.svg") }
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize; Layout.alignment: Qt.AlignVCenter
+            IconImage { anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize; source: Qt.resolvedUrl("../icons/status-download.svg") }
             Rectangle {
-                anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: -3; anchors.topMargin: -3
-                width: Math.max(13, updBadgeTxt.implicitWidth + 5); height: 13; radius: 7; color: Theme.acc
-                Text { id: updBadgeTxt; anchors.centerIn: parent; text: root.pendingUpdates > 99 ? "99+" : String(root.pendingUpdates); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
+                anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: Theme.marginSize(-3); anchors.topMargin: Theme.marginSize(-3)
+                width: Math.max(13, updBadgeTxt.implicitWidth + 5); height: Theme.dimensionSize(13); radius: Theme.radiusSize(7); color: Theme.acc
+                Text { id: updBadgeTxt; anchors.centerIn: parent; text: root.pendingUpdates > 99 ? "99+" : String(root.pendingUpdates); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(7); font.weight: Theme.fontWeightBold }
             }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.updatesClicked() } }
         }
 
         // ── Power ────────────────────────────────────────────────────────
         Item {
-            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
-            IconImage { anchors.centerIn: parent; width: 18; height: 18; source: Qt.resolvedUrl("../icons/status-power.svg") }
+            implicitWidth: Theme.statusIconButtonSize; implicitHeight: Theme.statusIconButtonSize; Layout.alignment: Qt.AlignVCenter
+            IconImage { anchors.centerIn: parent; width: Theme.statusIconSize; height: Theme.statusIconSize; source: Qt.resolvedUrl("../icons/status-power.svg") }
             MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.powerClicked() } }
         }
     }
@@ -387,36 +387,36 @@ Rectangle {
         id: notificationPreviewRow
         visible: root.notificationPreviewVisible
         anchors.fill:        parent
-        anchors.leftMargin:  15
-        anchors.rightMargin: 15
-        anchors.topMargin:   8
-        anchors.bottomMargin: 8
-        spacing: 9
+        anchors.leftMargin:  Theme.marginSize(15)
+        anchors.rightMargin: Theme.marginSize(15)
+        anchors.topMargin:   Theme.marginSize(8)
+        anchors.bottomMargin: Theme.marginSize(8)
+        spacing: Theme.spacingSize(9)
 
         Rectangle {
-            Layout.preferredWidth:  30
-            Layout.preferredHeight: 30
-            radius: 10
-            color: Qt.rgba(1, 0.62, 0.04, 0.14)
-            IconImage { anchors.centerIn: parent; width: 16; height: 16; source: Qt.resolvedUrl("../icons/bell-dot-accent.svg") }
+            Layout.preferredWidth:  Theme.dimensionSize(30)
+            Layout.preferredHeight: Theme.dimensionSize(30)
+            radius: Theme.radiusSize(10)
+            color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.14))
+            IconImage { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); source: Qt.resolvedUrl("../icons/bell-dot-accent.svg") }
         }
 
         ColumnLayout {
             id: notificationPreviewColumn
             Layout.fillWidth: true
-            spacing: 1
+            spacing: Theme.spacingSize(1)
             Text {
                 Layout.fillWidth: true
                 text:  root.previewNotification ? root.previewNotification.appName : "Notification"
                 color: Theme.muted
-                font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.DemiBold
+                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightSemibold
                 elide: Text.ElideRight
             }
             Text {
                 Layout.fillWidth: true
                 text:  root.previewNotification ? root.previewNotification.summary : ""
                 color: Theme.fg
-                font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.DemiBold
+                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightSemibold
                 elide: Text.ElideRight
             }
             Text {
@@ -426,7 +426,7 @@ Rectangle {
                 visible: !!(root.previewNotification && root.previewNotification.body)
                 text:  root.previewNotification ? root.previewNotification.body : ""
                 color: Theme.muted
-                font.family: Theme.uiFont; font.pixelSize: 9
+                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
                 textFormat: Text.AutoText
                 wrapMode:   Text.Wrap
                 maximumLineCount: 4
@@ -437,9 +437,9 @@ Rectangle {
         Text {
             text: root.previewNotification
                 ? NotificationService.timeAgo(root.previewNotification.timestamp) : ""
-            color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9
+            color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
         }
-        IconImage { width: 14; height: 14; Layout.alignment: Qt.AlignVCenter; source: Qt.resolvedUrl("../icons/chevron-right-muted.svg") }
+        IconImage { width: Theme.dimensionSize(14); height: Theme.dimensionSize(14); Layout.alignment: Qt.AlignVCenter; source: Qt.resolvedUrl("../icons/chevron-right-muted.svg") }
     }
 
     // ════════════════════════════════════════════════════════════════════
@@ -451,26 +451,26 @@ Rectangle {
         anchors.fill: parent
         radius: parent.radius
         color: Theme.surface
-        border.width: 1
-        border.color: Qt.rgba(1, 1, 1, 0.12)
+        border.width: Theme.dimensionSize(1)
+        border.color: Qt.rgba(1, 1, 1, Theme.opacityValue(0.12))
 
         ColumnLayout {
             anchors.fill:        parent
-            anchors.leftMargin:  10
-            anchors.rightMargin: 10
-            anchors.topMargin:   7
-            anchors.bottomMargin: 7
-            spacing: 5
+            anchors.leftMargin:  Theme.marginSize(10)
+            anchors.rightMargin: Theme.marginSize(10)
+            anchors.topMargin:   Theme.marginSize(7)
+            anchors.bottomMargin: Theme.marginSize(7)
+            spacing: Theme.spacingSize(5)
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: Theme.spacingSize(8)
 
                 Rectangle {
-                    Layout.preferredWidth:  35
-                    Layout.preferredHeight: 35
-                    radius: 10
-                    color:  Qt.rgba(1, 0.62, 0.04, 0.18)
+                    Layout.preferredWidth:  Theme.dimensionSize(35)
+                    Layout.preferredHeight: Theme.dimensionSize(35)
+                    radius: Theme.radiusSize(10)
+                    color:  Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.18))
                     clip:   true
                     Image {
                         anchors.fill: parent
@@ -483,37 +483,37 @@ Rectangle {
                     IconImage {
                         anchors.centerIn: parent
                         visible: MediaService.artUrl === ""
-                        width: 16; height: 16
+                        width: Theme.dimensionSize(16); height: Theme.dimensionSize(16)
                         source: Qt.resolvedUrl("../icons/music-2-accent.svg")
                     }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 1
+                    spacing: Theme.spacingSize(1)
                     Text {
                         Layout.fillWidth: true
                         text:  MediaService.title || "Nothing playing"
                         color: Theme.fg
-                        font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Bold
+                        font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightBold
                         elide: Text.ElideRight
                     }
                     Text {
                         Layout.fillWidth: true
                         text:  MediaService.artist || MediaService.playerName
                         color: Theme.muted
-                        font.family: Theme.uiFont; font.pixelSize: 9
+                        font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
                         elide: Text.ElideRight
                     }
                 }
 
                 Rectangle {
-                    Layout.preferredWidth: 30; Layout.preferredHeight: 30
-                    radius: 15
+                    Layout.preferredWidth: Theme.dimensionSize(30); Layout.preferredHeight: Theme.dimensionSize(30)
+                    radius: Theme.radiusSize(15)
                     color:  mediaPlayMouse.containsMouse ? Theme.acc : Theme.surfaceRaised
                     IconImage {
                         anchors.centerIn: parent
-                        width: 12; height: 12
+                        width: Theme.dimensionSize(12); height: Theme.dimensionSize(12)
                         source: Qt.resolvedUrl(MediaService.playing
                             ? mediaPlayMouse.containsMouse ? "../icons/pause-ink.svg" : "../icons/pause-fg.svg"
                             : mediaPlayMouse.containsMouse ? "../icons/play-ink.svg" : "../icons/play-fg.svg")
@@ -526,7 +526,7 @@ Rectangle {
                 }
 
                 IconImage {
-                    width: 14; height: 14; Layout.alignment: Qt.AlignVCenter
+                    width: Theme.dimensionSize(14); height: Theme.dimensionSize(14); Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(mediaCloseMouse.containsMouse ? "../icons/x-fg.svg" : "../icons/x-muted.svg")
                     MouseArea {
                         id: mediaCloseMouse; anchors.fill: parent; hoverEnabled: true
@@ -541,37 +541,37 @@ Rectangle {
 
             // Progress bar
             RowLayout {
-                Layout.fillWidth: true; spacing: 8
-                Text { text: root.formatMediaTime(MediaService.displayPosition); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 8 }
+                Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                Text { text: root.formatMediaTime(MediaService.displayPosition); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(8) }
                 Rectangle {
-                    id: mediaProgressTrack; Layout.fillWidth: true; height: 4; radius: 2; color: Theme.surfaceRaised
+                    id: mediaProgressTrack; Layout.fillWidth: true; height: Theme.dimensionSize(4); radius: Theme.radiusSize(2); color: Theme.surfaceRaised
                     Rectangle {
-                        width: parent.width * MediaService.progress; height: parent.height; radius: 2; color: Theme.acc
-                        Behavior on width { NumberAnimation { duration: 120 } }
+                        width: parent.width * MediaService.progress; height: parent.height; radius: Theme.radiusSize(2); color: Theme.acc
+                        Behavior on width { NumberAnimation { duration: Theme.duration(120) } }
                     }
                     MouseArea {
                         anchors.fill: parent; cursorShape: Qt.PointingHandCursor
                         onClicked: (e) => { e.accepted = true; MediaService.seekToRatio(e.x / width); root.restartMediaInactivity() }
                     }
                 }
-                Text { text: root.formatMediaTime(MediaService.length); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 8 }
+                Text { text: root.formatMediaTime(MediaService.length); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(8) }
             }
 
             // Transport controls
             RowLayout {
-                Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; spacing: 28
-                IconImage { width: 16; height: 16; Layout.alignment: Qt.AlignVCenter
+                Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; spacing: Theme.spacingSize(28)
+                IconImage { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(mediaPrevMouse.containsMouse ? "../icons/skip-back-fg.svg" : "../icons/skip-back-muted.svg")
                     MouseArea { id: mediaPrevMouse; anchors.fill: parent; hoverEnabled: true
                         onClicked: (e) => { e.accepted = true; MediaService.previous(); root.restartMediaInactivity() } } }
-                IconImage { width: 16; height: 16; Layout.alignment: Qt.AlignVCenter
+                IconImage { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(MediaService.playing ? "../icons/pause-fg.svg" : "../icons/play-fg.svg")
                     MouseArea { anchors.fill: parent; onClicked: (e) => { e.accepted = true; MediaService.toggle(); root.restartMediaInactivity() } } }
-                IconImage { width: 16; height: 16; Layout.alignment: Qt.AlignVCenter
+                IconImage { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl(mediaNextMouse.containsMouse ? "../icons/skip-forward-fg.svg" : "../icons/skip-forward-muted.svg")
                     MouseArea { id: mediaNextMouse; anchors.fill: parent; hoverEnabled: true
                         onClicked: (e) => { e.accepted = true; MediaService.next(); root.restartMediaInactivity() } } }
-                IconImage { width: 18; height: 18; Layout.alignment: Qt.AlignVCenter
+                IconImage { width: Theme.dimensionSize(18); height: Theme.dimensionSize(18); Layout.alignment: Qt.AlignVCenter
                     source: Qt.resolvedUrl("../icons/volume-2-muted.svg")
                     MouseArea { anchors.fill: parent; onClicked: (e) => { e.accepted = true; ShellState.goTo("sound"); root.restartMediaInactivity() } }
                 }
@@ -595,69 +595,69 @@ Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: Theme.surface
-        border.width: 1; border.color: Theme.outline
+        border.width: Theme.dimensionSize(1); border.color: Theme.outline
         z: 3
 
         ScrollView {
-            anchors.fill: parent; anchors.margins: 14; clip: true
+            anchors.fill: parent; anchors.margins: Theme.marginSize(14); clip: true
             contentWidth: availableWidth
             ScrollBar.vertical.policy: ScrollBar.AlwaysOff
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
             ColumnLayout {
-                width: parent.width; spacing: 8
+                width: parent.width; spacing: Theme.spacingSize(8)
 
                 RowLayout {
-                    Layout.fillWidth: true; spacing: 8
+                    Layout.fillWidth: true; spacing: Theme.spacingSize(8)
                     ColumnLayout {
-                        Layout.fillWidth: true; spacing: 0
-                        Text { text: "WORKSPACES & APPS"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Bold; font.letterSpacing: 0.5 }
-                        Text { text: "Running applications  •  hover an app and press S to close"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Layout.fillWidth: true; spacing: Theme.spacingSize(0)
+                        Text { text: "WORKSPACES & APPS"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightBold; font.letterSpacing: Theme.letterSpacingValue(0.5) }
+                        Text { text: "Running applications  •  hover an app and press S to close"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); elide: Text.ElideRight; Layout.fillWidth: true }
                     }
                 }
-                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line; opacity: 0.8 }
+                Rectangle { Layout.fillWidth: true; height: Theme.dimensionSize(1); color: Theme.line; opacity: Theme.opacityValue(0.8)}
 
                 Repeater {
                     model: root.workspaceData
                     delegate: ColumnLayout {
                         required property var modelData
                         required property int index
-                        Layout.fillWidth: true; spacing: 3
+                        Layout.fillWidth: true; spacing: Theme.spacingSize(3)
                         Layout.topMargin: index > 0 ? 6 : 0
-                        Layout.bottomMargin: 2
+                        Layout.bottomMargin: Theme.marginSize(2)
 
                         Rectangle {
                             anchors.fill: parent
                             z: -1
-                            radius: 12
+                            radius: Theme.radiusSize(12)
                             color: modelData.id === root.activeWorkspaceId
-                                ? Qt.rgba(1,0.62,0.04,0.055) : Qt.rgba(1,1,1,0.025)
-                            border.width: 1
+                                ? Qt.rgba(1,0.62,0.04, Theme.opacityValue(0.055)) : Qt.rgba(1,1,1, Theme.opacityValue(0.025))
+                            border.width: Theme.dimensionSize(1)
                             border.color: modelData.id === root.activeWorkspaceId
-                                ? Qt.rgba(1,0.62,0.04,0.24) : Qt.rgba(1,1,1,0.08)
+                                ? Qt.rgba(1,0.62,0.04, Theme.opacityValue(0.24)) : Qt.rgba(1,1,1, Theme.opacityValue(0.08))
                         }
 
                         Rectangle {
-                            visible: false; Layout.fillWidth: true; height: 1
-                            color: Qt.rgba(1,1,1,0.10)
+                            visible: false; Layout.fillWidth: true; height: Theme.dimensionSize(1)
+                            color: Qt.rgba(1,1,1, Theme.opacityValue(0.10))
                         }
                         Rectangle {
-                            Layout.fillWidth: true; Layout.leftMargin: 8; Layout.rightMargin: 8; Layout.topMargin: 8
-                            height: 26; radius: 8
-                            color: modelData.id === root.activeWorkspaceId ? Qt.rgba(1,0.62,0.04,0.14) : Qt.rgba(1,1,1,0.045)
+                            Layout.fillWidth: true; Layout.leftMargin: Theme.marginSize(8); Layout.rightMargin: Theme.marginSize(8); Layout.topMargin: Theme.marginSize(8)
+                            height: Theme.dimensionSize(26); radius: Theme.radiusSize(8)
+                            color: modelData.id === root.activeWorkspaceId ? Qt.rgba(1,0.62,0.04, Theme.opacityValue(0.14)) : Qt.rgba(1,1,1, Theme.opacityValue(0.045))
                             Text {
-                                anchors.left: parent.left; anchors.leftMargin: 9; anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left; anchors.leftMargin: Theme.marginSize(9); anchors.verticalCenter: parent.verticalCenter
                                 text: (modelData.id > 0 ? "Workspace " + modelData.id : "Scratchpad")
                                     + (modelData.id === root.activeWorkspaceId ? "  •  active" : "")
                                 color: modelData.id === root.activeWorkspaceId ? Theme.islandAccent : Theme.fg
-                                font.family: Theme.uiFont; font.pixelSize: 10; font.weight: Font.Bold
+                                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); font.weight: Theme.fontWeightBold
                             }
                         }
                         Repeater {
                             model: modelData.clients
                             delegate: RowLayout {
                                 required property var modelData
-                                Layout.fillWidth: true; Layout.minimumWidth: 0; Layout.leftMargin: 8; Layout.rightMargin: 8; Layout.bottomMargin: 4; spacing: 5
+                                Layout.fillWidth: true; Layout.minimumWidth: Theme.dimensionSize(0); Layout.leftMargin: Theme.marginSize(8); Layout.rightMargin: Theme.marginSize(8); Layout.bottomMargin: Theme.marginSize(4); spacing: Theme.spacingSize(5)
                                 width: Math.max(0, parent.width - 16)
                                 HoverHandler {
                                     id: appRowHover
@@ -667,21 +667,21 @@ Rectangle {
                                     }
                                 }
                                 Rectangle {
-                                    Layout.minimumWidth: 28; Layout.preferredWidth: 28; Layout.maximumWidth: 28
-                                    Layout.minimumHeight: 28; Layout.preferredHeight: 28; Layout.maximumHeight: 28
+                                    Layout.minimumWidth: Theme.dimensionSize(28); Layout.preferredWidth: Theme.dimensionSize(28); Layout.maximumWidth: Theme.dimensionSize(28)
+                                    Layout.minimumHeight: Theme.dimensionSize(28); Layout.preferredHeight: Theme.dimensionSize(28); Layout.maximumHeight: Theme.dimensionSize(28)
                                     Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                                    radius: 8
-                                    color: Qt.rgba(1,1,1,0.08); clip: true
+                                    radius: Theme.radiusSize(8)
+                                    color: Qt.rgba(1,1,1, Theme.opacityValue(0.08)); clip: true
                                     Image {
-                                        anchors.fill: parent; anchors.margins: 4
+                                        anchors.fill: parent; anchors.margins: Theme.marginSize(4)
                                         source: modelData.iconPath; sourceSize: Qt.size(48,48)
                                         fillMode: Image.PreserveAspectFit; smooth: true; asynchronous: true
                                     }
-                                    IconImage { anchors.centerIn: parent; visible: !modelData.iconPath; width: 14; height: 14; source: Qt.resolvedUrl("../icons/app-window-muted.svg") }
+                                    IconImage { anchors.centerIn: parent; visible: !modelData.iconPath; width: Theme.dimensionSize(14); height: Theme.dimensionSize(14); source: Qt.resolvedUrl("../icons/app-window-muted.svg") }
                                 }
                                 Item {
                                     id: appNameViewport
-                                    Layout.fillWidth: true; Layout.minimumWidth: 1; Layout.preferredHeight: 28
+                                    Layout.fillWidth: true; Layout.minimumWidth: Theme.dimensionSize(1); Layout.preferredHeight: Theme.dimensionSize(28)
                                     Layout.alignment: Qt.AlignVCenter
                                     clip: true
                                     Text {
@@ -689,30 +689,30 @@ Rectangle {
                                         y: 1
                                         text: modelData.appClass
                                         color: modelData.address === root.activeAddress ? Theme.islandAccent : Theme.fg
-                                        font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.DemiBold
+                                        font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightSemibold
                                         width: Math.max(implicitWidth, appNameViewport.width)
                                         elide: Text.ElideRight
                                     }
                                     Text {
                                         anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
                                         text: modelData.title; color: Theme.muted
-                                        font.family: Theme.uiFont; font.pixelSize: 8
+                                        font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(8)
                                         elide: Text.ElideRight
                                     }
                                     SequentialAnimation {
                                         running: appRowHover.hovered && appNameText.implicitWidth > appNameViewport.width
                                         loops: Animation.Infinite
-                                        PauseAnimation { duration: 500 }
-                                        NumberAnimation { target: appNameText; property: "x"; from: 0; to: -(appNameText.implicitWidth - appNameViewport.width); duration: Math.max(900, appNameText.implicitWidth * 35); easing.type: Easing.InOutSine }
-                                        PauseAnimation { duration: 500 }
-                                        NumberAnimation { target: appNameText; property: "x"; to: 0; duration: 350; easing.type: Easing.InOutSine }
+                                        PauseAnimation { duration: Theme.duration(500) }
+                                        NumberAnimation { target: appNameText; property: "x"; from: 0; to: -(appNameText.implicitWidth - appNameViewport.width); duration: Math.max(Theme.duration(900), appNameText.implicitWidth * Theme.scrollAppRate); easing.type: Easing.InOutSine }
+                                        PauseAnimation { duration: Theme.duration(500) }
+                                        NumberAnimation { target: appNameText; property: "x"; to: 0; duration: Theme.duration(350); easing.type: Easing.InOutSine }
                                     }
                                 }
                                 Rectangle {
-                                    Layout.minimumWidth: 28; Layout.preferredWidth: 28; Layout.maximumWidth: 28; Layout.preferredHeight: 28; radius: 9
+                                    Layout.minimumWidth: Theme.dimensionSize(28); Layout.preferredWidth: Theme.dimensionSize(28); Layout.maximumWidth: Theme.dimensionSize(28); Layout.preferredHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(9)
                                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                                    color: closeClientMouse.containsMouse ? Qt.rgba(1,0.25,0.35,0.28) : Qt.rgba(1,0.25,0.35,0.12)
-                                    Text { anchors.centerIn: parent; text: "×"; color: closeClientMouse.containsMouse ? Theme.error : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 17; font.weight: Font.Medium }
+                                    color: closeClientMouse.containsMouse ? Qt.rgba(1,0.25,0.35, Theme.opacityValue(0.28)) : Qt.rgba(1,0.25,0.35, Theme.opacityValue(0.12))
+                                    Text { anchors.centerIn: parent; text: "×"; color: closeClientMouse.containsMouse ? Theme.error : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(17); font.weight: Theme.fontWeightMedium }
                                     MouseArea {
                                         id: closeClientMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                         onEntered: root.keyboardKillAddress = modelData.address
@@ -727,8 +727,8 @@ Rectangle {
                         }
                         Text {
                             visible: modelData.clients.length === 0; text: "(empty)"
-                            color: Theme.mutedDim; font.family: Theme.uiFont; font.pixelSize: 9; font.italic: true
-                            Layout.leftMargin: 8; Layout.topMargin: 4; Layout.bottomMargin: 8
+                            color: Theme.mutedDim; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.italic: true
+                            Layout.leftMargin: Theme.marginSize(8); Layout.topMargin: Theme.marginSize(4); Layout.bottomMargin: Theme.marginSize(8)
                         }
                     }
                 }
@@ -800,22 +800,22 @@ Rectangle {
         property bool   active:      false
         property bool   danger:      false
         signal clicked()
-        implicitWidth: 24; implicitHeight: 24
+        implicitWidth: Theme.dimensionSize(24); implicitHeight: Theme.dimensionSize(24)
 
         Rectangle {
-            anchors.fill: parent; radius: 8
+            anchors.fill: parent; radius: Theme.radiusSize(8)
             color: actionMouse.containsMouse
-                ? (action.danger ? Qt.rgba(1,0.42,0.37,0.24) : Qt.rgba(1,0.62,0.04,0.22))
-                : action.active ? Qt.rgba(1,0.62,0.04,0.13) : Qt.rgba(1,1,1,0.075)
-            Behavior on color { ColorAnimation { duration: 120 } }
-            Text { anchors.centerIn: parent; text: action.icon; color: action.danger ? Theme.error : action.active ? Theme.islandAccent : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 13 }
+                ? (action.danger ? Qt.rgba(1,0.42,0.37, Theme.opacityValue(0.24)) : Qt.rgba(1,0.62,0.04, Theme.opacityValue(0.22)))
+                : action.active ? Qt.rgba(1,0.62,0.04, Theme.opacityValue(0.13)) : Qt.rgba(1,1,1, Theme.opacityValue(0.075))
+            Behavior on color { ColorAnimation { duration: Theme.duration(120) } }
+            Text { anchors.centerIn: parent; text: action.icon; color: action.danger ? Theme.error : action.active ? Theme.islandAccent : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13) }
         }
         Rectangle {
             visible: action.badge !== ""
             anchors.right: parent.right; anchors.top: parent.top
-            anchors.rightMargin: -5; anchors.topMargin: -5
-            width: Math.max(10, badgeText.implicitWidth + 5); height: 11; radius: 6; color: Theme.error
-            Text { id: badgeText; anchors.centerIn: parent; text: action.badge; color: Theme.background; font.family: Theme.uiFont; font.pixelSize: 6; font.weight: Font.Bold }
+            anchors.rightMargin: Theme.marginSize(-5); anchors.topMargin: Theme.marginSize(-5)
+            width: Math.max(10, badgeText.implicitWidth + 5); height: Theme.dimensionSize(11); radius: Theme.radiusSize(6); color: Theme.error
+            Text { id: badgeText; anchors.centerIn: parent; text: action.badge; color: Theme.background; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(6); font.weight: Theme.fontWeightBold }
         }
         MouseArea { id: actionMouse; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; action.clicked() } }
     }

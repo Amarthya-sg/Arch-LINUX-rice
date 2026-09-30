@@ -11,7 +11,7 @@ import "../services"
 // Parent must provide a ColumnLayout context (it uses Layout.fillWidth).
 ColumnLayout {
     id: root
-    spacing: 8
+    spacing: Theme.spacingSize(8)
 
     // ── Header card: DND toggle + count ──────────────────────────────────
     Rectangle {
@@ -19,31 +19,31 @@ ColumnLayout {
         implicitHeight: hdrRow.implicitHeight + 24
         radius: Theme.radius
         color: Theme.surface
-        border.width: 1
+        border.width: Theme.dimensionSize(1)
         border.color: NotificationService.dndEnabled
-            ? Qt.rgba(0.96, 0.71, 0.27, 0.40) : Theme.outline
-        Behavior on border.color { ColorAnimation { duration: 200 } }
+            ? Qt.rgba(0.96, 0.71, 0.27, Theme.opacityValue(0.40)) : Theme.outline
+        Behavior on border.color { ColorAnimation { duration: Theme.duration(200) } }
 
         RowLayout {
             id: hdrRow
             anchors { left: parent.left; right: parent.right; top: parent.top }
-            anchors.margins: 14
-            spacing: 10
+            anchors.margins: Theme.marginSize(14)
+            spacing: Theme.spacingSize(10)
 
             SvgIcon {
-                width: 18; height: 18
+                width: Theme.dimensionSize(18); height: Theme.dimensionSize(18)
                 iconName: NotificationService.dndEnabled ? "bell-off" : "bell"
                 tone: NotificationService.dndEnabled ? "warning" : "accent"
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 1
+                spacing: Theme.spacingSize(1)
                 Text {
                     text: "Notifications"
                     color: Theme.text
                     font.family: Theme.uiFont
-                    font.pixelSize: 14; font.weight: 600
+                    font.pixelSize: Theme.fontSize(14); font.weight: Theme.fontWeightSemibold
                 }
                 Text {
                     text: NotificationService.dndEnabled
@@ -55,8 +55,8 @@ ColumnLayout {
                     color: NotificationService.dndEnabled
                         ? Theme.warning
                         : NotificationService.count > 0 ? Theme.text : Theme.muted
-                    font.family: Theme.uiFont; font.pixelSize: 11
-                    Behavior on color { ColorAnimation { duration: 180 } }
+                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11)
+                    Behavior on color { ColorAnimation { duration: Theme.duration(180) } }
                 }
             }
 
@@ -78,7 +78,7 @@ ColumnLayout {
             text: NotificationService.count
                   + (NotificationService.count === 1 ? " notification" : " notifications")
             color: Theme.muted
-            font.family: Theme.uiFont; font.pixelSize: 11
+            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11)
             Layout.fillWidth: true
         }
         StyledButton {
@@ -91,20 +91,20 @@ ColumnLayout {
     ColumnLayout {
         visible: NotificationService.count === 0
         Layout.fillWidth: true
-        Layout.topMargin: 12
-        spacing: 6
+        Layout.topMargin: Theme.marginSize(12)
+        spacing: Theme.spacingSize(6)
 
         SvgIcon {
             Layout.alignment: Qt.AlignHCenter
             iconName: "check"; tone: "muted"
-            width: 28; height: 28
-            opacity: 0.4
+            width: Theme.dimensionSize(28); height: Theme.dimensionSize(28)
+            opacity: Theme.opacityValue(0.4)
         }
         Text {
             Layout.alignment: Qt.AlignHCenter
             text: "You're all caught up"
             color: Theme.muted
-            font.family: Theme.uiFont; font.pixelSize: 13
+            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13)
         }
     }
 
@@ -115,14 +115,14 @@ ColumnLayout {
         delegate: ColumnLayout {
             required property var modelData
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Theme.spacingSize(6)
 
             // Section label (Today / Earlier)
             Text {
                 text: modelData.label
                 color: Theme.muted
-                font.family: Theme.uiFont; font.pixelSize: 10; font.weight: 600
-                topPadding: 4
+                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); font.weight: Theme.fontWeightSemibold
+                topPadding: Theme.paddingSize(4)
             }
 
             // App groups
@@ -149,39 +149,39 @@ ColumnLayout {
 
         radius: Theme.radius
         color:  Theme.surfaceRaised
-        border.width: 1; border.color: Theme.outline
+        border.width: Theme.dimensionSize(1); border.color: Theme.outline
         implicitHeight: cardCol.implicitHeight + 24
 
         ColumnLayout {
             id: cardCol
             anchors { left: parent.left; right: parent.right; top: parent.top }
-            anchors.margins: 12
-            spacing: 8
+            anchors.margins: Theme.marginSize(12)
+            spacing: Theme.spacingSize(8)
 
             // App header row
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: Theme.spacingSize(8)
 
                 // App icon
                 Image {
                     visible: (card.appData.appIcon || "") !== ""
                     source:  Quickshell.iconPath(card.appData.appIcon || "", true)
-                    width: 16; height: 16
+                    width: Theme.dimensionSize(16); height: Theme.dimensionSize(16)
                     sourceSize: Qt.size(32, 32)
                     fillMode: Image.PreserveAspectFit
                     smooth: true; asynchronous: true
                 }
                 SvgIcon {
                     visible: (card.appData.appIcon || "") === ""
-                    width: 14; height: 14
+                    width: Theme.dimensionSize(14); height: Theme.dimensionSize(14)
                     iconName: "app-window"; tone: "muted"
                 }
 
                 Text {
                     text: card.appData.appName
                     color: Theme.text
-                    font.family: Theme.uiFont; font.pixelSize: 13; font.weight: 600
+                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightSemibold
                     Layout.fillWidth: true
                     elide: Text.ElideRight
                 }
@@ -189,26 +189,26 @@ ColumnLayout {
                 // Count badge when multiple
                 Rectangle {
                     visible: card.appData.items.length > 1
-                    radius: 8; color: Theme.surfaceHover
-                    implicitWidth: cntLbl.implicitWidth + 10; implicitHeight: 18
+                    radius: Theme.radiusSize(8); color: Theme.surfaceHover
+                    implicitWidth: cntLbl.implicitWidth + 10; implicitHeight: Theme.dimensionSize(18)
                     Text {
                         id: cntLbl
                         anchors.centerIn: parent
                         text: card.appData.items.length
                         color: Theme.primary
-                        font.family: Theme.uiFont; font.pixelSize: 10; font.weight: 600
+                        font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); font.weight: Theme.fontWeightSemibold
                     }
                 }
 
                 // Mute toggle
                 Rectangle {
-                    width: 26; height: 26; radius: 6
+                    width: Theme.dimensionSize(26); height: Theme.dimensionSize(26); radius: Theme.radiusSize(6)
                     color: muteHov.containsMouse
                         ? Theme.surfaceHover : "transparent"
-                    Behavior on color { ColorAnimation { duration: 110 } }
+                    Behavior on color { ColorAnimation { duration: Theme.duration(110) } }
                     SvgIcon {
                         anchors.centerIn: parent
-                        width: 14; height: 14
+                        width: Theme.dimensionSize(14); height: Theme.dimensionSize(14)
                         iconName: card.appData.muted ? "bell-off" : "bell"
                         tone: card.appData.muted ? "warning" : "muted"
                     }
@@ -221,13 +221,13 @@ ColumnLayout {
 
                 // Clear app
                 Rectangle {
-                    width: 26; height: 26; radius: 6
+                    width: Theme.dimensionSize(26); height: Theme.dimensionSize(26); radius: Theme.radiusSize(6)
                     color: clearHov.containsMouse
-                        ? Qt.rgba(0.95, 0.44, 0.44, 0.18) : "transparent"
-                    Behavior on color { ColorAnimation { duration: 110 } }
+                        ? Qt.rgba(0.95, 0.44, 0.44, Theme.opacityValue(0.18)) : "transparent"
+                    Behavior on color { ColorAnimation { duration: Theme.duration(110) } }
                     SvgIcon {
                         anchors.centerIn: parent
-                        width: 12; height: 12
+                        width: Theme.dimensionSize(12); height: Theme.dimensionSize(12)
                         iconName: "x"
                         tone: clearHov.containsMouse ? "error" : "muted"
                     }
@@ -242,12 +242,12 @@ ColumnLayout {
                 Rectangle {
                     objectName: "notificationGroupExpand"
                     visible: card.canExpand
-                    width: 26; height: 26; radius: 6
+                    width: Theme.dimensionSize(26); height: Theme.dimensionSize(26); radius: Theme.radiusSize(6)
                     color: expandHov.containsMouse ? Theme.surfaceHover : "transparent"
-                    Behavior on color { ColorAnimation { duration: 110 } }
+                    Behavior on color { ColorAnimation { duration: Theme.duration(110) } }
                     SvgIcon {
                         anchors.centerIn: parent
-                        width: 14; height: 14
+                        width: Theme.dimensionSize(14); height: Theme.dimensionSize(14)
                         iconName: card.expanded ? "chevron-up" : "chevron-down"
                         tone: "muted"
                     }
@@ -289,7 +289,7 @@ ColumnLayout {
 
         radius: Theme.smallRadius
         color:  entry.urgency === NotificationUrgency.Critical
-            ? Qt.rgba(0.94, 0.44, 0.44, 0.08) : Theme.surface
+            ? Qt.rgba(0.94, 0.44, 0.44, Theme.opacityValue(0.08)) : Theme.surface
         border.width: entry.urgency === NotificationUrgency.Critical ? 1 : 0
         border.color: Theme.error
         implicitHeight: rowCol.implicitHeight + 20
@@ -300,20 +300,20 @@ ColumnLayout {
         x: dragX
         Behavior on x {
             enabled: !dragMA.drag.active
-            NumberAnimation { duration: 120; easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Theme.duration(120); easing.type: Easing.OutCubic }
         }
 
         // Red reveal strip on left
         Rectangle {
             anchors.right: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            width: 40; height: parent.height; radius: Theme.smallRadius
+            width: Theme.dimensionSize(40); height: parent.height; radius: Theme.smallRadius
             color: Theme.error
-            opacity: Math.min(1, Math.abs(row.x) / 50)
+            opacity: Math.min(Theme.opacityValue(1), Math.abs(row.x) / Theme.dimensionSize(50))
             visible: row.x !== 0
             SvgIcon {
                 anchors.centerIn: parent
-                width: 14; height: 14
+                width: Theme.dimensionSize(14); height: Theme.dimensionSize(14)
                 iconName: "x"; tone: "fg"
             }
         }
@@ -334,16 +334,16 @@ ColumnLayout {
         ColumnLayout {
             id: rowCol
             anchors { left: parent.left; right: parent.right; top: parent.top }
-            anchors.margins: 10
-            spacing: 4
+            anchors.margins: Theme.marginSize(10)
+            spacing: Theme.spacingSize(4)
 
             // Top meta row: urgency dot · timestamp · dismiss
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Theme.spacingSize(6)
 
                 Rectangle {
-                    width: 6; height: 6; radius: 3
+                    width: Theme.dimensionSize(6); height: Theme.dimensionSize(6); radius: Theme.radiusSize(3)
                     color: row.urgencyAccent
                     Layout.alignment: Qt.AlignVCenter
                 }
@@ -352,16 +352,16 @@ ColumnLayout {
                 Text {
                     text: NotificationService.timeAgo(row.entry.timestamp)
                     color: Theme.muted
-                    font.family: Theme.uiFont; font.pixelSize: 10
+                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10)
                 }
                 // Dismiss ×
                 Rectangle {
-                    width: 20; height: 20; radius: 5
+                    width: Theme.dimensionSize(20); height: Theme.dimensionSize(20); radius: Theme.radiusSize(5)
                     color: dismissHov.containsMouse
-                        ? Qt.rgba(0.94, 0.44, 0.44, 0.20) : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                        ? Qt.rgba(0.94, 0.44, 0.44, Theme.opacityValue(0.20)) : "transparent"
+                    Behavior on color { ColorAnimation { duration: Theme.duration(100) } }
                     SvgIcon {
-                        anchors.centerIn: parent; width: 11; height: 11
+                        anchors.centerIn: parent; width: Theme.dimensionSize(11); height: Theme.dimensionSize(11)
                         iconName: "x"
                         tone: dismissHov.containsMouse ? "error" : "muted"
                     }
@@ -381,7 +381,7 @@ ColumnLayout {
                 visible: row.entry.summary !== ""
                 text: row.entry.summary
                 color: Theme.text
-                font.family: Theme.uiFont; font.pixelSize: 12; font.weight: 600
+                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightSemibold
                 wrapMode: Text.Wrap
                 maximumLineCount: row.fullContentExpanded ? -1 : 2
                 elide: row.fullContentExpanded ? Text.ElideNone : Text.ElideRight
@@ -394,7 +394,7 @@ ColumnLayout {
                 visible: row.entry.body !== "" && row.fullContentExpanded
                 text: row.entry.body
                 color: Theme.muted
-                font.family: Theme.uiFont; font.pixelSize: 11
+                font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11)
                 textFormat: Text.AutoText
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
@@ -412,7 +412,7 @@ ColumnLayout {
             // Action buttons
             Flow {
                 visible: JSON.parse(row.entry.actionsJson).length > 0
-                Layout.fillWidth: true; spacing: 5
+                Layout.fillWidth: true; spacing: Theme.spacingSize(5)
 
                 Repeater {
                     model: JSON.parse(row.entry.actionsJson)

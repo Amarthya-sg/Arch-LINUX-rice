@@ -45,6 +45,15 @@ QtObject {
     property int textBody: tokens.textBody !== undefined ? tokens.textBody : 13
     property int textCaption: tokens.textCaption !== undefined ? tokens.textCaption : 11
     property int controlHeight: tokens.controlHeight !== undefined ? tokens.controlHeight : 40
+    property int statusIconSize: tokens.statusIconSize !== undefined ? tokens.statusIconSize : 18
+    property int statusIconButtonSize: tokens.statusIconButtonSize !== undefined ? tokens.statusIconButtonSize : 28
+    property int fontWeightLight: tokens.fontWeightLight !== undefined ? Number(tokens.fontWeightLight) : Font.Light
+    property int fontWeightRegular: tokens.fontWeightRegular !== undefined ? Number(tokens.fontWeightRegular) : Font.Normal
+    property int fontWeightMedium: tokens.fontWeightMedium !== undefined ? Number(tokens.fontWeightMedium) : Font.Medium
+    property int fontWeightSemibold: tokens.fontWeightSemibold !== undefined ? Number(tokens.fontWeightSemibold) : Font.DemiBold
+    property int fontWeightBold: tokens.fontWeightBold !== undefined ? Number(tokens.fontWeightBold) : Font.Bold
+    property real scrollTitleRate: tokens.scrollTitleRate !== undefined ? Number(tokens.scrollTitleRate) : 45
+    property real scrollAppRate: tokens.scrollAppRate !== undefined ? Number(tokens.scrollAppRate) : 35
 
     // Non-token compatibility values retained for existing components.
     readonly property color surfaceHigh: surfaceRaised
@@ -52,7 +61,7 @@ QtObject {
     readonly property color mutedDim: islandMutedDim
     readonly property color primaryColor: primary
     readonly property color islandAccentColor: islandAccent
-    readonly property string uiFont: "Inter"
+    readonly property string uiFont: tokens.fontFamily !== undefined ? String(tokens.fontFamily) : "Inter"
     readonly property int smallRadius: 8
     readonly property int radiusPill: 19
 
@@ -70,6 +79,28 @@ QtObject {
     readonly property int controlRadius: radiusControl
     readonly property int panelRadius: radiusPanel
     readonly property int space: spaceSm
+
+    // Look up per-baseline CSS values while preserving safe defaults during startup.
+    // Numeric suffixes use their digits only; negative values use the "Neg" prefix.
+    function numericStyleValue(group: string, baseline: real): real {
+        const numeric = Number(baseline)
+        const suffix = (numeric < 0 ? "Neg" : "") + String(Math.abs(numeric)).replace(".", "")
+        const candidate = root.tokens[group + suffix]
+        if (candidate === undefined || candidate === null || candidate === "")
+            return numeric
+        const resolved = Number(candidate)
+        return isNaN(resolved) ? numeric : resolved
+    }
+
+    function fontSize(value: real): real { return numericStyleValue("fontSize", value) }
+    function spacingSize(value: real): real { return numericStyleValue("spacing", value) }
+    function radiusSize(value: real): real { return numericStyleValue("radius", value) }
+    function dimensionSize(value: real): real { return numericStyleValue("size", value) }
+    function marginSize(value: real): real { return numericStyleValue("margin", value) }
+    function paddingSize(value: real): real { return numericStyleValue("padding", value) }
+    function duration(value: real): real { return numericStyleValue("duration", value) }
+    function opacityValue(value: real): real { return numericStyleValue("opacity", value) }
+    function letterSpacingValue(value: real): real { return numericStyleValue("letterSpacing", value) }
 
     function reloadCssTokens(): void {
         cssParser.exec([

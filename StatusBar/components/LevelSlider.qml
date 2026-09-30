@@ -21,7 +21,7 @@ Item {
 
     signal valueEdited(real value)
 
-    implicitWidth:  200
+    implicitWidth:  Theme.dimensionSize(200)
     implicitHeight: title !== "" ? 44 : 24
 
     // ── Local display state ─────────────────────────────────────────────
@@ -38,7 +38,7 @@ Item {
     // Short trailing while dragging, longer ease for external changes
     Behavior on shown {
         NumberAnimation {
-            duration: root.dragging ? 60 : 200
+            duration: root.dragging ? Theme.duration(60) : Theme.duration(200)
             easing.type: Easing.OutCubic
         }
     }
@@ -50,7 +50,7 @@ Item {
         anchors.top:   parent.top
         anchors.left:  parent.left
         anchors.right: parent.right
-        height: 16
+        height: Theme.dimensionSize(16)
 
         Text {
             anchors.left: parent.left
@@ -58,8 +58,8 @@ Item {
             text:  root.title
             color: Theme.fg
             font.family:    Theme.uiFont
-            font.pixelSize: 12
-            font.weight:    Font.Medium
+            font.pixelSize: Theme.fontSize(12)
+            font.weight:    Theme.fontWeightMedium
         }
         Text {
             anchors.right: parent.right
@@ -67,8 +67,8 @@ Item {
             text:  root.valueLabel
             color: root.accent
             font.family:    Theme.uiFont
-            font.pixelSize: 12
-            font.weight:    Font.DemiBold
+            font.pixelSize: Theme.fontSize(12)
+            font.weight:    Theme.fontWeightSemibold
         }
     }
 
@@ -87,8 +87,8 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             anchors.left:  parent.left
             anchors.right: parent.right
-            height: 3
-            radius: 9
+            height: Theme.dimensionSize(3)
+            radius: Theme.radiusSize(9)
             color:  Theme.line
 
             // Filled portion, ends at the thumb's center

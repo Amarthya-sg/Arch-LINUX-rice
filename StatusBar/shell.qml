@@ -553,56 +553,56 @@ Scope {
                 y: -2
                 width: clockPopupWidth
                 height: clockPopupHeight
-                radius: 16
+                radius: Theme.radiusSize(16)
                 color: Theme.background
-                border.width: 1
+                border.width: Theme.dimensionSize(1)
                 border.color: Theme.outline
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 16
+                    anchors.margins: Theme.marginSize(16)
+                    spacing: Theme.spacingSize(16)
 
                     ColumnLayout {
                         id: calendarColumn
                         visible: calendarPopupOpen || island.mediaPanelOpen
                         Layout.preferredWidth: island.mediaPanelOpen ? 260 : calendarPopupWidth - 32
                         Layout.fillHeight: true
-                        spacing: 8
+                        spacing: Theme.spacingSize(8)
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 10
+                        spacing: Theme.spacingSize(10)
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 1
+                            spacing: Theme.spacingSize(1)
                             Label {
                                 text: ShellState.time
                                 color: Theme.text
                                 font.family: Theme.uiFont
-                                font.pixelSize: 21
-                                font.weight: 600
+                                font.pixelSize: Theme.fontSize(21)
+                                font.weight: Theme.fontWeightSemibold
                             }
                             Label {
                                 text: Qt.formatDateTime(ShellState.now, "dddd, MMMM d")
                                 color: Theme.muted
                                 font.family: Theme.uiFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSize(10)
                             }
                         }
-                        Item { width: 26; height: 26 }
+                        Item { width: Theme.dimensionSize(26); height: Theme.dimensionSize(26) }
                     }
 
-                    Rectangle { Layout.fillWidth: true; height: 1; color: Theme.outline }
+                    Rectangle { Layout.fillWidth: true; height: Theme.dimensionSize(1); color: Theme.outline }
 
                     RowLayout {
                         Layout.fillWidth: true
                         Rectangle {
-                            width: 28; height: 26; radius: 8
+                            width: Theme.dimensionSize(28); height: Theme.dimensionSize(26); radius: Theme.radiusSize(8)
                             color: prevMonthMouse.containsMouse ? Theme.surfaceHover : "transparent"
                             SvgIcon {
                                 anchors.centerIn: parent
-                                width: 16; height: 16; iconName: "chevron-left"; tone: "fg"
+                                width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg"
                             }
                             MouseArea {
                                 id: prevMonthMouse
@@ -617,15 +617,15 @@ Scope {
                             text: Qt.formatDateTime(calendarMonthStart, "MMMM yyyy")
                             color: Theme.text
                             font.family: Theme.uiFont
-                            font.pixelSize: 12
-                            font.weight: 600
+                            font.pixelSize: Theme.fontSize(12)
+                            font.weight: Theme.fontWeightSemibold
                         }
                         Rectangle {
-                            width: 28; height: 26; radius: 8
+                            width: Theme.dimensionSize(28); height: Theme.dimensionSize(26); radius: Theme.radiusSize(8)
                             color: nextMonthMouse.containsMouse ? Theme.surfaceHover : "transparent"
                             SvgIcon {
                                 anchors.centerIn: parent
-                                width: 16; height: 16; iconName: "chevron-right"; tone: "fg"
+                                width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-right"; tone: "fg"
                             }
                             MouseArea {
                                 id: nextMonthMouse
@@ -640,7 +640,7 @@ Scope {
                         id: calendarGrid
                         Layout.fillWidth: true
                         columns: 7
-                        spacing: 3
+                        spacing: Theme.spacingSize(3)
                         property real cellWidth: (width - 18) / 7
 
                         Repeater {
@@ -648,11 +648,11 @@ Scope {
                             delegate: Label {
                                 required property string modelData
                                 width: calendarGrid.cellWidth
-                                height: 20
+                                height: Theme.dimensionSize(20)
                                 text: modelData
                                 color: Theme.muted
                                 font.family: Theme.uiFont
-                                font.pixelSize: 9
+                                font.pixelSize: Theme.fontSize(9)
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
@@ -664,8 +664,8 @@ Scope {
                                 required property int index
                                 readonly property var dateValue: rootScope.calendarDateAt(index)
                                 width: calendarGrid.cellWidth
-                                height: 29
-                                radius: 8
+                                height: Theme.dimensionSize(29)
+                                radius: Theme.radiusSize(8)
                                 color: rootScope.isCalendarToday(dateValue)
                                     ? Theme.primary
                                     : rootScope.isCalendarMonthDate(dateValue)
@@ -678,8 +678,8 @@ Scope {
                                         : rootScope.isCalendarMonthDate(dateValue)
                                             ? Theme.text : Theme.mutedDim
                                     font.family: Theme.uiFont
-                                    font.pixelSize: 10
-                                    font.weight: rootScope.isCalendarToday(dateValue) ? 700 : 400
+                                    font.pixelSize: Theme.fontSize(10)
+                                    font.weight: rootScope.isCalendarToday(dateValue) ? Theme.fontWeightBold : Theme.fontWeightRegular
                                 }
                             }
                         }
@@ -689,7 +689,7 @@ Scope {
                 Rectangle {
                     visible: island.mediaPanelOpen
                     Layout.fillHeight: true
-                    width: 1
+                    width: Theme.dimensionSize(1)
                     color: Theme.outline
                 }
 
@@ -699,7 +699,7 @@ Scope {
                         && !island.mediaPanelOpen
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    spacing: 9
+                    spacing: Theme.spacingSize(9)
 
                     HoverHandler {
                         id: mediaCardHover
@@ -713,25 +713,25 @@ Scope {
 
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 10
+                        spacing: Theme.spacingSize(10)
                         Rectangle {
-                            width: 38; height: 38; radius: 11
+                            width: Theme.dimensionSize(38); height: Theme.dimensionSize(38); radius: Theme.radiusSize(11)
                             color: Theme.surfaceRaised
                             SvgIcon {
                                 anchors.centerIn: parent
-                                width: 20; height: 20; iconName: "music-2"; tone: "accent"
+                                width: Theme.dimensionSize(20); height: Theme.dimensionSize(20); iconName: "music-2"; tone: "accent"
                             }
                         }
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 2
+                            spacing: Theme.spacingSize(2)
                             Label {
                                 Layout.fillWidth: true
                                 text: MediaService.title || "Unknown track"
                                 color: Theme.text
                                 font.family: Theme.uiFont
-                                font.pixelSize: 12
-                                font.weight: 700
+                                font.pixelSize: Theme.fontSize(12)
+                                font.weight: Theme.fontWeightBold
                                 elide: Text.ElideRight
                             }
                             Label {
@@ -739,7 +739,7 @@ Scope {
                                 text: MediaService.artist || MediaService.playerName
                                 color: Theme.muted
                                 font.family: Theme.uiFont
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.fontSize(10)
                                 elide: Text.ElideRight
                             }
                         }
@@ -747,7 +747,7 @@ Scope {
 
                     RowLayout {
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 14
+                        spacing: Theme.spacingSize(14)
                         Repeater {
                             model: [
                                 { action: "previous", iconName: "skip-back", size: 30 },
@@ -762,7 +762,7 @@ Scope {
                                     ? Theme.surfaceHover : Theme.surfaceRaised
                                 SvgIcon {
                                     anchors.centerIn: parent
-                                    width: 16; height: 16
+                                    width: Theme.dimensionSize(16); height: Theme.dimensionSize(16)
                                     iconName: modelData.iconName
                                     tone: "fg"
                                 }
@@ -784,17 +784,17 @@ Scope {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 4
+                        spacing: Theme.spacingSize(4)
                         RowLayout {
                             Layout.fillWidth: true
                             Label {
                                 text: rootScope.formatMediaTime(MediaService.displayPosition)
-                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9
+                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
                             }
                             Item { Layout.fillWidth: true }
                             Label {
                                 text: rootScope.formatMediaTime(MediaService.length)
-                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9
+                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
                             }
                         }
                         Rectangle {
@@ -802,7 +802,7 @@ Scope {
                             property real progress: MediaService.length > 0
                                 ? Math.max(0, Math.min(1, MediaService.displayPosition / MediaService.length)) : 0
                             Layout.fillWidth: true
-                            height: 6; radius: 3
+                            height: Theme.dimensionSize(6); radius: Theme.radiusSize(3)
                             color: Theme.surfaceRaised
                             Rectangle {
                                 id: hoverProgressFill
@@ -810,16 +810,16 @@ Scope {
                                 height: parent.height; radius: parent.radius
                                 color: Theme.islandAccent
                                 Behavior on width {
-                                    NumberAnimation { duration: 90; easing.type: Easing.Linear }
+                                    NumberAnimation { duration: Theme.duration(90); easing.type: Easing.Linear }
                                 }
                                 Rectangle {
                                     visible: MediaService.playing && hoverProgressFill.width > 4
-                                    width: 8; height: 8; radius: 4
+                                    width: Theme.dimensionSize(8); height: Theme.dimensionSize(8); radius: Theme.radiusSize(4)
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
                                     color: Theme.primaryStrong
-                                    opacity: 0.9
-                                    Behavior on opacity { NumberAnimation { duration: 350 } }
+                                    opacity: Theme.opacityValue(0.9)
+                                    Behavior on opacity { NumberAnimation { duration: Theme.duration(350) } }
                                 }
                             }
                             MouseArea {
@@ -839,7 +839,7 @@ Scope {
                     visible: island.mediaPanelOpen && MediaService.hasTrack
                     Layout.preferredWidth: Math.max(220, calendarPopupWidth - 330)
                     Layout.fillHeight: true
-                    spacing: 10
+                    spacing: Theme.spacingSize(10)
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -847,48 +847,48 @@ Scope {
                             Layout.fillWidth: true
                             text: "NOW PLAYING"
                             color: Theme.islandAccent
-                            font.family: Theme.uiFont; font.pixelSize: 10; font.weight: 700
-                            font.letterSpacing: 1.2
+                            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); font.weight: Theme.fontWeightBold
+                            font.letterSpacing: Theme.letterSpacingValue(1.2)
                         }
                         Label {
                             text: MediaService.playerName
                             color: Theme.muted
-                            font.family: Theme.uiFont; font.pixelSize: 9
+                            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
                             elide: Text.ElideRight
                         }
                     }
 
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 92; radius: 16
+                        height: Theme.dimensionSize(92); radius: Theme.radiusSize(16)
                         gradient: Gradient {
-                            GradientStop { position: 0; color: Qt.rgba(1, 0.62, 0.04, 0.16) }
+                            GradientStop { position: 0; color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.16)) }
                             GradientStop { position: 0.55; color: Theme.surface }
-                            GradientStop { position: 1; color: Qt.rgba(0.4, 0.34, 0.8, 0.10) }
+                            GradientStop { position: 1; color: Qt.rgba(0.4, 0.34, 0.8, Theme.opacityValue(0.10)) }
                         }
-                        border.width: 1
-                        border.color: Qt.rgba(1, 1, 1, 0.06)
+                        border.width: Theme.dimensionSize(1)
+                        border.color: Qt.rgba(1, 1, 1, Theme.opacityValue(0.06))
                         RowLayout {
                             anchors.fill: parent
-                            anchors.margins: 14
-                            spacing: 13
+                            anchors.margins: Theme.marginSize(14)
+                            spacing: Theme.spacingSize(13)
                             Rectangle {
-                                width: 64; height: 64; radius: 15
+                                width: Theme.dimensionSize(64); height: Theme.dimensionSize(64); radius: Theme.radiusSize(15)
                                 gradient: Gradient {
                                     GradientStop { position: 0; color: Theme.primaryStrong }
                                     GradientStop { position: 0.52; color: Theme.primary }
                                     GradientStop { position: 1; color: Theme.islandMutedDim }
                                 }
-                                border.width: 1
-                                border.color: Qt.rgba(1, 1, 1, 0.18)
+                                border.width: Theme.dimensionSize(1)
+                                border.color: Qt.rgba(1, 1, 1, Theme.opacityValue(0.18))
                                 Rectangle {
-                                    width: 43; height: 43; radius: 22
+                                    width: Theme.dimensionSize(43); height: Theme.dimensionSize(43); radius: Theme.radiusSize(22)
                                     anchors.centerIn: parent
-                                    color: Qt.rgba(0.08, 0.08, 0.1, 0.62)
-                                    border.width: 1
-                                    border.color: Qt.rgba(1, 1, 1, 0.22)
+                                    color: Qt.rgba(0.08, 0.08, 0.1, Theme.opacityValue(0.62))
+                                    border.width: Theme.dimensionSize(1)
+                                    border.color: Qt.rgba(1, 1, 1, Theme.opacityValue(0.22))
                                     Rectangle {
-                                        width: 10; height: 10; radius: 5
+                                        width: Theme.dimensionSize(10); height: Theme.dimensionSize(10); radius: Theme.radiusSize(5)
                                         anchors.centerIn: parent
                                         color: Theme.primaryStrong
                                     }
@@ -896,19 +896,19 @@ Scope {
                             }
                             ColumnLayout {
                                 Layout.fillWidth: true
-                                spacing: 5
+                                spacing: Theme.spacingSize(5)
                                 Label {
                                     Layout.fillWidth: true
                                     text: MediaService.title || "Unknown track"
                                     color: Theme.text
-                                    font.family: Theme.uiFont; font.pixelSize: 14; font.weight: 700
+                                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(14); font.weight: Theme.fontWeightBold
                                     elide: Text.ElideRight
                                 }
                                 Label {
                                     Layout.fillWidth: true
                                     text: MediaService.artist || "Unknown artist"
                                     color: Theme.muted
-                                    font.family: Theme.uiFont; font.pixelSize: 10
+                                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10)
                                     elide: Text.ElideRight
                                 }
                             }
@@ -917,7 +917,7 @@ Scope {
 
                     RowLayout {
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 14
+                        spacing: Theme.spacingSize(14)
                         Repeater {
                             model: [
                                 { action: "previous", iconName: "skip-back", size: 36 },
@@ -931,7 +931,7 @@ Scope {
                                 color: modelData.action === "toggle"
                                     ? (fullMediaControl.containsMouse ? Theme.primaryStrong : Theme.primary)
                                     : (fullMediaControl.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised)
-                                Behavior on color { ColorAnimation { duration: 160 } }
+                                Behavior on color { ColorAnimation { duration: Theme.duration(160) } }
                                 SvgIcon {
                                     anchors.centerIn: parent
                                     width: modelData.action === "toggle" ? 22 : 18
@@ -957,17 +957,17 @@ Scope {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 5
+                        spacing: Theme.spacingSize(5)
                         RowLayout {
                             Layout.fillWidth: true
                             Label {
                                 text: rootScope.formatMediaTime(MediaService.displayPosition)
-                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10
+                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10)
                             }
                             Item { Layout.fillWidth: true }
                             Label {
                                 text: rootScope.formatMediaTime(MediaService.length)
-                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10
+                                color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10)
                             }
                         }
                         Rectangle {
@@ -975,7 +975,7 @@ Scope {
                             property real progress: MediaService.length > 0
                                 ? Math.max(0, Math.min(1, MediaService.displayPosition / MediaService.length)) : 0
                             Layout.fillWidth: true
-                            height: 5; radius: 3
+                            height: Theme.dimensionSize(5); radius: Theme.radiusSize(3)
                             color: Theme.surfaceRaised
                             Rectangle {
                                 id: fullProgressFill
@@ -983,11 +983,11 @@ Scope {
                                 height: parent.height; radius: parent.radius
                                 color: Theme.islandAccent
                                 Behavior on width {
-                                    NumberAnimation { duration: 90; easing.type: Easing.Linear }
+                                    NumberAnimation { duration: Theme.duration(90); easing.type: Easing.Linear }
                                 }
                                 Rectangle {
                                     visible: MediaService.playing && fullProgressFill.width > 5
-                                    width: 10; height: 10; radius: 5
+                                    width: Theme.dimensionSize(10); height: Theme.dimensionSize(10); radius: Theme.radiusSize(5)
                                     anchors.right: parent.right
                                     anchors.verticalCenter: parent.verticalCenter
                                     color: Theme.primaryStrong

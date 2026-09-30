@@ -13,9 +13,9 @@ Button {
     implicitWidth: iconOnly ? implicitHeight : Math.max(74, contentItem.implicitWidth + 24)
     padding: iconOnly ? 0 : 10
     font.family: Theme.uiFont
-    font.pixelSize: compact ? 10 : 11
-    font.weight: 600
-    opacity: enabled ? 1 : 0.48
+    font.pixelSize: Theme.fontSize(compact ? 10 : 11)
+    font.weight: Theme.fontWeightSemibold
+    opacity: enabled ? Theme.opacityValue(1) : Theme.opacityValue(0.48)
 
     contentItem: Item {
         implicitWidth: root.iconName !== "" ? 16 : buttonLabel.implicitWidth
@@ -23,7 +23,7 @@ Button {
         SvgIcon {
             anchors.centerIn: parent
             visible: root.iconName !== ""
-            width: 16; height: 16
+            width: Theme.dimensionSize(16); height: Theme.dimensionSize(16)
             iconName: root.iconName
             tone: root.down || root.highlighted ? "ink" : root.danger ? "error" : root.iconTone
         }
@@ -47,11 +47,11 @@ Button {
         color: root.down ? Theme.primaryStrong
             : root.highlighted ? Theme.primary
             : root.hovered ? Theme.surfaceHover : Theme.surfaceRaised
-        border.width: 1
+        border.width: Theme.dimensionSize(1)
         border.color: root.danger ? Qt.alpha(Theme.error, 0.72)
             : root.highlighted ? Theme.primary
             : root.hovered ? Theme.primaryStrong : Theme.outline
-        Behavior on color { ColorAnimation { duration: 120 } }
-        Behavior on border.color { ColorAnimation { duration: 120 } }
+        Behavior on color { ColorAnimation { duration: Theme.duration(120) } }
+        Behavior on border.color { ColorAnimation { duration: Theme.duration(120) } }
     }
 }

@@ -10,25 +10,25 @@ ColumnLayout {
     property bool supported: false
     signal valueEdited(real value)
 
-    spacing: 3
-    opacity: supported ? 1 : 0.48
+    spacing: Theme.spacingSize(3)
+    opacity: supported ? Theme.opacityValue(1) : Theme.opacityValue(0.48)
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 6
+        spacing: Theme.spacingSize(6)
 
         Label {
             text: "Left"
             color: Theme.text
             font.family: Theme.uiFont
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSize(9)
         }
         Label {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             color: Theme.muted
             font.family: Theme.uiFont
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSize(9)
             text: !root.supported ? "Stereo balance unavailable"
                 : Math.abs(root.value) < 0.005 ? "Center"
                 : (root.value < 0 ? "Left " : "Right ") + Math.round(Math.abs(root.value) * 100) + "%"
@@ -37,14 +37,14 @@ ColumnLayout {
             text: "Right"
             color: Theme.text
             font.family: Theme.uiFont
-            font.pixelSize: 9
+            font.pixelSize: Theme.fontSize(9)
         }
     }
 
     Item {
         id: track
         Layout.fillWidth: true
-        Layout.preferredHeight: 24
+        Layout.preferredHeight: Theme.dimensionSize(24)
 
         readonly property real normalized: Math.max(0, Math.min(1, (root.value + 1) / 2))
         readonly property real handleSize: 16
@@ -53,25 +53,25 @@ ColumnLayout {
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            height: 5
-            radius: 3
+            height: Theme.dimensionSize(5)
+            radius: Theme.radiusSize(3)
             color: Theme.surfaceRaised
-            border.width: 1
+            border.width: Theme.dimensionSize(1)
             border.color: Theme.outline
         }
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             x: Math.min(parent.width / 2, track.handleCenter)
             width: Math.abs(track.handleCenter - parent.width / 2)
-            height: 5
-            radius: 3
+            height: Theme.dimensionSize(5)
+            radius: Theme.radiusSize(3)
             color: Theme.islandAccent
         }
         Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             x: parent.width / 2 - 1
-            width: 2
-            height: 14
+            width: Theme.dimensionSize(2)
+            height: Theme.dimensionSize(14)
             color: Theme.mutedDim
         }
         Rectangle {
@@ -82,7 +82,7 @@ ColumnLayout {
             height: track.handleSize
             radius: width / 2
             color: Theme.background
-            border.width: 3
+            border.width: Theme.dimensionSize(3)
             border.color: Theme.islandAccent
         }
         MouseArea {

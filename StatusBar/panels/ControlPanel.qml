@@ -33,8 +33,8 @@ Item {
     id: root
 
     // ── Sizing (filled by UnifiedPill when embedded) ──────────────────────
-    implicitWidth:  380
-    implicitHeight: 480
+    implicitWidth:  Theme.dimensionSize(380)
+    implicitHeight: Theme.dimensionSize(480)
 
     // ── Props threaded in from UnifiedPill / shell.qml ────────────────────
     property int    pendingUpdates: 0
@@ -53,7 +53,7 @@ Item {
         anchors.fill: parent
         color:  Theme.surface
         radius: Theme.radiusPanel       // 22px
-        border.width: 1
+        border.width: Theme.dimensionSize(1)
         border.color: Theme.line
         clip: true
 
@@ -66,9 +66,9 @@ Item {
         // keep the original 200 ms fade-in.
         property bool shown: false
         Timer { interval: 16; running: true; onTriggered: card.shown = true }
-        opacity:   ShellState.popupOpen && shown ? 1 : 0
+        opacity:   ShellState.popupOpen && shown ? Theme.opacityValue(1) : Theme.opacityValue(0)
         transform: Translate { y: ShellState.popupOpen ? 0 : -6 }
-        Behavior on opacity   { NumberAnimation { duration: 200; easing.type: Easing.OutQuad } }
+        Behavior on opacity   { NumberAnimation { duration: Theme.duration(200); easing.type: Easing.OutQuad } }
         Behavior on transform { } // transform Behavior must be on the value property — see y below
 
         // ── View router: swap visible Item children ───────────────────────
@@ -80,7 +80,7 @@ Item {
         Item {
             id: viewContainer
             anchors.fill:    parent
-            anchors.margins: 0   // individual views handle their own 18px padding
+            anchors.margins: Theme.marginSize(0)   // individual views handle their own 18px padding
 
             // ────────────────────────────────────────────────────────────
             // V-MAIN  (default landing view)
@@ -101,45 +101,45 @@ Item {
                     anchors.left:   parent.left
                     anchors.right:  parent.right
                     anchors.top:    parent.top
-                    anchors.margins: 18
-                    spacing: 14
+                    anchors.margins: Theme.marginSize(18)
+                    spacing: Theme.spacingSize(14)
 
                     // ── Time / date header ────────────────────────────────
                     Item {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 62
+                        Layout.preferredHeight: Theme.dimensionSize(62)
                         RowLayout {
                             anchors.fill: parent
                         ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: 3
+                            spacing: Theme.spacingSize(3)
                             Text {
                                 text:  Qt.formatTime(ShellState.now, "h:mm AP")
                                 color: Theme.fg
                                 font.family:    Theme.uiFont
-                                font.pixelSize: 30
-                                font.weight:    Font.Light
-                                font.letterSpacing: -1
+                                font.pixelSize: Theme.fontSize(30)
+                                font.weight:    Theme.fontWeightLight
+                                font.letterSpacing: Theme.letterSpacingValue(-1)
                             }
                             Text {
                                 text:  Qt.formatDate(ShellState.now, "dddd, MMMM d")
                                 color: Theme.muted
                                 font.family:    Theme.uiFont
-                                font.pixelSize: 12
+                                font.pixelSize: Theme.fontSize(12)
                             }
                         }
                         Rectangle {
-                            Layout.preferredWidth: 128
-                            Layout.preferredHeight: 44
+                            Layout.preferredWidth: Theme.dimensionSize(128)
+                            Layout.preferredHeight: Theme.dimensionSize(44)
                             Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                            radius: 12
+                            radius: Theme.radiusSize(12)
                             color: "transparent"
                             RowLayout {
                                 anchors.fill: parent
-                                anchors.margins: 8
-                                spacing: 7
+                                anchors.margins: Theme.marginSize(8)
+                                spacing: Theme.spacingSize(7)
                                 SvgIcon {
-                                    Layout.preferredWidth: 22; Layout.preferredHeight: 22
+                                    Layout.preferredWidth: Theme.dimensionSize(22); Layout.preferredHeight: Theme.dimensionSize(22)
                                     iconName: SystemService.batteryCharging ? "battery-charging"
                                         : SystemService.batteryPercent <= 15 ? "battery-low"
                                         : SystemService.batteryPercent < 40 ? "battery-medium" : "battery-full"
@@ -147,10 +147,10 @@ Item {
                                         : SystemService.batteryPercent <= 15 ? "error" : "muted"
                                 }
                                 ColumnLayout {
-                                    Layout.fillWidth: true; spacing: 0
-                                    Text { text: Math.round(SystemService.batteryPercent) + "%"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.DemiBold }
-                                    Text { text: SystemService.batteryCharging ? "Charging" : "Discharging"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; elide: Text.ElideRight }
-                                    Text { text: (SystemService.batteryStatus.split("\n")[1] || ""); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 8; elide: Text.ElideRight }
+                                    Layout.fillWidth: true; spacing: Theme.spacingSize(0)
+                                    Text { text: Math.round(SystemService.batteryPercent) + "%"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightSemibold }
+                                    Text { text: SystemService.batteryCharging ? "Charging" : "Discharging"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); elide: Text.ElideRight }
+                                    Text { text: (SystemService.batteryStatus.split("\n")[1] || ""); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(8); elide: Text.ElideRight }
                                 }
                             }
                         }
@@ -160,24 +160,24 @@ Item {
                     // ── Wi-Fi row ─────────────────────────────────────────
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 56
+                        implicitHeight: Theme.dimensionSize(56)
                         radius: Theme.radiusCard
                         color: Theme.surfaceRaised
                         border.width: NetworkService.connected ? 1 : 0
-                        border.color: Qt.rgba(1, 0.62, 0.04, 0.20)
+                        border.color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.20))
                         RowLayout {
-                            anchors.fill: parent; anchors.margins: 14; spacing: 12
-                            Item { Layout.preferredWidth: 20; Layout.minimumWidth: 20; Layout.alignment: Qt.AlignVCenter
-                                SvgIcon { anchors.centerIn: parent; width: 20; height: 20; iconName: "wifi"; tone: "fg" }
+                            anchors.fill: parent; anchors.margins: Theme.marginSize(14); spacing: Theme.spacingSize(12)
+                            Item { Layout.preferredWidth: Theme.dimensionSize(20); Layout.minimumWidth: Theme.dimensionSize(20); Layout.alignment: Qt.AlignVCenter
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(20); height: Theme.dimensionSize(20); iconName: "wifi"; tone: "fg" }
                             }
                             ColumnLayout {
-                                Layout.fillWidth: true; Layout.minimumWidth: 0; spacing: 1
-                                Text { text: "Wi-Fi"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 14; font.weight: Font.Medium }
-                                Text { text: !NetworkService.wifiEnabled ? "Off" : NetworkService.connected ? NetworkService.ssid : "Not connected"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
+                                Layout.fillWidth: true; Layout.minimumWidth: Theme.dimensionSize(0); spacing: Theme.spacingSize(1)
+                                Text { text: "Wi-Fi"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(14); font.weight: Theme.fontWeightMedium }
+                                Text { text: !NetworkService.wifiEnabled ? "Off" : NetworkService.connected ? NetworkService.ssid : "Not connected"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); elide: Text.ElideRight; Layout.fillWidth: true }
                             }
                             ToggleSwitch { Layout.alignment: Qt.AlignVCenter; checked: NetworkService.wifiEnabled; onToggled: NetworkService.toggleWifi() }
-                            Rectangle { Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 9; color: wifiArrowHov.containsMouse ? Theme.surfaceHover : "transparent"
-                                SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "chevron-right"; tone: "muted" }
+                            Rectangle { Layout.preferredWidth: Theme.dimensionSize(28); Layout.preferredHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(9); color: wifiArrowHov.containsMouse ? Theme.surfaceHover : "transparent"
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-right"; tone: "muted" }
                                 MouseArea { id: wifiArrowHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.goTo("wifi") }
                             }
                         }
@@ -187,24 +187,24 @@ Item {
                     // ── Bluetooth row ─────────────────────────────────────
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 56
+                        implicitHeight: Theme.dimensionSize(56)
                         radius: Theme.radiusCard
                         color: Theme.surfaceRaised
                         border.width: BluetoothService.enabled && BluetoothService.connectedDevices.length > 0 ? 1 : 0
-                        border.color: Qt.rgba(1, 0.62, 0.04, 0.20)
+                        border.color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.20))
                         RowLayout {
-                            anchors.fill: parent; anchors.margins: 14; spacing: 12
-                            Item { Layout.preferredWidth: 20; Layout.minimumWidth: 20; Layout.alignment: Qt.AlignVCenter
-                                SvgIcon { anchors.centerIn: parent; width: 20; height: 20; iconName: "bluetooth"; tone: "fg" }
+                            anchors.fill: parent; anchors.margins: Theme.marginSize(14); spacing: Theme.spacingSize(12)
+                            Item { Layout.preferredWidth: Theme.dimensionSize(20); Layout.minimumWidth: Theme.dimensionSize(20); Layout.alignment: Qt.AlignVCenter
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(20); height: Theme.dimensionSize(20); iconName: "bluetooth"; tone: "fg" }
                             }
                             ColumnLayout {
-                                Layout.fillWidth: true; Layout.minimumWidth: 0; spacing: 1
-                                Text { text: "Bluetooth"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 14; font.weight: Font.Medium }
-                                Text { text: !BluetoothService.enabled ? "Off" : BluetoothService.connectedDevices.length > 0 ? BluetoothService.connectedDevices.length + " connected" : "On"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12; elide: Text.ElideRight; Layout.fillWidth: true }
+                                Layout.fillWidth: true; Layout.minimumWidth: Theme.dimensionSize(0); spacing: Theme.spacingSize(1)
+                                Text { text: "Bluetooth"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(14); font.weight: Theme.fontWeightMedium }
+                                Text { text: !BluetoothService.enabled ? "Off" : BluetoothService.connectedDevices.length > 0 ? BluetoothService.connectedDevices.length + " connected" : "On"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); elide: Text.ElideRight; Layout.fillWidth: true }
                             }
                             ToggleSwitch { Layout.alignment: Qt.AlignVCenter; checked: BluetoothService.enabled; enabled: BluetoothService.available; onToggled: BluetoothService.toggle() }
-                            Rectangle { Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 9; color: btArrowHov.containsMouse ? Theme.surfaceHover : "transparent"
-                                SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "chevron-right"; tone: "muted" }
+                            Rectangle { Layout.preferredWidth: Theme.dimensionSize(28); Layout.preferredHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(9); color: btArrowHov.containsMouse ? Theme.surfaceHover : "transparent"
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-right"; tone: "muted" }
                                 MouseArea { id: btArrowHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.goTo("bt") }
                             }
                         }
@@ -214,31 +214,31 @@ Item {
                     // ── Quick tiles: Focus / Night light / Location / Screencast
                     GridLayout {
                         Layout.fillWidth: true; columns: 2; columnSpacing: 8; rowSpacing: 8
-                        Rectangle { Layout.fillWidth: true; implicitHeight: 52; radius: Theme.radiusCard; color: ShellState.focusEnabled ? Qt.rgba(1, 0.62, 0.04, 0.18) : Theme.surfaceRaised; border.width: ShellState.focusEnabled ? 1 : 0; border.color: Theme.acc
-                            RowLayout { anchors.centerIn: parent; spacing: 10
-                                SvgIcon { width: 17; height: 17; iconName: "moon"; tone: ShellState.focusEnabled ? "accent" : "muted" }
-                                Text { text: "Focus"; color: ShellState.focusEnabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium }
+                        Rectangle { Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(52); radius: Theme.radiusCard; color: ShellState.focusEnabled ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.18)) : Theme.surfaceRaised; border.width: ShellState.focusEnabled ? 1 : 0; border.color: Theme.acc
+                            RowLayout { anchors.centerIn: parent; spacing: Theme.spacingSize(10)
+                                SvgIcon { width: Theme.dimensionSize(17); height: Theme.dimensionSize(17); iconName: "moon"; tone: ShellState.focusEnabled ? "accent" : "muted" }
+                                Text { text: "Focus"; color: ShellState.focusEnabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium }
                             }
                             MouseArea { anchors.fill: parent; onClicked: ShellState.focusEnabled = !ShellState.focusEnabled }
                         }
-                        Rectangle { Layout.fillWidth: true; implicitHeight: 52; radius: Theme.radiusCard; color: NightLightService.enabled ? Qt.rgba(1, 0.62, 0.04, 0.18) : Theme.surfaceRaised; border.width: NightLightService.enabled ? 1 : 0; border.color: Theme.acc
-                            RowLayout { anchors.centerIn: parent; spacing: 10
-                                SvgIcon { width: 17; height: 17; iconName: "sun"; tone: NightLightService.enabled ? "accent" : "muted" }
-                                Text { text: "Night light"; color: NightLightService.enabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium }
+                        Rectangle { Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(52); radius: Theme.radiusCard; color: NightLightService.enabled ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.18)) : Theme.surfaceRaised; border.width: NightLightService.enabled ? 1 : 0; border.color: Theme.acc
+                            RowLayout { anchors.centerIn: parent; spacing: Theme.spacingSize(10)
+                                SvgIcon { width: Theme.dimensionSize(17); height: Theme.dimensionSize(17); iconName: "sun"; tone: NightLightService.enabled ? "accent" : "muted" }
+                                Text { text: "Night light"; color: NightLightService.enabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium }
                             }
                             MouseArea { anchors.fill: parent; onClicked: if (NightLightService.available) NightLightService.toggle() }
                         }
-                        Rectangle { Layout.fillWidth: true; implicitHeight: 52; radius: Theme.radiusCard; color: LocationService.enabled ? Qt.rgba(1, 0.62, 0.04, 0.18) : Theme.surfaceRaised; border.width: LocationService.enabled ? 1 : 0; border.color: Theme.acc
-                            RowLayout { anchors.centerIn: parent; spacing: 10
-                                SvgIcon { width: 17; height: 17; iconName: "map-pin"; tone: LocationService.enabled ? "accent" : "muted" }
-                                Text { text: "Location"; color: LocationService.enabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium }
+                        Rectangle { Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(52); radius: Theme.radiusCard; color: LocationService.enabled ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.18)) : Theme.surfaceRaised; border.width: LocationService.enabled ? 1 : 0; border.color: Theme.acc
+                            RowLayout { anchors.centerIn: parent; spacing: Theme.spacingSize(10)
+                                SvgIcon { width: Theme.dimensionSize(17); height: Theme.dimensionSize(17); iconName: "map-pin"; tone: LocationService.enabled ? "accent" : "muted" }
+                                Text { text: "Location"; color: LocationService.enabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium }
                             }
                             MouseArea { anchors.fill: parent; onClicked: LocationService.toggle() }
                         }
-                        Rectangle { Layout.fillWidth: true; implicitHeight: 52; radius: Theme.radiusCard; color: ShellState.screencastEnabled ? Qt.rgba(1, 0.62, 0.04, 0.18) : Theme.surfaceRaised; border.width: ShellState.screencastEnabled ? 1 : 0; border.color: Theme.acc
-                            RowLayout { anchors.centerIn: parent; spacing: 10
-                                SvgIcon { width: 17; height: 17; iconName: "screen-share"; tone: ShellState.screencastEnabled ? "accent" : "muted" }
-                                Text { text: "Screencast"; color: ShellState.screencastEnabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium }
+                        Rectangle { Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(52); radius: Theme.radiusCard; color: ShellState.screencastEnabled ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.18)) : Theme.surfaceRaised; border.width: ShellState.screencastEnabled ? 1 : 0; border.color: Theme.acc
+                            RowLayout { anchors.centerIn: parent; spacing: Theme.spacingSize(10)
+                                SvgIcon { width: Theme.dimensionSize(17); height: Theme.dimensionSize(17); iconName: "screen-share"; tone: ShellState.screencastEnabled ? "accent" : "muted" }
+                                Text { text: "Screencast"; color: ShellState.screencastEnabled ? Theme.acc : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium }
                             }
                             MouseArea { anchors.fill: parent; onClicked: ShellState.screencastEnabled = !ShellState.screencastEnabled }
                         }
@@ -247,8 +247,8 @@ Item {
                     // ── Volume slider ─────────────────────────────────────
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 12
-                        SvgIcon { width: 18; height: 18; iconName: AudioService.muted ? "volume-x" : "volume-2"; tone: "muted" }
+                        spacing: Theme.spacingSize(12)
+                        SvgIcon { width: Theme.dimensionSize(18); height: Theme.dimensionSize(18); iconName: AudioService.muted ? "volume-x" : "volume-2"; tone: "muted" }
                         LevelSlider {
                             Layout.fillWidth: true
                             value:      AudioService.outputMaster
@@ -257,14 +257,14 @@ Item {
                         Text {
                             text:  Math.round(AudioService.outputMaster * 100) + "%"
                             color: Theme.muted
-                            font.family: Theme.uiFont; font.pixelSize: 12
+                            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12)
                             font.features: ({ "tnum": 1 })
                         }
                         Rectangle {
-                            Layout.preferredWidth: 28; Layout.preferredHeight: 28
-                            radius: 9
+                            Layout.preferredWidth: Theme.dimensionSize(28); Layout.preferredHeight: Theme.dimensionSize(28)
+                            radius: Theme.radiusSize(9)
                             color: soundOpenHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                            SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "chevron-right"; tone: "muted" }
+                            SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-right"; tone: "muted" }
                             MouseArea { id: soundOpenHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.goTo("sound") }
                         }
                     }
@@ -272,8 +272,8 @@ Item {
                     // ── Brightness slider ─────────────────────────────────
                     RowLayout {
                         Layout.fillWidth: true
-                        spacing: 12
-                        SvgIcon { width: 18; height: 18; iconName: "sun"; tone: "muted" }
+                        spacing: Theme.spacingSize(12)
+                        SvgIcon { width: Theme.dimensionSize(18); height: Theme.dimensionSize(18); iconName: "sun"; tone: "muted" }
                         LevelSlider {
                             Layout.fillWidth: true
                             value:      BrightnessService.level
@@ -282,7 +282,7 @@ Item {
                         Text {
                             text:  Math.round(BrightnessService.level * 100) + "%"
                             color: Theme.muted
-                            font.family: Theme.uiFont; font.pixelSize: 12
+                            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12)
                             font.features: ({ "tnum": 1 })
                         }
                     }
@@ -290,43 +290,43 @@ Item {
                     // ── Media controls with live progress and seek
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 6
+                        spacing: Theme.spacingSize(6)
                         visible: MediaService.hasTrack
                         RowLayout {
-                            Layout.fillWidth: true; spacing: 8
+                            Layout.fillWidth: true; spacing: Theme.spacingSize(8)
                             ColumnLayout {
-                                Layout.fillWidth: true; spacing: 1
-                                Text { Layout.fillWidth: true; text: MediaService.title; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Medium; elide: Text.ElideRight }
-                                Text { Layout.fillWidth: true; text: MediaService.artist; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; elide: Text.ElideRight }
+                                Layout.fillWidth: true; spacing: Theme.spacingSize(1)
+                                Text { Layout.fillWidth: true; text: MediaService.title; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightMedium; elide: Text.ElideRight }
+                                Text { Layout.fillWidth: true; text: MediaService.artist; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); elide: Text.ElideRight }
                             }
-                            Rectangle { Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 9; color: mediaSoundHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                                SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "volume-2"; tone: "muted" }
+                            Rectangle { Layout.preferredWidth: Theme.dimensionSize(28); Layout.preferredHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(9); color: mediaSoundHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "volume-2"; tone: "muted" }
                                 MouseArea { id: mediaSoundHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.goTo("sound") }
                             }
                         }
                         RowLayout {
-                            Layout.fillWidth: true; spacing: 8
-                            Text { text: root.formatMediaTime(MediaService.displayPosition); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 8; font.features: ({ "tnum": 1 }) }
+                            Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                            Text { text: root.formatMediaTime(MediaService.displayPosition); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(8); font.features: ({ "tnum": 1 }) }
                             Rectangle {
-                                id: mainMediaProgress; Layout.fillWidth: true; height: 5; radius: 3; color: Theme.surfaceRaised
-                                Rectangle { width: parent.width * MediaService.progress; height: parent.height; radius: 3; color: Theme.acc; Behavior on width { NumberAnimation { duration: 120 } } }
+                                id: mainMediaProgress; Layout.fillWidth: true; height: Theme.dimensionSize(5); radius: Theme.radiusSize(3); color: Theme.surfaceRaised
+                                Rectangle { width: parent.width * MediaService.progress; height: parent.height; radius: Theme.radiusSize(3); color: Theme.acc; Behavior on width { NumberAnimation { duration: Theme.duration(120) } } }
                                 MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: function(mouse) { MediaService.seekToRatio(mouse.x / width) } }
                             }
-                            Text { text: root.formatMediaTime(MediaService.length); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 8; font.features: ({ "tnum": 1 }) }
+                            Text { text: root.formatMediaTime(MediaService.length); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(8); font.features: ({ "tnum": 1 }) }
                         }
                         RowLayout {
-                            Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; spacing: 20
+                            Layout.fillWidth: true; Layout.alignment: Qt.AlignHCenter; spacing: Theme.spacingSize(20)
                             Item { Layout.fillWidth: true }
-                            Rectangle { implicitWidth: 34; implicitHeight: 34; radius: 10; color: mainPrevHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                                SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "skip-back"; tone: "muted" }
+                            Rectangle { implicitWidth: Theme.dimensionSize(34); implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10); color: mainPrevHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "skip-back"; tone: "muted" }
                                 MouseArea { id: mainPrevHov; anchors.fill: parent; hoverEnabled: true; onClicked: MediaService.previous() }
                             }
-                            Rectangle { implicitWidth: 42; implicitHeight: 42; radius: 21; color: Theme.fg
-                                SvgIcon { anchors.centerIn: parent; width: 17; height: 17; iconName: MediaService.playing ? "pause" : "play"; tone: "ink" }
+                            Rectangle { implicitWidth: Theme.dimensionSize(42); implicitHeight: Theme.dimensionSize(42); radius: Theme.radiusSize(21); color: Theme.fg
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(17); height: Theme.dimensionSize(17); iconName: MediaService.playing ? "pause" : "play"; tone: "ink" }
                                 MouseArea { anchors.fill: parent; onClicked: MediaService.toggle() }
                             }
-                            Rectangle { implicitWidth: 34; implicitHeight: 34; radius: 10; color: mainNextHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                                SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "skip-forward"; tone: "muted" }
+                            Rectangle { implicitWidth: Theme.dimensionSize(34); implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10); color: mainNextHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                                SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "skip-forward"; tone: "muted" }
                                 MouseArea { id: mainNextHov; anchors.fill: parent; hoverEnabled: true; onClicked: MediaService.next() }
                             }
                             Item { Layout.fillWidth: true }
@@ -435,7 +435,7 @@ Item {
                 }
 
                 ColumnLayout {
-                    anchors.fill: parent; anchors.margins: 18; spacing: 10
+                    anchors.fill: parent; anchors.margins: Theme.marginSize(18); spacing: Theme.spacingSize(10)
 
                     // ── Header: back / scan / toggle ─────────────────────
                     RowLayout {
@@ -443,14 +443,14 @@ Item {
 
                         // Back button
                         Rectangle {
-                            implicitHeight: 40
+                            implicitHeight: Theme.dimensionSize(40)
                             implicitWidth: wfBackRow.implicitWidth + 20
-                            radius: 12
+                            radius: Theme.radiusSize(12)
                             color: wfBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
                             RowLayout {
-                                id: wfBackRow; anchors.centerIn: parent; spacing: 6
-                                SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" }
-                                Text { text: "Wi-Fi"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont }
+                                id: wfBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6)
+                                SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" }
+                                Text { text: "Wi-Fi"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont }
                             }
                             MouseArea { id: wfBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                         }
@@ -459,11 +459,11 @@ Item {
 
                         // Scan button
                         Rectangle {
-                            implicitHeight: 34
+                            implicitHeight: Theme.dimensionSize(34)
                             implicitWidth: wfScanLabel.implicitWidth + 24
-                            radius: 10
+                            radius: Theme.radiusSize(10)
                             color: wfScanHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                            Text { id: wfScanLabel; anchors.centerIn: parent; text: NetworkService.scanning ? "Stop" : "Scan"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Medium }
+                            Text { id: wfScanLabel; anchors.centerIn: parent; text: NetworkService.scanning ? "Stop" : "Scan"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightMedium }
                             MouseArea {
                                 id: wfScanHov; anchors.fill: parent; hoverEnabled: true
                                 enabled: NetworkService.wifiEnabled || NetworkService.scanning
@@ -477,16 +477,16 @@ Item {
                     // ── Scan sweep line ───────────────────────────────────
                     ScanSweep {
                         Layout.fillWidth: true
-                        Layout.leftMargin: 8; Layout.rightMargin: 8
+                        Layout.leftMargin: Theme.marginSize(8); Layout.rightMargin: Theme.marginSize(8)
                         active: NetworkService.scanning
                     }
 
                     // ── Empty states ──────────────────────────────────────
-                    Text { visible: !NetworkService.wifiEnabled; text: "Turn Wi-Fi on to see networks."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12 }
+                    Text { visible: !NetworkService.wifiEnabled; text: "Turn Wi-Fi on to see networks."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
                     Text {
                         visible: NetworkService.wifiEnabled && wifiView.pwNetworks.length === 0
                         text: NetworkService.scanning ? "Scanning…" : "No networks found. Tap Scan."
-                        color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12
+                        color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12)
                     }
 
                     // ── Network list ──────────────────────────────────────
@@ -497,7 +497,7 @@ Item {
                         ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                         ColumnLayout {
-                            id: wfNetCol; width: parent.width; spacing: 6
+                            id: wfNetCol; width: parent.width; spacing: Theme.spacingSize(6)
 
                             Repeater {
                                 model: wifiView.pwNetworks   // ← direct id reference, no parent chains
@@ -520,42 +520,42 @@ Item {
                                     Rectangle {
                                         anchors.fill: parent
                                         radius: Theme.radiusCard
-                                        color:  modelData.connected ? Qt.rgba(1, 0.62, 0.04, 0.10) : Theme.surfaceRaised
+                                        color:  modelData.connected ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.10)) : Theme.surfaceRaised
                                         border.width: modelData.connected ? 1 : 0
-                                        border.color: Qt.rgba(1, 0.62, 0.04, 0.25)
+                                        border.color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.25))
                                     }
 
                                     ColumnLayout {
                                         id: netRowInner
                                         anchors { left: parent.left; right: parent.right; top: parent.top }
-                                        anchors.margins: 10; spacing: 6
+                                        anchors.margins: Theme.marginSize(10); spacing: Theme.spacingSize(6)
 
                                         // ── Network info + action button ──────────
                                         RowLayout {
-                                            Layout.fillWidth: true; spacing: 8
+                                            Layout.fillWidth: true; spacing: Theme.spacingSize(8)
 
                                             // Signal icon
-                                            SvgIcon { width: 18; height: 18; iconName: "wifi"; tone: "fg" }
+                                            SvgIcon { width: Theme.dimensionSize(18); height: Theme.dimensionSize(18); iconName: "wifi"; tone: "fg" }
 
-                                            ColumnLayout { Layout.fillWidth: true; spacing: 1
-                                                Text { Layout.fillWidth: true; text: modelData.name || "Hidden network"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.DemiBold; elide: Text.ElideRight }
+                                            ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(1)
+                                                Text { Layout.fillWidth: true; text: modelData.name || "Hidden network"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightSemibold; elide: Text.ElideRight }
                                                 Text {
                                                     Layout.fillWidth: true
                                                     text: Math.round(Number(modelData.signalStrength || 0) * 100) + "% · "
                                                         + NetworkService.security(modelData)
                                                         + (modelData.connected ? " · connected" : modelData.known ? " · saved" : "")
-                                                    color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight
+                                                    color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight
                                                 }
                                             }
 
                                             // Connect / Disconnect button
                                             Rectangle {
-                                                implicitWidth: connLabel.implicitWidth + 24; implicitHeight: 34; radius: 10
+                                                implicitWidth: connLabel.implicitWidth + 24; implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10)
                                                 color: connHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
                                                 Text {
                                                     id: connLabel; anchors.centerIn: parent
                                                     text: modelData.connected ? "Disconnect" : netRow.isConnecting ? "…" : "Connect"
-                                                    color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium
+                                                    color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium
                                                 }
                                                 MouseArea {
                                                     id: connHov; anchors.fill: parent; hoverEnabled: true
@@ -572,16 +572,16 @@ Item {
                                                 }
                                             }
                                             Rectangle {
-                                                implicitWidth: 30; implicitHeight: 30; radius: 15
+                                                implicitWidth: Theme.dimensionSize(30); implicitHeight: Theme.dimensionSize(30); radius: Theme.radiusSize(15)
                                                 color: netInfoHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
-                                                Text { anchors.centerIn: parent; text: "i"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Bold }
+                                                Text { anchors.centerIn: parent; text: "i"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightBold }
                                                 MouseArea { id: netInfoHov; anchors.fill: parent; hoverEnabled: true; onClicked: wifiView.toggleDetails(modelData) }
                                             }
                                             Rectangle {
                                                 visible: !!modelData.known
-                                                implicitWidth: forgetWifiLabel.implicitWidth + 18; implicitHeight: 30; radius: 10
-                                                color: forgetWifiHov.containsMouse ? Qt.rgba(1, 0.42, 0.37, 0.20) : Theme.surfaceRaised
-                                                Text { id: forgetWifiLabel; anchors.centerIn: parent; text: "Forget"; color: Theme.error; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium }
+                                                implicitWidth: forgetWifiLabel.implicitWidth + 18; implicitHeight: Theme.dimensionSize(30); radius: Theme.radiusSize(10)
+                                                color: forgetWifiHov.containsMouse ? Qt.rgba(1, 0.42, 0.37, Theme.opacityValue(0.20)) : Theme.surfaceRaised
+                                                Text { id: forgetWifiLabel; anchors.centerIn: parent; text: "Forget"; color: Theme.error; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium }
                                                 MouseArea { id: forgetWifiHov; anchors.fill: parent; hoverEnabled: true; onClicked: NetworkService.forget(modelData) }
                                             }
                                         }
@@ -591,74 +591,74 @@ Item {
                                             Layout.fillWidth: true
                                             implicitHeight: detailsCardCol.implicitHeight + 18
                                             Layout.preferredHeight: detailsCardCol.implicitHeight + 18
-                                            radius: 12
-                                            color: Qt.rgba(1, 1, 1, 0.045)
-                                            border.width: 1; border.color: Theme.line
+                                            radius: Theme.radiusSize(12)
+                                            color: Qt.rgba(1, 1, 1, Theme.opacityValue(0.045))
+                                            border.width: Theme.dimensionSize(1); border.color: Theme.line
                                             ColumnLayout {
                                                 id: detailsCardCol
                                                 anchors { left: parent.left; right: parent.right; top: parent.top }
-                                                anchors.margins: 9; spacing: 5
+                                                anchors.margins: Theme.marginSize(9); spacing: Theme.spacingSize(5)
                                                 RowLayout {
-                                                    Layout.fillWidth: true; spacing: 6
-                                                    Text { text: "NETWORK DETAILS"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; font.letterSpacing: 0.7; Layout.fillWidth: true }
+                                                    Layout.fillWidth: true; spacing: Theme.spacingSize(6)
+                                                    Text { text: "NETWORK DETAILS"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; font.letterSpacing: Theme.letterSpacingValue(0.7); Layout.fillWidth: true }
                                                     Rectangle {
-                                                        implicitWidth: detailsStatusText.implicitWidth + 12; implicitHeight: 20; radius: 10
-                                                        color: modelData.connected ? Qt.rgba(0.35, 0.85, 0.55, 0.16) : Qt.rgba(1, 1, 1, 0.08)
-                                                        Text { id: detailsStatusText; anchors.centerIn: parent; text: modelData.connected ? "Connected" : modelData.known ? "Saved" : "Available"; color: modelData.connected ? Theme.success : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Medium }
+                                                        implicitWidth: detailsStatusText.implicitWidth + 12; implicitHeight: Theme.dimensionSize(20); radius: Theme.radiusSize(10)
+                                                        color: modelData.connected ? Qt.rgba(0.35, 0.85, 0.55, Theme.opacityValue(0.16)) : Qt.rgba(1, 1, 1, Theme.opacityValue(0.08))
+                                                        Text { id: detailsStatusText; anchors.centerIn: parent; text: modelData.connected ? "Connected" : modelData.known ? "Saved" : "Available"; color: modelData.connected ? Theme.success : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightMedium }
                                                     }
                                                 }
-                                                Rectangle { Layout.fillWidth: true; height: 1; color: Theme.line; opacity: 0.7 }
+                                                Rectangle { Layout.fillWidth: true; height: Theme.dimensionSize(1); color: Theme.line; opacity: Theme.opacityValue(0.7)}
                                                 RowLayout {
-                                                    Layout.fillWidth: true; spacing: 6
-                                                    Text { text: "SSID:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: modelData.ssid || modelData.name || "—"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.DemiBold; elide: Text.ElideRight; Layout.fillWidth: true }
-                                                    Text { text: NetworkService.security(modelData); color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Medium }
+                                                    Layout.fillWidth: true; spacing: Theme.spacingSize(6)
+                                                    Text { text: "SSID:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: modelData.ssid || modelData.name || "—"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightSemibold; elide: Text.ElideRight; Layout.fillWidth: true }
+                                                    Text { text: NetworkService.security(modelData); color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightMedium }
                                                 }
-                                                RowLayout { Layout.fillWidth: true; spacing: 8
-                                                    Text { text: "Signal:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: NetworkService.signalPercentage(modelData) + "%"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; Layout.fillWidth: true }
+                                                RowLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                                                    Text { text: "Signal:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: NetworkService.signalPercentage(modelData) + "%"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); Layout.fillWidth: true }
                                                 }
-                                                RowLayout { Layout.fillWidth: true; spacing: 8
-                                                    Text { text: "Band:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: NetworkService.bandChannel(modelData).replace("Band unavailable", "Unknown"); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; Layout.fillWidth: true; elide: Text.ElideRight }
-                                                }
-                                                RowLayout {
-                                                    visible: !!modelData.bssid; Layout.fillWidth: true; spacing: 8
-                                                    Text { text: "BSSID:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: modelData.bssid || "—"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight; Layout.fillWidth: true }
+                                                RowLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                                                    Text { text: "Band:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: NetworkService.bandChannel(modelData).replace("Band unavailable", "Unknown"); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); Layout.fillWidth: true; elide: Text.ElideRight }
                                                 }
                                                 RowLayout {
-                                                    visible: !!modelData.connected; Layout.fillWidth: true; spacing: 8
-                                                    Text { text: "IP:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: NetworkService.ipAddress; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; Layout.fillWidth: true; elide: Text.ElideRight }
+                                                    visible: !!modelData.bssid; Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                                                    Text { text: "BSSID:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: modelData.bssid || "—"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight; Layout.fillWidth: true }
                                                 }
                                                 RowLayout {
-                                                    visible: !!modelData.connected; Layout.fillWidth: true; spacing: 8
-                                                    Text { text: "Gateway:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: NetworkService.gateway; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; Layout.fillWidth: true; elide: Text.ElideRight }
+                                                    visible: !!modelData.connected; Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                                                    Text { text: "IP:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: NetworkService.ipAddress; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); Layout.fillWidth: true; elide: Text.ElideRight }
                                                 }
                                                 RowLayout {
-                                                    visible: !!modelData.connected; Layout.fillWidth: true; spacing: 8
-                                                    Text { text: "DNS:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
-                                                    Text { text: NetworkService.dnsServer; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; Layout.fillWidth: true; elide: Text.ElideRight }
+                                                    visible: !!modelData.connected; Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                                                    Text { text: "Gateway:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: NetworkService.gateway; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); Layout.fillWidth: true; elide: Text.ElideRight }
+                                                }
+                                                RowLayout {
+                                                    visible: !!modelData.connected; Layout.fillWidth: true; spacing: Theme.spacingSize(8)
+                                                    Text { text: "DNS:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
+                                                    Text { text: NetworkService.dnsServer; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); Layout.fillWidth: true; elide: Text.ElideRight }
                                                 }
                                                 RowLayout {
                                                     visible: !!modelData.known
-                                                    Layout.fillWidth: true; spacing: 6
-                                                    Text { text: "Password:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Bold; Layout.preferredWidth: 64 }
+                                                    Layout.fillWidth: true; spacing: Theme.spacingSize(6)
+                                                    Text { text: "Password:"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightBold; Layout.preferredWidth: Theme.dimensionSize(64) }
                                                     Text {
                                                         Layout.fillWidth: true
                                                         text: NetworkService.passwordLookupBusy ? "loading…"
                                                             : NetworkService.revealedPasswordKey === netRow.thisKey
                                                                 ? (wifiView.detailsPasswordVisible ? (NetworkService.revealedPassword || "Unavailable") : "••••••••")
                                                                 : "Unavailable"
-                                                        color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight
+                                                        color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight
                                                     }
                                                     Rectangle {
                                                         visible: NetworkService.revealedPasswordKey === netRow.thisKey && !!NetworkService.revealedPassword
-                                                        implicitWidth: detailsPasswordAction.implicitWidth + 18; implicitHeight: 24; radius: 8
-                                                        color: detailsPasswordHov.containsMouse ? Theme.surfaceHover : Qt.rgba(1, 0.62, 0.04, 0.12)
-                                                        Text { id: detailsPasswordAction; anchors.centerIn: parent; text: wifiView.detailsPasswordVisible ? "Hide" : "Show"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 9; font.weight: Font.Medium }
+                                                        implicitWidth: detailsPasswordAction.implicitWidth + 18; implicitHeight: Theme.dimensionSize(24); radius: Theme.radiusSize(8)
+                                                        color: detailsPasswordHov.containsMouse ? Theme.surfaceHover : Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.12))
+                                                        Text { id: detailsPasswordAction; anchors.centerIn: parent; text: wifiView.detailsPasswordVisible ? "Hide" : "Show"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); font.weight: Theme.fontWeightMedium }
                                                         MouseArea { id: detailsPasswordHov; anchors.fill: parent; hoverEnabled: true; onClicked: wifiView.detailsPasswordVisible = !wifiView.detailsPasswordVisible }
                                                     }
                                                 }
@@ -669,10 +669,10 @@ Item {
                                         ColumnLayout {
                                             visible:          netRow.isPwRow
                                             Layout.fillWidth: true
-                                            spacing: 6
+                                            spacing: Theme.spacingSize(6)
 
                                             RowLayout {
-                                                Layout.fillWidth: true; spacing: 6
+                                                Layout.fillWidth: true; spacing: Theme.spacingSize(6)
 
                                                 TextField {
                                                     id: pwInput
@@ -685,10 +685,10 @@ Item {
                                                     color:               Theme.fg
                                                     placeholderTextColor: Theme.muted
                                                     font.family:         Theme.uiFont
-                                                    font.pixelSize:      12
+                                                    font.pixelSize:      Theme.fontSize(12)
                                                     background: Rectangle {
-                                                        radius: 10; color: Theme.surfaceRaised
-                                                        border.width: 1
+                                                        radius: Theme.radiusSize(10); color: Theme.surfaceRaised
+                                                        border.width: Theme.dimensionSize(1)
                                                         border.color: pwInput.activeFocus ? Theme.acc : Theme.line
                                                     }
                                                     // Focus automatically when the row appears
@@ -705,19 +705,19 @@ Item {
 
                                                 // show / hide toggle
                                                 Rectangle {
-                                                    implicitWidth: pwTogLabel.implicitWidth + 18; implicitHeight: 34; radius: 10
+                                                    implicitWidth: pwTogLabel.implicitWidth + 18; implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10)
                                                     color: pwTogHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                                                    Text { id: pwTogLabel; anchors.centerIn: parent; text: wifiView.pwVisible ? "hide" : "show"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium }
+                                                    Text { id: pwTogLabel; anchors.centerIn: parent; text: wifiView.pwVisible ? "hide" : "show"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium }
                                                     MouseArea { id: pwTogHov; anchors.fill: parent; hoverEnabled: true; onClicked: wifiView.pwVisible = !wifiView.pwVisible }
                                                 }
 
                                                 // Join button
                                                 Rectangle {
                                                     id: joinBtn
-                                                    implicitWidth: joinLabel.implicitWidth + 20; implicitHeight: 34; radius: 10
+                                                    implicitWidth: joinLabel.implicitWidth + 20; implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10)
                                                     color: joinHov.containsMouse && pwInput.length >= 8 ? Theme.acc : Theme.surfaceRaised
-                                                    opacity: pwInput.text.length >= 8 ? 1 : 0.45
-                                                    Text { id: joinLabel; anchors.centerIn: parent; text: "Join"; color: joinHov.containsMouse && pwInput.text.length >= 8 ? Theme.islandBg : Theme.acc; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.DemiBold }
+                                                    opacity: pwInput.text.length >= 8 ? Theme.opacityValue(1) : Theme.opacityValue(0.45)
+                                                    Text { id: joinLabel; anchors.centerIn: parent; text: "Join"; color: joinHov.containsMouse && pwInput.text.length >= 8 ? Theme.islandBg : Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightSemibold }
                                                     MouseArea {
                                                         id: joinHov; anchors.fill: parent; hoverEnabled: true
                                                         enabled: pwInput.text.length >= 8
@@ -730,9 +730,9 @@ Item {
 
                                                 // Cancel button
                                                 Rectangle {
-                                                    implicitWidth: 60; implicitHeight: 34; radius: 10
+                                                    implicitWidth: Theme.dimensionSize(60); implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10)
                                                     color: cancelHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                                                    Text { id: cancelLabel; anchors.centerIn: parent; text: "Cancel"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12 }
+                                                    Text { id: cancelLabel; anchors.centerIn: parent; text: "Cancel"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
                                                     MouseArea { id: cancelHov; anchors.fill: parent; hoverEnabled: true; onClicked: wifiView.clearPw() }
                                                 }
                                             }
@@ -741,7 +741,7 @@ Item {
                                                 visible: NetworkService.connectionErrorKey === netRow.thisKey && NetworkService.connectionError !== ""
                                                 Layout.fillWidth: true
                                                 text: NetworkService.connectionError
-                                                color: Theme.error; font.family: Theme.uiFont; font.pixelSize: 11; wrapMode: Text.Wrap
+                                                color: Theme.error; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); wrapMode: Text.Wrap
                                             }
 
                                         }
@@ -800,16 +800,16 @@ Item {
     component ScanBar: Item {
         property bool scanning: false
         Layout.fillWidth: true
-        implicitHeight:   4
+        implicitHeight:   Theme.dimensionSize(4)
 
-        Rectangle { anchors.fill: parent; radius: 2; color: Theme.line }
+        Rectangle { anchors.fill: parent; radius: Theme.radiusSize(2); color: Theme.line }
         Rectangle {
             id: sweeper
-            height: parent.height; width: parent.width * 0.30; radius: 2
-            color: Theme.fg; opacity: scanning ? 0.9 : 0
+            height: parent.height; width: parent.width * 0.30; radius: Theme.radiusSize(2)
+            color: Theme.fg; opacity: scanning ? Theme.opacityValue(0.9) : Theme.opacityValue(0)
             NumberAnimation on x {
                 from: -sweeper.width; to: sweeper.parent.width
-                duration: 1000; loops: Animation.Infinite; running: scanning
+                duration: Theme.duration(1000); loops: Animation.Infinite; running: scanning
                 easing.type: Easing.InOutSine
             }
         }
@@ -823,9 +823,9 @@ Item {
     component ScanSweep: Item {
         id: sweepRoot
         property bool active: false
-        implicitHeight: 6
-        opacity: active ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        implicitHeight: Theme.dimensionSize(6)
+        opacity: active ? Theme.opacityValue(1) : Theme.opacityValue(0)
+        Behavior on opacity { NumberAnimation { duration: Theme.duration(250); easing.type: Easing.OutCubic } }
 
         Rectangle {
             anchors.fill: parent
@@ -845,11 +845,11 @@ Item {
                 running: sweepRoot.active || sweepRoot.opacity > 0.01
                 NumberAnimation {
                     from: 0; to: sweepRoot.width - sweepBar.width
-                    duration: 900; easing.type: Easing.InOutSine
+                    duration: Theme.duration(900); easing.type: Easing.InOutSine
                 }
                 NumberAnimation {
                     from: sweepRoot.width - sweepBar.width; to: 0
-                    duration: 900; easing.type: Easing.InOutSine
+                    duration: Theme.duration(900); easing.type: Easing.InOutSine
                 }
             }
         }
@@ -863,25 +863,25 @@ Item {
             detailsAddress = detailsAddress === address ? "" : address
         }
         ColumnLayout {
-            anchors.fill: parent; anchors.margins: 18; spacing: 10
+            anchors.fill: parent; anchors.margins: Theme.marginSize(18); spacing: Theme.spacingSize(10)
 
             // Header
             RowLayout {
                 Layout.fillWidth: true
                 Rectangle {
-                    implicitHeight: 40; implicitWidth: bbtRow.implicitWidth + 20; radius: 12
+                    implicitHeight: Theme.dimensionSize(40); implicitWidth: bbtRow.implicitWidth + 20; radius: Theme.radiusSize(12)
                     color: bbtBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    RowLayout { id: bbtRow; anchors.centerIn: parent; spacing: 6
-                        SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" }
-                        Text { text: "Bluetooth"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont }
+                    RowLayout { id: bbtRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6)
+                        SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" }
+                        Text { text: "Bluetooth"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont }
                     }
                     MouseArea { id: bbtBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                 }
                 Item { Layout.fillWidth: true }
                 Rectangle {
-                    implicitHeight: 34; implicitWidth: btScanTxt.implicitWidth + 24; radius: 10
+                    implicitHeight: Theme.dimensionSize(34); implicitWidth: btScanTxt.implicitWidth + 24; radius: Theme.radiusSize(10)
                     color: btScanHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    Text { id: btScanTxt; anchors.centerIn: parent; text: BluetoothService.scanning ? "Stop" : "Scan"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Medium }
+                    Text { id: btScanTxt; anchors.centerIn: parent; text: BluetoothService.scanning ? "Stop" : "Scan"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightMedium }
                     MouseArea { id: btScanHov; anchors.fill: parent; hoverEnabled: true; enabled: BluetoothService.enabled || BluetoothService.scanning
                         onClicked: BluetoothService.scanning ? BluetoothService.stopScan() : BluetoothService.scan() }
                 }
@@ -890,11 +890,11 @@ Item {
 
             ScanSweep {
                 Layout.fillWidth: true
-                Layout.leftMargin: 8; Layout.rightMargin: 8
+                Layout.leftMargin: Theme.marginSize(8); Layout.rightMargin: Theme.marginSize(8)
                 active: BluetoothService.scanning
             }
 
-            Text { visible: !BluetoothService.enabled; text: "Turn Bluetooth on to discover devices."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12 }
+            Text { visible: !BluetoothService.enabled; text: "Turn Bluetooth on to discover devices."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
 
             Flickable {
                 Layout.fillWidth: true; Layout.fillHeight: true
@@ -903,7 +903,7 @@ Item {
                 ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
 
                 ColumnLayout {
-                    id: btDevCol; width: parent.width; spacing: 6
+                    id: btDevCol; width: parent.width; spacing: Theme.spacingSize(6)
 
                     Repeater {
                         model: BluetoothService.devices
@@ -914,55 +914,55 @@ Item {
                             readonly property string devStatus: BluetoothService.deviceStatus(modelData)
                             readonly property bool busy: devStatus.endsWith("…")
                             Layout.fillWidth: true; implicitHeight: btDevRow.implicitHeight + 20 + (detailsOpen ? btDetailsCol.implicitHeight + 8 : 0); radius: Theme.radiusCard
-                            color: BluetoothService.value(modelData, "connected") ? Qt.rgba(1, 0.62, 0.04, 0.10) : Theme.surfaceRaised
+                            color: BluetoothService.value(modelData, "connected") ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.10)) : Theme.surfaceRaised
                             border.width: BluetoothService.value(modelData, "connected") ? 1 : 0
-                            border.color: Qt.rgba(1, 0.62, 0.04, 0.25)
+                            border.color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.25))
 
                             RowLayout {
                                 id: btDevRow
                                 anchors { left: parent.left; right: parent.right; top: parent.top }
-                                anchors.margins: 10; spacing: 8
+                                anchors.margins: Theme.marginSize(10); spacing: Theme.spacingSize(8)
 
                                 Rectangle {
-                                    width: 9; height: 9; radius: 5
+                                    width: Theme.dimensionSize(9); height: Theme.dimensionSize(9); radius: Theme.radiusSize(5)
                                     color: BluetoothService.value(modelData, "connected") ? Theme.success
                                         : BluetoothService.value(modelData, "paired") ? Theme.acc : Theme.muted
                                 }
-                                ColumnLayout { Layout.fillWidth: true; spacing: 1
-                                    Text { text: BluetoothService.displayName(modelData) || "Bluetooth device"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.DemiBold; elide: Text.ElideRight; Layout.fillWidth: true }
-                                    Text { text: BluetoothService.deviceStatus(modelData) + (BluetoothService.value(modelData, "batteryAvailable") ? " · " + Math.round(BluetoothService.value(modelData, "battery") * 100) + "%" : ""); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight; Layout.fillWidth: true }
+                                ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(1)
+                                    Text { text: BluetoothService.displayName(modelData) || "Bluetooth device"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightSemibold; elide: Text.ElideRight; Layout.fillWidth: true }
+                                    Text { text: BluetoothService.deviceStatus(modelData) + (BluetoothService.value(modelData, "batteryAvailable") ? " · " + Math.round(BluetoothService.value(modelData, "battery") * 100) + "%" : ""); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight; Layout.fillWidth: true }
                                 }
                                 Rectangle {
-                                    implicitWidth: btActTxt.implicitWidth + 24; implicitHeight: 34; radius: 10; color: btActHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
-                                    Text { id: btActTxt; anchors.centerIn: parent; text: busy ? devStatus : !BluetoothService.value(modelData, "paired") ? "Pair" : BluetoothService.value(modelData, "connected") ? "Disconnect" : "Connect"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium }
+                                    implicitWidth: btActTxt.implicitWidth + 24; implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10); color: btActHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
+                                    Text { id: btActTxt; anchors.centerIn: parent; text: busy ? devStatus : !BluetoothService.value(modelData, "paired") ? "Pair" : BluetoothService.value(modelData, "connected") ? "Disconnect" : "Connect"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium }
                                     MouseArea { id: btActHov; anchors.fill: parent; hoverEnabled: true; enabled: !busy; onClicked: BluetoothService.activate(modelData) }
                                 }
                                 Rectangle {
-                                    implicitWidth: 30; implicitHeight: 30; radius: 15
+                                    implicitWidth: Theme.dimensionSize(30); implicitHeight: Theme.dimensionSize(30); radius: Theme.radiusSize(15)
                                     color: btInfoHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
-                                    Text { anchors.centerIn: parent; text: "i"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Bold }
+                                    Text { anchors.centerIn: parent; text: "i"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightBold }
                                     MouseArea { id: btInfoHov; anchors.fill: parent; hoverEnabled: true; onClicked: btViewRoot.toggleDetails(modelData) }
                                 }
                                 Rectangle {
                                     visible: BluetoothService.value(modelData, "paired")
-                                    implicitWidth: 60; implicitHeight: 34; radius: 10; color: btForgetHov.containsMouse ? Qt.rgba(1, 0.42, 0.37, 0.20) : Theme.surfaceRaised
-                                    Text { anchors.centerIn: parent; text: "Forget"; color: Theme.error; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium }
+                                    implicitWidth: Theme.dimensionSize(60); implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10); color: btForgetHov.containsMouse ? Qt.rgba(1, 0.42, 0.37, Theme.opacityValue(0.20)) : Theme.surfaceRaised
+                                    Text { anchors.centerIn: parent; text: "Forget"; color: Theme.error; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium }
                                     MouseArea { id: btForgetHov; anchors.fill: parent; hoverEnabled: true; onClicked: BluetoothService.forget(modelData) }
                                 }
                             }
                             ColumnLayout {
                                 id: btDetailsCol
                                 visible: detailsOpen
-                                anchors { left: parent.left; right: parent.right; top: btDevRow.bottom; leftMargin: 10; rightMargin: 10; bottomMargin: 10 }
-                                spacing: 2
-                                Text { Layout.fillWidth: true; text: "Address: " + deviceAddress; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight }
-                                Text { Layout.fillWidth: true; text: "Status: " + BluetoothService.deviceStatus(modelData); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight }
-                                Text { visible: BluetoothService.value(modelData, "batteryAvailable"); Layout.fillWidth: true; text: "Battery: " + Math.round(BluetoothService.value(modelData, "battery") * 100) + "%"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10 }
+                                anchors { left: parent.left; right: parent.right; top: btDevRow.bottom; leftMargin: Theme.marginSize(10); rightMargin: Theme.marginSize(10); bottomMargin: Theme.marginSize(10) }
+                                spacing: Theme.spacingSize(2)
+                                Text { Layout.fillWidth: true; text: "Address: " + deviceAddress; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight }
+                                Text { Layout.fillWidth: true; text: "Status: " + BluetoothService.deviceStatus(modelData); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight }
+                                Text { visible: BluetoothService.value(modelData, "batteryAvailable"); Layout.fillWidth: true; text: "Battery: " + Math.round(BluetoothService.value(modelData, "battery") * 100) + "%"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10) }
                             }
                         }
                     }
 
-                    Text { visible: BluetoothService.devices.length === 0 && !BluetoothService.scanning; text: "No devices found. Tap Scan."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12 }
+                    Text { visible: BluetoothService.devices.length === 0 && !BluetoothService.scanning; text: "No devices found. Tap Scan."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
                 }
             }
         }
@@ -977,14 +977,14 @@ Item {
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
             ColumnLayout {
                 id: sndCol; width: parent.width
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
-                spacing: 12
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: Theme.marginSize(18) }
+                spacing: Theme.spacingSize(12)
 
                 // Header
                 RowLayout {
                     Layout.fillWidth: true
-                    Rectangle { implicitHeight: 40; implicitWidth: sndBackRow.implicitWidth + 20; radius: 12; color: sndBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                        RowLayout { id: sndBackRow; anchors.centerIn: parent; spacing: 6; SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" } Text { text: "Sound"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont } }
+                    Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: sndBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: sndBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                        RowLayout { id: sndBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "Sound"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
                         MouseArea { id: sndBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                     }
                     Item { Layout.fillWidth: true }
@@ -992,10 +992,10 @@ Item {
                 }
 
                 // Volume slider
-                RowLayout { Layout.fillWidth: true; spacing: 12
-                    SvgIcon { width: 18; height: 18; iconName: AudioService.muted ? "volume-x" : "volume-2"; tone: "muted" }
+                RowLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(12)
+                    SvgIcon { width: Theme.dimensionSize(18); height: Theme.dimensionSize(18); iconName: AudioService.muted ? "volume-x" : "volume-2"; tone: "muted" }
                     LevelSlider { Layout.fillWidth: true; value: AudioService.outputMaster; onValueEdited: function(v) { AudioService.setVolume(v) } }
-                    Text { text: Math.round(AudioService.outputMaster * 100) + "%"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12; font.features: ({ "tnum": 1 }) }
+                    Text { text: Math.round(AudioService.outputMaster * 100) + "%"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.features: ({ "tnum": 1 }) }
                 }
                 ChannelBalance {
                     Layout.fillWidth: true
@@ -1005,22 +1005,22 @@ Item {
                 }
 
                 // Outputs label
-                Text { text: "Output"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11 }
+                Text { text: "Output"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11) }
 
                 // Output device list
                 Repeater {
                     model: AudioService.outputChoices
                     delegate: Rectangle {
                         required property var modelData; required property int index
-                        Layout.fillWidth: true; implicitHeight: 44; radius: Theme.radiusCard
-                        color: modelData.active ? Qt.rgba(1, 0.62, 0.04, 0.12) : outDevHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
-                        border.width: modelData.active ? 1 : 0; border.color: Qt.rgba(1, 0.62, 0.04, 0.30)
-                        RowLayout { anchors.fill: parent; anchors.margins: 12; spacing: 10
+                        Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(44); radius: Theme.radiusCard
+                        color: modelData.active ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.12)) : outDevHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
+                        border.width: modelData.active ? 1 : 0; border.color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.30))
+                        RowLayout { anchors.fill: parent; anchors.margins: Theme.marginSize(12); spacing: Theme.spacingSize(10)
                             // Speaker / output icon
-                            SvgIcon { width: 16; height: 16; iconName: "volume-2"; tone: modelData.active ? "accent" : "muted" }
-                            ColumnLayout { Layout.fillWidth: true; spacing: 1
-                                Text { Layout.fillWidth: true; text: modelData.description || modelData.name || "Output"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium; elide: Text.ElideRight }
-                                Text { Layout.fillWidth: true; text: (modelData.active ? "Active · " : "") + (modelData.detail || ""); color: modelData.active ? Theme.success : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight }
+                            SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "volume-2"; tone: modelData.active ? "accent" : "muted" }
+                            ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(1)
+                                Text { Layout.fillWidth: true; text: modelData.description || modelData.name || "Output"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium; elide: Text.ElideRight }
+                                Text { Layout.fillWidth: true; text: (modelData.active ? "Active · " : "") + (modelData.detail || ""); color: modelData.active ? Theme.success : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight }
                             }
                         }
                         MouseArea { id: outDevHov; anchors.fill: parent; hoverEnabled: true; onClicked: AudioService.selectOutput(modelData) }
@@ -1028,22 +1028,22 @@ Item {
                 }
 
                 // Input devices label
-                Text { text: "Input"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11 }
+                Text { text: "Input"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11) }
 
                 // Input device list
                 Repeater {
                     model: AudioService.inputChoices
                     delegate: Rectangle {
                         required property var modelData; required property int index
-                        Layout.fillWidth: true; implicitHeight: 44; radius: Theme.radiusCard
-                        color: modelData.active ? Qt.rgba(1, 0.62, 0.04, 0.12) : inDevHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
-                        border.width: modelData.active ? 1 : 0; border.color: Qt.rgba(1, 0.62, 0.04, 0.30)
-                        RowLayout { anchors.fill: parent; anchors.margins: 12; spacing: 10
+                        Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(44); radius: Theme.radiusCard
+                        color: modelData.active ? Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.12)) : inDevHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
+                        border.width: modelData.active ? 1 : 0; border.color: Qt.rgba(1, 0.62, 0.04, Theme.opacityValue(0.30))
+                        RowLayout { anchors.fill: parent; anchors.margins: Theme.marginSize(12); spacing: Theme.spacingSize(10)
                             // Microphone / input icon
-                            SvgIcon { width: 16; height: 16; iconName: "mic"; tone: modelData.active ? "accent" : "muted" }
-                            ColumnLayout { Layout.fillWidth: true; spacing: 1
-                                Text { Layout.fillWidth: true; text: modelData.description || modelData.name || "Input"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium; elide: Text.ElideRight }
-                                Text { Layout.fillWidth: true; text: (modelData.active ? "Active · " : "") + (modelData.detail || ""); color: modelData.active ? Theme.success : Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; elide: Text.ElideRight }
+                            SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "mic"; tone: modelData.active ? "accent" : "muted" }
+                            ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(1)
+                                Text { Layout.fillWidth: true; text: modelData.description || modelData.name || "Input"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium; elide: Text.ElideRight }
+                                Text { Layout.fillWidth: true; text: (modelData.active ? "Active · " : "") + (modelData.detail || ""); color: modelData.active ? Theme.success : Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); elide: Text.ElideRight }
                             }
                         }
                         MouseArea { id: inDevHov; anchors.fill: parent; hoverEnabled: true; onClicked: AudioService.selectInput(modelData) }
@@ -1053,8 +1053,8 @@ Item {
                     visible: AudioService.inputChoices.length === 0
                     text: "No input devices detected"
                     color: Theme.muted
-                    font.family: Theme.uiFont; font.pixelSize: 11; font.italic: true
-                    Layout.leftMargin: 4
+                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.italic: true
+                    Layout.leftMargin: Theme.marginSize(4)
                 }
             }
         }
@@ -1083,18 +1083,18 @@ Item {
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
             ColumnLayout {
                 id: battCol; width: parent.width
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
-                spacing: 12
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: Theme.marginSize(18) }
+                spacing: Theme.spacingSize(12)
 
                 // Header (back button)
-                Rectangle { implicitHeight: 40; implicitWidth: battBackRow.implicitWidth + 20; radius: 12; color: battBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    RowLayout { id: battBackRow; anchors.centerIn: parent; spacing: 6; SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" } Text { text: "Battery"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont } }
+                Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: battBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: battBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                    RowLayout { id: battBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "Battery"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
                     MouseArea { id: battBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                 }
 
                 // Hero: ring + side stats (.bhero)
                 RowLayout {
-                    Layout.fillWidth: true; spacing: 16
+                    Layout.fillWidth: true; spacing: Theme.spacingSize(16)
 
                     // Big circular battery gauge (132×132)
                     Gauge {
@@ -1106,16 +1106,16 @@ Item {
 
                     // Side stats (.bside)
                     ColumnLayout {
-                        Layout.fillWidth: true; spacing: 10
+                        Layout.fillWidth: true; spacing: Theme.spacingSize(10)
 
                         // Status chip (.bchip)
                         Rectangle {
                             implicitWidth:  bChipRow.implicitWidth + 20
-                            implicitHeight: 24; radius: 99
-                            color: Qt.rgba(battViewRoot.battColor.r, battViewRoot.battColor.g, battViewRoot.battColor.b, 0.14)
-                            RowLayout { id: bChipRow; anchors.centerIn: parent; spacing: 5
+                            implicitHeight: Theme.dimensionSize(24); radius: Theme.radiusSize(99)
+                            color: Qt.rgba(battViewRoot.battColor.r, battViewRoot.battColor.g, battViewRoot.battColor.b, Theme.opacityValue(0.14))
+                            RowLayout { id: bChipRow; anchors.centerIn: parent; spacing: Theme.spacingSize(5)
                                 SvgIcon {
-                                    width: 14; height: 14
+                                    width: Theme.dimensionSize(14); height: Theme.dimensionSize(14)
                                     iconName: battViewRoot.battCharging ? "battery-charging"
                                         : battViewRoot.battPct <= 20 ? "battery-low"
                                         : battViewRoot.battPct <= 40 ? "battery-medium" : "battery-full"
@@ -1127,14 +1127,14 @@ Item {
                                     text: battViewRoot.battCharging ? "Charging"
                                         : battViewRoot.battPct <= 20 ? "Low battery" : "On battery"
                                     color: battViewRoot.battColor
-                                    font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.Medium
+                                    font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightMedium
                                 }
                             }
                         }
 
                         // Stats rows (.bstats)
                         ColumnLayout {
-                            Layout.fillWidth: true; spacing: 0
+                            Layout.fillWidth: true; spacing: Theme.spacingSize(0)
                             Repeater {
                                 model: [
                                     { k: SystemService.batteryCharging ? "To full" : "Remaining", v: SystemService.batteryStatus.split("\n")[1] || "—" },
@@ -1146,11 +1146,11 @@ Item {
                                 delegate: ColumnLayout {
                                     required property var modelData
                                     required property int index
-                                    Layout.fillWidth: true; spacing: 0
-                                    Rectangle { visible: index > 0; Layout.fillWidth: true; height: 1; color: Theme.line }
+                                    Layout.fillWidth: true; spacing: Theme.spacingSize(0)
+                                    Rectangle { visible: index > 0; Layout.fillWidth: true; height: Theme.dimensionSize(1); color: Theme.line }
                                     RowLayout { Layout.fillWidth: true
-                                        Text { text: modelData.k; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; Layout.fillWidth: true }
-                                        Text { text: String(modelData.v || "—"); color: Theme.fg;   font.family: Theme.uiFont; font.pixelSize: 12; font.weight: Font.DemiBold; font.features: ({ "tnum": 1 }) }
+                                        Text { text: modelData.k; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); Layout.fillWidth: true }
+                                        Text { text: String(modelData.v || "—"); color: Theme.fg;   font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12); font.weight: Theme.fontWeightSemibold; font.features: ({ "tnum": 1 }) }
                                     }
                                 }
                             }
@@ -1159,7 +1159,7 @@ Item {
                 }
 
                 // Memory & storage heading
-                Text { text: "Memory & storage"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11 }
+                Text { text: "Memory & storage"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11) }
 
                 GridLayout {
                     Layout.fillWidth: true
@@ -1169,53 +1169,53 @@ Item {
 
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 102
+                        implicitHeight: Theme.dimensionSize(102)
                         radius: Theme.radiusCard
                         color: Theme.surfaceRaised
-                        border.width: 1
+                        border.width: Theme.dimensionSize(1)
                         border.color: Theme.line
                         ColumnLayout {
                             anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 5
+                            anchors.margins: Theme.marginSize(12)
+                            spacing: Theme.spacingSize(5)
                             RowLayout {
                                 Layout.fillWidth: true
-                                Text { text: "RAM"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium; Layout.fillWidth: true }
-                                Text { text: SystemService.memoryPercent.toFixed(0) + "%"; color: Theme.success; font.family: Theme.uiFont; font.pixelSize: 18; font.weight: Font.DemiBold }
+                                Text { text: "RAM"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium; Layout.fillWidth: true }
+                                Text { text: SystemService.memoryPercent.toFixed(0) + "%"; color: Theme.success; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(18); font.weight: Theme.fontWeightSemibold }
                             }
                             Rectangle {
-                                Layout.fillWidth: true; height: 7; radius: 4; color: Theme.line
+                                Layout.fillWidth: true; height: Theme.dimensionSize(7); radius: Theme.radiusSize(4); color: Theme.line
                                 Rectangle {
                                     width: parent.width * SystemService.memoryPercent / 100
-                                    height: parent.height; radius: 4
+                                    height: parent.height; radius: Theme.radiusSize(4)
                                     color: SystemService.memoryPercent >= 85 ? Theme.error : SystemService.memoryPercent >= 65 ? Theme.warning : Theme.success
                                 }
                             }
-                            Text { text: SystemService.memoryLabel; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Text { text: SystemService.memoryLabel; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); elide: Text.ElideRight; Layout.fillWidth: true }
                         }
                     }
 
                     Rectangle {
                         Layout.fillWidth: true
-                        implicitHeight: 102
+                        implicitHeight: Theme.dimensionSize(102)
                         radius: Theme.radiusCard
                         color: Theme.surfaceRaised
-                        border.width: 1
+                        border.width: Theme.dimensionSize(1)
                         border.color: Theme.line
                         ColumnLayout {
                             anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 5
+                            anchors.margins: Theme.marginSize(12)
+                            spacing: Theme.spacingSize(5)
                             RowLayout {
                                 Layout.fillWidth: true
-                                Text { text: "CPU"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium; Layout.fillWidth: true }
-                                Text { text: SystemService.cpuPercent.toFixed(0) + "%"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 18; font.weight: Font.DemiBold }
+                                Text { text: "CPU"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium; Layout.fillWidth: true }
+                                Text { text: SystemService.cpuPercent.toFixed(0) + "%"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(18); font.weight: Theme.fontWeightSemibold }
                             }
                             Rectangle {
-                                Layout.fillWidth: true; height: 7; radius: 4; color: Theme.line
-                                Rectangle { width: parent.width * SystemService.cpuPercent / 100; height: parent.height; radius: 4; color: Theme.acc }
+                                Layout.fillWidth: true; height: Theme.dimensionSize(7); radius: Theme.radiusSize(4); color: Theme.line
+                                Rectangle { width: parent.width * SystemService.cpuPercent / 100; height: parent.height; radius: Theme.radiusSize(4); color: Theme.acc }
                             }
-                            Text { text: SystemService.cpuModel; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Text { text: SystemService.cpuModel; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); elide: Text.ElideRight; Layout.fillWidth: true }
                         }
                     }
 
@@ -1224,25 +1224,25 @@ Item {
                         delegate: Rectangle {
                             required property var modelData
                             Layout.fillWidth: true
-                            implicitHeight: 102
+                            implicitHeight: Theme.dimensionSize(102)
                             radius: Theme.radiusCard
                             color: Theme.surfaceRaised
-                            border.width: 1
+                            border.width: Theme.dimensionSize(1)
                             border.color: Theme.line
                             ColumnLayout {
                                 anchors.fill: parent
-                                anchors.margins: 12
-                                spacing: 5
+                                anchors.margins: Theme.marginSize(12)
+                                spacing: Theme.spacingSize(5)
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    Text { text: modelData.kind === "Discrete" ? "dGPU" : modelData.kind === "Integrated" ? "iGPU" : "GPU"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium; Layout.fillWidth: true }
-                                    Text { text: modelData.sleeping ? "—" : Math.round(modelData.load || 0) + "%"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 18; font.weight: Font.DemiBold }
+                                    Text { text: modelData.kind === "Discrete" ? "dGPU" : modelData.kind === "Integrated" ? "iGPU" : "GPU"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium; Layout.fillWidth: true }
+                                    Text { text: modelData.sleeping ? "—" : Math.round(modelData.load || 0) + "%"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(18); font.weight: Theme.fontWeightSemibold }
                                 }
                                 Rectangle {
-                                    Layout.fillWidth: true; height: 7; radius: 4; color: Theme.line
-                                    Rectangle { width: parent.width * Math.max(0, Math.min(100, Number(modelData.load || 0))) / 100; height: parent.height; radius: 4; color: Theme.acc }
+                                    Layout.fillWidth: true; height: Theme.dimensionSize(7); radius: Theme.radiusSize(4); color: Theme.line
+                                    Rectangle { width: parent.width * Math.max(0, Math.min(100, Number(modelData.load || 0))) / 100; height: parent.height; radius: Theme.radiusSize(4); color: Theme.acc }
                                 }
-                                Text { text: modelData.name || "GPU"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; elide: Text.ElideRight; Layout.fillWidth: true }
+                                Text { text: modelData.name || "GPU"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); elide: Text.ElideRight; Layout.fillWidth: true }
                             }
                         }
                     }
@@ -1250,70 +1250,70 @@ Item {
                     Rectangle {
                         Layout.columnSpan: 2
                         Layout.fillWidth: true
-                        implicitHeight: 86
+                        implicitHeight: Theme.dimensionSize(86)
                         radius: Theme.radiusCard
                         color: Theme.surfaceRaised
-                        border.width: 1
+                        border.width: Theme.dimensionSize(1)
                         border.color: Theme.line
                         ColumnLayout {
                             anchors.fill: parent
-                            anchors.margins: 12
-                            spacing: 5
+                            anchors.margins: Theme.marginSize(12)
+                            spacing: Theme.spacingSize(5)
                             RowLayout {
                                 Layout.fillWidth: true
-                                Text { text: "SSD"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.Medium; Layout.fillWidth: true }
-                                Text { text: SystemService.storageAvailable ? SystemService.storagePercent.toFixed(0) + "%" : "—"; color: Theme.success; font.family: Theme.uiFont; font.pixelSize: 18; font.weight: Font.DemiBold }
+                                Text { text: "SSD"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); font.weight: Theme.fontWeightMedium; Layout.fillWidth: true }
+                                Text { text: SystemService.storageAvailable ? SystemService.storagePercent.toFixed(0) + "%" : "—"; color: Theme.success; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(18); font.weight: Theme.fontWeightSemibold }
                             }
                             Rectangle {
-                                Layout.fillWidth: true; height: 7; radius: 4; color: Theme.line
-                                Rectangle { width: parent.width * SystemService.storagePercent / 100; height: parent.height; radius: 4; color: Theme.success }
+                                Layout.fillWidth: true; height: Theme.dimensionSize(7); radius: Theme.radiusSize(4); color: Theme.line
+                                Rectangle { width: parent.width * SystemService.storagePercent / 100; height: parent.height; radius: Theme.radiusSize(4); color: Theme.success }
                             }
-                            Text { text: SystemService.storageLabel; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 9; elide: Text.ElideRight; Layout.fillWidth: true }
+                            Text { text: SystemService.storageLabel; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9); elide: Text.ElideRight; Layout.fillWidth: true }
                         }
                     }
                 }
 
                 // Fan section
-                Text { text: "Cooling fan"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11 }
+                Text { text: "Cooling fan"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11) }
                 RowLayout {
-                    Layout.fillWidth: true; spacing: 12
+                    Layout.fillWidth: true; spacing: Theme.spacingSize(12)
 
                     // Spinning fan icon
                     Rectangle {
-                        implicitWidth: 52; implicitHeight: 52; radius: 26
-                        border.width: 2; border.color: Theme.line; color: "transparent"
+                        implicitWidth: Theme.dimensionSize(52); implicitHeight: Theme.dimensionSize(52); radius: Theme.radiusSize(26)
+                        border.width: Theme.dimensionSize(2); border.color: Theme.line; color: "transparent"
                         SvgIcon {
-                            anchors.centerIn: parent; width: 30; height: 30
+                            anchors.centerIn: parent; width: Theme.dimensionSize(30); height: Theme.dimensionSize(30)
                             iconName: "fan"; tone: "accent"
                             RotationAnimation on rotation {
                                 running: SystemService.fanAvailable && SystemService.fanRpm > 0
                                 loops: Animation.Infinite; from: 0; to: 360
-                                duration: SystemService.fanRpm > 0 ? Math.round(60000 / SystemService.fanRpm * 4) : 2000
+                                duration: SystemService.fanRpm > Theme.duration(0) ? Math.round(Theme.duration(60000) / SystemService.fanRpm * Theme.duration(4)) : Theme.duration(2000)
                             }
                         }
                     }
 
-                    ColumnLayout { Layout.fillWidth: true; spacing: 2
+                    ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(2)
                         Text {
                             text: SystemService.fanAvailable ? Math.round(SystemService.fanRpm) + " RPM" : "—"
-                            color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 22; font.weight: Font.DemiBold; font.features: ({ "tnum": 1 })
+                            color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(22); font.weight: Theme.fontWeightSemibold; font.features: ({ "tnum": 1 })
                         }
                         Text {
                             text: SystemService.cpuTemperatureText ? "Auto · " + SystemService.cpuTemperatureText : "Auto"
-                            color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11
+                            color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11)
                         }
                     }
                 }
 
                 RowLayout {
-                    Layout.fillWidth: true; spacing: 8
+                    Layout.fillWidth: true; spacing: Theme.spacingSize(8)
                     Item { Layout.fillWidth: true }
-                    Rectangle { implicitWidth: 58; implicitHeight: 28; radius: 9; color: Theme.surfaceRaised; border.width: 1; border.color: Theme.line
-                        Text { anchors.centerIn: parent; text: "Max"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 10; font.weight: Font.Medium }
+                    Rectangle { implicitWidth: Theme.dimensionSize(58); implicitHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(9); color: Theme.surfaceRaised; border.width: Theme.dimensionSize(1); border.color: Theme.line
+                        Text { anchors.centerIn: parent; text: "Max"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); font.weight: Theme.fontWeightMedium }
                         MouseArea { anchors.fill: parent; onClicked: { } }
                     }
-                    Rectangle { implicitWidth: 58; implicitHeight: 28; radius: 9; color: Theme.acc; border.width: 1; border.color: Theme.acc
-                        Text { anchors.centerIn: parent; text: "Auto"; color: Theme.background; font.family: Theme.uiFont; font.pixelSize: 10; font.weight: Font.Medium }
+                    Rectangle { implicitWidth: Theme.dimensionSize(58); implicitHeight: Theme.dimensionSize(28); radius: Theme.radiusSize(9); color: Theme.acc; border.width: Theme.dimensionSize(1); border.color: Theme.acc
+                        Text { anchors.centerIn: parent; text: "Auto"; color: Theme.background; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(10); font.weight: Theme.fontWeightMedium }
                         MouseArea { anchors.fill: parent; onClicked: { } }
                     }
                 }
@@ -1336,18 +1336,18 @@ Item {
         }
 
         ColumnLayout {
-            anchors.fill: parent; anchors.margins: 18; spacing: 12
+            anchors.fill: parent; anchors.margins: Theme.marginSize(18); spacing: Theme.spacingSize(12)
 
             // Header (back)
-            Rectangle { implicitHeight: 40; implicitWidth: calBackRow.implicitWidth + 20; radius: 12; color: calBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                RowLayout { id: calBackRow; anchors.centerIn: parent; spacing: 6; SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" } Text { text: "Calendar"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont } }
+            Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: calBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: calBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                RowLayout { id: calBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "Calendar"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
                 MouseArea { id: calBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
             }
 
             // Big time + date
-            ColumnLayout { Layout.fillWidth: true; spacing: 2
-                Text { text: Qt.formatTime(ShellState.now, "HH:mm:ss"); color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 40; font.weight: Font.Light; font.letterSpacing: -1 }
-                Text { text: Qt.formatDate(ShellState.now, "dddd, MMMM d, yyyy"); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12 }
+            ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(2)
+                Text { text: Qt.formatTime(ShellState.now, "HH:mm:ss"); color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(40); font.weight: Theme.fontWeightLight; font.letterSpacing: Theme.letterSpacingValue(-1) }
+                Text { text: Qt.formatDate(ShellState.now, "dddd, MMMM d, yyyy"); color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
             }
 
             // Month nav row
@@ -1355,17 +1355,17 @@ Item {
                 Layout.fillWidth: true
                 Text {
                     text: Qt.formatDate(calViewRoot.calMonth, "MMMM yyyy")
-                    color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 14; font.weight: Font.DemiBold
+                    color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(14); font.weight: Theme.fontWeightSemibold
                     Layout.fillWidth: true
                 }
-                Rectangle { implicitWidth: 36; implicitHeight: 36; radius: 10; color: prevMonHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "chevron-left"; tone: "fg" }
+                Rectangle { implicitWidth: Theme.dimensionSize(36); implicitHeight: Theme.dimensionSize(36); radius: Theme.radiusSize(10); color: prevMonHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                    SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" }
                     MouseArea { id: prevMonHov; anchors.fill: parent; hoverEnabled: true
                         onClicked: calViewRoot.calMonth = new Date(calViewRoot.calMonth.getFullYear(), calViewRoot.calMonth.getMonth() - 1, 1)
                     }
                 }
-                Rectangle { implicitWidth: 36; implicitHeight: 36; radius: 10; color: nextMonHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    SvgIcon { anchors.centerIn: parent; width: 16; height: 16; iconName: "chevron-right"; tone: "fg" }
+                Rectangle { implicitWidth: Theme.dimensionSize(36); implicitHeight: Theme.dimensionSize(36); radius: Theme.radiusSize(10); color: nextMonHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                    SvgIcon { anchors.centerIn: parent; width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-right"; tone: "fg" }
                     MouseArea { id: nextMonHov; anchors.fill: parent; hoverEnabled: true
                         onClicked: calViewRoot.calMonth = new Date(calViewRoot.calMonth.getFullYear(), calViewRoot.calMonth.getMonth() + 1, 1)
                     }
@@ -1375,7 +1375,7 @@ Item {
             // Calendar grid (.cg) — 7 columns
             Grid {
                 Layout.fillWidth: true
-                columns: 7; spacing: 2
+                columns: 7; spacing: Theme.spacingSize(2)
                 property int cellSize: Math.floor((parent.width - 12) / 7)
 
                 // Weekday headers
@@ -1383,15 +1383,15 @@ Item {
                     model: ["M","T","W","T","F","S","S"]
                     delegate: Item {
                         required property string modelData
-                        width: parent.cellSize; height: 24
-                        Text { anchors.centerIn: parent; text: modelData; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11 }
+                        width: parent.cellSize; height: Theme.dimensionSize(24)
+                        Text { anchors.centerIn: parent; text: modelData; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11) }
                     }
                 }
 
                 // Offset blank cells
                 Repeater {
                     model: calViewRoot.monthOffset(calViewRoot.calMonth)
-                    delegate: Item { width: parent.cellSize; height: 36 }
+                    delegate: Item { width: parent.cellSize; height: Theme.dimensionSize(36) }
                 }
 
                 // Day cells
@@ -1400,18 +1400,18 @@ Item {
                     delegate: Item {
                         required property int index
                         property bool itIsToday: calViewRoot.isToday(calViewRoot.calMonth.getFullYear(), calViewRoot.calMonth.getMonth(), index + 1)
-                        width: parent.cellSize; height: 36
+                        width: parent.cellSize; height: Theme.dimensionSize(36)
 
                         Rectangle {
                             anchors.centerIn: parent
-                            width: 32; height: 32; radius: 16
+                            width: Theme.dimensionSize(32); height: Theme.dimensionSize(32); radius: Theme.radiusSize(16)
                             color: itIsToday ? Theme.acc : "transparent"
                         }
                         Text {
                             anchors.centerIn: parent
                             text: String(index + 1)
                             color: itIsToday ? Theme.islandBg : Theme.fg
-                            font.family: Theme.uiFont; font.pixelSize: 13; font.weight: itIsToday ? Font.DemiBold : Font.Normal
+                            font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: itIsToday ? Theme.fontWeightSemibold : Theme.fontWeightRegular
                             font.features: ({ "tnum": 1 })
                         }
                     }
@@ -1425,21 +1425,21 @@ Item {
     // ════════════════════════════════════════════════════════════════════════
     component AlertsView: Item {
         ColumnLayout {
-            anchors.fill: parent; anchors.margins: 18; spacing: 10
+            anchors.fill: parent; anchors.margins: Theme.marginSize(18); spacing: Theme.spacingSize(10)
 
             // Header: back + Clear all
             RowLayout {
                 Layout.fillWidth: true
-                Rectangle { implicitHeight: 40; implicitWidth: alBackRow.implicitWidth + 20; radius: 12; color: alBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    RowLayout { id: alBackRow; anchors.centerIn: parent; spacing: 6; SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" } Text { text: "Notifications"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont } }
+                Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: alBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: alBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                    RowLayout { id: alBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "Notifications"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
                     MouseArea { id: alBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                 }
                 Item { Layout.fillWidth: true }
                 Rectangle {
                     visible: NotificationService.count > 0
-                    implicitWidth: clrTxt.implicitWidth + 24; implicitHeight: 34; radius: 10
+                    implicitWidth: clrTxt.implicitWidth + 24; implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10)
                     color: clrHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                    Text { id: clrTxt; anchors.centerIn: parent; text: "Clear all"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Medium }
+                    Text { id: clrTxt; anchors.centerIn: parent; text: "Clear all"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightMedium }
                     MouseArea { id: clrHov; anchors.fill: parent; hoverEnabled: true; onClicked: NotificationService.clearAll() }
                 }
             }
@@ -1467,21 +1467,21 @@ Item {
             ScrollBar.vertical: ScrollBar { policy: ScrollBar.AsNeeded }
             ColumnLayout {
                 id: updCol; width: parent.width
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
-                spacing: 10
+                anchors { left: parent.left; right: parent.right; top: parent.top; margins: Theme.marginSize(18) }
+                spacing: Theme.spacingSize(10)
 
                 // Header: back + Install all
                 RowLayout {
                     Layout.fillWidth: true
-                    Rectangle { implicitHeight: 40; implicitWidth: updBackRow.implicitWidth + 20; radius: 12; color: updBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                        RowLayout { id: updBackRow; anchors.centerIn: parent; spacing: 6; SvgIcon { width: 16; height: 16; iconName: "chevron-left"; tone: "fg" } Text { text: "Updates"; color: Theme.fg; font.pixelSize: 16; font.weight: Font.DemiBold; font.family: Theme.uiFont } }
+                    Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: updBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: updBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                        RowLayout { id: updBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "Updates"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
                         MouseArea { id: updBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                     }
                     Item { Layout.fillWidth: true }
                     Rectangle {
                         visible: updViewRoot.pendingUpdates > 0
-                        implicitWidth: instTxt.implicitWidth + 24; implicitHeight: 34; radius: 10; color: instHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                        Text { id: instTxt; anchors.centerIn: parent; text: "Install all"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Medium }
+                        implicitWidth: instTxt.implicitWidth + 24; implicitHeight: Theme.dimensionSize(34); radius: Theme.radiusSize(10); color: instHov.containsMouse ? Theme.surfaceRaised : "transparent"
+                        Text { id: instTxt; anchors.centerIn: parent; text: "Install all"; color: Theme.acc; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightMedium }
                         MouseArea { id: instHov; anchors.fill: parent; hoverEnabled: true; onClicked: { /* wire to shell launchSystemUpdater */ } }
                     }
                 }
@@ -1489,11 +1489,11 @@ Item {
                 // Package count summary
                 Text {
                     text: updViewRoot.pendingUpdates + " packages available"
-                    color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 12
+                    color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12)
                 }
                 Text {
                     text: updViewRoot.updateTooltip
-                    color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11; wrapMode: Text.Wrap
+                    color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11); wrapMode: Text.Wrap
                     Layout.fillWidth: true
                 }
 
@@ -1502,12 +1502,12 @@ Item {
                     model: Math.min(updViewRoot.pendingUpdates, 20)
                     delegate: Rectangle {
                         required property int index
-                        Layout.fillWidth: true; implicitHeight: 48; radius: Theme.radiusCard; color: Theme.surfaceRaised
-                        RowLayout { anchors.fill: parent; anchors.margins: 12; spacing: 10
-                            SvgIcon { width: 18; height: 18; iconName: "download"; tone: "accent" }
-                            ColumnLayout { Layout.fillWidth: true; spacing: 2
-                                Text { Layout.fillWidth: true; text: "Package " + (index + 1); color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 13; font.weight: Font.Medium }
-                                Text { Layout.fillWidth: true; text: "Pending update"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 11 }
+                        Layout.fillWidth: true; implicitHeight: Theme.dimensionSize(48); radius: Theme.radiusCard; color: Theme.surfaceRaised
+                        RowLayout { anchors.fill: parent; anchors.margins: Theme.marginSize(12); spacing: Theme.spacingSize(10)
+                            SvgIcon { width: Theme.dimensionSize(18); height: Theme.dimensionSize(18); iconName: "download"; tone: "accent" }
+                            ColumnLayout { Layout.fillWidth: true; spacing: Theme.spacingSize(2)
+                                Text { Layout.fillWidth: true; text: "Package " + (index + 1); color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13); font.weight: Theme.fontWeightMedium }
+                                Text { Layout.fillWidth: true; text: "Pending update"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(11) }
                             }
                         }
                     }
@@ -1516,9 +1516,9 @@ Item {
                 // Empty state
                 ColumnLayout {
                     visible: updViewRoot.pendingUpdates === 0
-                    Layout.fillWidth: true; Layout.topMargin: 24; spacing: 8
-                    SvgIcon { Layout.alignment: Qt.AlignHCenter; width: 32; height: 32; iconName: "check"; tone: "muted"; opacity: 0.4 }
-                    Text { Layout.alignment: Qt.AlignHCenter; text: "Your system is up to date"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: 13 }
+                    Layout.fillWidth: true; Layout.topMargin: Theme.marginSize(24); spacing: Theme.spacingSize(8)
+                    SvgIcon { Layout.alignment: Qt.AlignHCenter; width: Theme.dimensionSize(32); height: Theme.dimensionSize(32); iconName: "check"; tone: "muted"; opacity: Theme.opacityValue(0.4)}
+                    Text { Layout.alignment: Qt.AlignHCenter; text: "Your system is up to date"; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(13) }
                 }
             }
         }

@@ -17,7 +17,9 @@ COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 TOKEN_LINE_RE = re.compile(
     r"^\s*--cc-([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\s*:\s*(.*?)\s*;\s*$"
 )
-NUMERIC_PX_RE = re.compile(r"^([+-]?(?:\d+(?:\.\d*)?|\.\d+))px$", re.IGNORECASE)
+NUMERIC_VALUE_RE = re.compile(
+    r"^([+-]?(?:\d+(?:\.\d*)?|\.\d+))(px|ms|s)?$", re.IGNORECASE
+)
 CSS_HEX_RE = re.compile(r"^#([0-9a-fA-F]{4}|[0-9a-fA-F]{8})$")
 
 
@@ -28,11 +30,17 @@ def camel_case(name: str) -> str:
 
 
 def qml_value(value: str) -> int | float | str:
-    """Convert CSS numeric px values and CSS alpha hex to QML-compatible JSON values."""
-    match = NUMERIC_PX_RE.fullmatch(value)
+    """Convert CSS numbers, px/ms durations, quoted strings and alpha hex to QML values."""
+    match = NUMERIC_VALUE_RE.fullmatch(value)
     if match:
         number = float(match.group(1))
+        unit = (match.group(2) or "").lower()
+        if unit == "s":
+            number *= 1000
         return int(number) if number.is_integer() else number
+
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
 
     match = CSS_HEX_RE.fullmatch(value)
     if match:

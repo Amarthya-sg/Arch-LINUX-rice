@@ -20,6 +20,15 @@ class CssTokenParserTests(unittest.TestCase):
         self.assertEqual(tokens["textTitle"], 22)
         self.assertEqual(tokens["islandBg"], "#060b12")
         self.assertEqual(tokens["outline"], "#24ffffff")
+        self.assertEqual(tokens["statusIconSize"], 18)
+        self.assertEqual(tokens["statusIconButtonSize"], 28)
+        self.assertEqual(tokens["fontFamily"], "Inter")
+        self.assertEqual(tokens["fontSize13"], 13)
+        self.assertEqual(tokens["duration200"], 200)
+        self.assertEqual(tokens["opacity014"], 0.14)
+        self.assertEqual(tokens["marginNeg3"], -3)
+        self.assertEqual(tokens["fontWeightSemibold"], 600)
+        self.assertEqual(tokens["scrollTitleRate"], 45)
 
     def test_css_alpha_hex_is_reordered_for_qt_argb(self) -> None:
         self.assertEqual(qml_value("#ffffff14"), "#14ffffff")
@@ -29,6 +38,14 @@ class CssTokenParserTests(unittest.TestCase):
         self.assertEqual(qml_value("22px"), 22)
         self.assertEqual(qml_value("1.5px"), 1.5)
         self.assertEqual(qml_value("-2px"), -2)
+        self.assertEqual(qml_value("180ms"), 180)
+        self.assertEqual(qml_value("1.5s"), 1500)
+        self.assertEqual(qml_value("0.14"), 0.14)
+        self.assertEqual(qml_value("400"), 400)
+
+    def test_quoted_font_family_becomes_plain_string(self) -> None:
+        self.assertEqual(qml_value('"Noto Sans"'), "Noto Sans")
+        self.assertEqual(qml_value("'JetBrains Mono'"), "JetBrains Mono")
 
     def test_kebab_case_becomes_camel_case(self) -> None:
         tokens = parse_css(":root {\n  --cc-surface-raised: #232327;\n}\n")

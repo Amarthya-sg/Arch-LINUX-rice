@@ -130,8 +130,8 @@ Item {
         color: Theme.fg
 
         font.family:    Theme.uiFont
-        font.pixelSize: root.hero ? 34 : 10
-        font.weight:    Font.DemiBold
+        font.pixelSize: Theme.fontSize(root.hero ? 34 : 10)
+        font.weight:    Theme.fontWeightSemibold
         // Tabular numerics (matches CSS font-variant-numeric: tabular-nums)
         font.features:  ({ "tnum": 1 })
         // Percentage sign below (hero only — rendered as separate Text)
@@ -145,10 +145,10 @@ Item {
         text: root.valueText.replace("%", "")
         color: Theme.fg
         font.family:    Theme.uiFont
-        font.pixelSize: 34
-        font.weight:    Font.DemiBold
+        font.pixelSize: Theme.fontSize(34)
+        font.weight:    Theme.fontWeightSemibold
         font.features:  ({ "tnum": 1 })
-        font.letterSpacing: -1
+        font.letterSpacing: Theme.letterSpacingValue(-1)
     }
     Text {
         visible: root.hero
@@ -158,19 +158,19 @@ Item {
         text: "%"
         color: Theme.muted
         font.family:    Theme.uiFont
-        font.pixelSize: 13
-        font.weight:    Font.Medium
+        font.pixelSize: Theme.fontSize(13)
+        font.weight:    Theme.fontWeightMedium
     }
 
     // ── Bottom label (compact mode only) ───────────────────────────────
     Text {
         visible: !root.hero && root.label !== ""
         anchors.top:              canvas.bottom
-        anchors.topMargin:        7
+        anchors.topMargin:        Theme.marginSize(7)
         anchors.horizontalCenter: parent.horizontalCenter
         text:  root.label
         color: Theme.muted
         font.family:    Theme.uiFont
-        font.pixelSize: 10
+        font.pixelSize: Theme.fontSize(10)
     }
 }
