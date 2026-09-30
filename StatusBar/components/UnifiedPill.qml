@@ -268,31 +268,29 @@ Rectangle {
         Rectangle { width: 1; height: 14; color: Theme.line; opacity: 0.5; Layout.alignment: Qt.AlignVCenter }
 
         // ── Quick Settings ───────────────────────────────────────────────
-        Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99
-            color: settHov.containsMouse ? Theme.surfaceRaised : "transparent"; Layout.alignment: Qt.AlignVCenter
-            IconImage { anchors.centerIn: parent; width: 16; height: 16; source: Qt.resolvedUrl("../icons/sliders-horizontal-muted.svg") }
-            MouseArea { id: settHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("main") } }
+        Item {
+            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
+            IconImage { anchors.centerIn: parent; width: 18; height: 18; source: Qt.resolvedUrl("../icons/status-settings.svg") }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("main") } }
         }
 
         // ── Battery (icon + %) ───────────────────────────────────────────
-        Rectangle {
-            implicitWidth: battRow.implicitWidth + 16; implicitHeight: 28; radius: 99
-            color: battHov.containsMouse ? Theme.surfaceRaised : "transparent"; Layout.alignment: Qt.AlignVCenter
+        Item {
+            implicitWidth: battRow.implicitWidth + 16; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
             Row {
                 id: battRow; anchors.centerIn: parent; spacing: 4
                 IconImage {
-                    width: 16; height: 16; anchors.verticalCenter: parent.verticalCenter
-                    source: Qt.resolvedUrl(root.batteryCharging ? "../icons/battery-charging-success.svg"
-                        : root.batteryPercent < 0 ? "../icons/battery-muted.svg"
-                        : root.batteryPercent <= 15 ? "../icons/battery-low-error.svg"
-                        : root.batteryPercent < 40 ? "../icons/battery-medium-muted.svg"
-                        : "../icons/battery-full-muted.svg")
+                    width: 18; height: 18; anchors.verticalCenter: parent.verticalCenter
+                    source: Qt.resolvedUrl(root.batteryCharging ? "../icons/status-battery-charging.svg"
+                        : root.batteryPercent < 0 ? "../icons/status-battery-unknown.svg"
+                        : root.batteryPercent <= 15 ? "../icons/status-battery-low.svg"
+                        : root.batteryPercent < 40 ? "../icons/status-battery-medium.svg"
+                        : "../icons/status-battery-full.svg")
                 }
                 Text { text: root.batteryPercent < 0 ? "n/a" : root.batteryPercent + "%"; color: Theme.fg; font.family: Theme.uiFont; font.pixelSize: 11; font.weight: Font.DemiBold; font.features: ({ "tnum": 1 }); anchors.verticalCenter: parent.verticalCenter }
                 LockBadge { active: LockKeysService.numLock; anchors.verticalCenter: parent.verticalCenter }
             }
-            MouseArea { id: battHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("batt") } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.openControlCenter("batt") } }
         }
 
         // ── Wi-Fi ────────────────────────────────────────────────────────
@@ -365,22 +363,20 @@ Rectangle {
         Item {
             visible: root.pendingUpdates > 0
             implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
-            Rectangle { anchors.fill: parent; radius: 99; color: updHov.containsMouse ? Theme.surfaceRaised : "transparent" }
-            IconImage { anchors.centerIn: parent; width: 16; height: 16; source: Qt.resolvedUrl("../icons/download-fg.svg") }
+            IconImage { anchors.centerIn: parent; width: 18; height: 18; source: Qt.resolvedUrl("../icons/status-download.svg") }
             Rectangle {
                 anchors.right: parent.right; anchors.top: parent.top; anchors.rightMargin: -3; anchors.topMargin: -3
                 width: Math.max(13, updBadgeTxt.implicitWidth + 5); height: 13; radius: 7; color: Theme.acc
                 Text { id: updBadgeTxt; anchors.centerIn: parent; text: root.pendingUpdates > 99 ? "99+" : String(root.pendingUpdates); color: Theme.islandBg; font.family: Theme.uiFont; font.pixelSize: 7; font.weight: Font.Bold }
             }
-            MouseArea { id: updHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.updatesClicked() } }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.updatesClicked() } }
         }
 
         // ── Power ────────────────────────────────────────────────────────
-        Rectangle {
-            implicitWidth: 28; implicitHeight: 28; radius: 99
-            color: pwrHov.containsMouse ? Theme.surfaceRaised : "transparent"; Layout.alignment: Qt.AlignVCenter
-            IconImage { anchors.centerIn: parent; width: 16; height: 16; source: Qt.resolvedUrl("../icons/power-muted.svg") }
-            MouseArea { id: pwrHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.powerClicked() } }
+        Item {
+            implicitWidth: 28; implicitHeight: 28; Layout.alignment: Qt.AlignVCenter
+            IconImage { anchors.centerIn: parent; width: 18; height: 18; source: Qt.resolvedUrl("../icons/status-power.svg") }
+            MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: (e) => { e.accepted = true; root.powerClicked() } }
         }
     }
 

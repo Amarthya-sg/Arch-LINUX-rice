@@ -4,13 +4,30 @@ import Quickshell.Io
 
 QtObject {
     id: root
-    property bool enabled: inhibitor.running
-    property Process inhibitor: Process {
-        command: ["systemd-inhibit", "--what=idle:sleep", "--who=Odyssey", "--why=Keep awake", "sleep", "infinity"]
-        running: false
-    }
+
+    // True while the shell holds a systemd inhibitor against idle and sleep.
+    property bool active: false
+    readonly property bool enabled: active
 
     function toggle(): void {
-        inhibitor.running = !inhibitor.running
+        root.setActive(!root.active)
+    }
+
+    function setActive(value): void {
+        root.active = Boolean(value)
+    }
+
+    // The child process holds the block inhibitor until active is cleared.
+    property Process inhibitor: Process {
+        command: ["systemd-inhibit", "--what=idle:sleep",
+                  "--who=quickshell", "--why=Caffeine mode",
+                  "--mode=block", "sleep", "infinity"]
+        running: root.active
+        onExited: (code, status) => {
+            if (root.active) {
+                root.active = false
+                console.warn("[Caffeine] systemd inhibitor exited; code=", code, "status=", status)
+            }
+        }
     }
 }
