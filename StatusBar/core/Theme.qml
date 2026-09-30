@@ -105,11 +105,12 @@ QtObject {
     function letterSpacingValue(value: real): real { return numericStyleValue("letterSpacing", value) }
 
     function reloadCssTokens(): void {
-        cssParser.exec([
+        cssParser.command = [
             "python3",
             Quickshell.shellPath("core/parse_css_tokens.py"),
             Quickshell.shellPath("style.css")
-        ])
+        ]
+        cssParser.running = true
     }
 
     function applyCssTokens(output: string): void {
@@ -173,14 +174,8 @@ QtObject {
         }
     }
 
-    property FileView cssWatcher: FileView {
-        id: cssWatcher
-        path: Quickshell.shellPath("style.css")
-        watchChanges: true
-        onLoaded: root.reloadCssTokens()
-        onFileChanged: cssWatcher.reload()
-    }
-
+    // cssParser MUST be declared before cssWatcher so it is fully
+    // constructed when cssWatcher.onLoaded fires and calls reloadCssTokens().
     property Process cssParser: Process {
         id: cssParser
         command: []
@@ -198,5 +193,13 @@ QtObject {
                 console.warn("[Theme]", root.loadError)
             }
         }
+    }
+
+    property FileView cssWatcher: FileView {
+        id: cssWatcher
+        path: Quickshell.shellPath("style.css")
+        watchChanges: true
+        onLoaded: root.reloadCssTokens()
+        onFileChanged: cssWatcher.reload()
     }
 }
