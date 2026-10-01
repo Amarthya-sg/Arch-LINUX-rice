@@ -1,0 +1,86 @@
+:root {
+  /* Core palette: every color is unique.
+     Design idea: warm near-black surfaces, light icons for contrast,
+     and red reserved for accents (primary, active, power, alerts). */
+  --cc-background: #0f0d0e;
+  --cc-surface: #171415;
+  --cc-surface-raised: #211c1e;
+  --cc-surface-hover: #2d2629;
+  --cc-outline: #ffffff1a;
+  --cc-text: #f4eeee;
+  --cc-text-muted: #a09598;
+  --cc-primary: #e5334b;
+  --cc-primary-strong: #ff5a6e;
+  --cc-success: #34c17b;
+  --cc-warning: #e8ac3a;
+  --cc-error: #f0505f;
+  --cc-island-bg: #060505;
+  --cc-island-accent: #ee3a52;
+  --cc-island-accent-strong: #ff8896;
+  --cc-island-muted: #b3a8ab;
+  --cc-island-muted-dim: #6a5f62;
+
+  /* SVG icon colors: one unique color per icon. */
+  --cc-icon-menu: #e9e2e3;
+  --cc-icon-settings: #ddd5d7;
+  --cc-icon-wifi: #f1eaeb;
+  --cc-icon-wifi-slash: #6f6467;
+  --cc-icon-bluetooth: #ece5e6;
+  --cc-icon-bluetooth-slash: #6b6063;
+  --cc-icon-volume-2: #e6dedf;
+  --cc-icon-volume-2-slash: #675c5f;
+  --cc-icon-bell: #e2dadc;
+  --cc-icon-bell-slash: #63585b;
+  --cc-icon-coffee: #e9b877;
+  --cc-icon-coffee-slash: #5f5457;
+  --cc-icon-battery: #d8cfd1;
+  --cc-icon-battery-slash: #5b5053;
+  --cc-icon-battery-charging: #3ecb86;
+  --cc-icon-battery-full: #4ad091;
+  --cc-icon-battery-medium: #ecb444;
+  --cc-icon-battery-low: #f04a5b;
+  --cc-icon-moon: #d3c6de;
+  --cc-icon-sun: #f0c35c;
+  --cc-icon-map-pin: #f28b7d;
+  --cc-icon-screen-share: #dbd3d5;
+  --cc-icon-chevron-left: #b8adb0;
+  --cc-icon-chevron-right: #b1a6a9;
+  --cc-icon-play: #ef4258;
+  --cc-icon-pause: #e93d54;
+  --cc-icon-download: #efe7e8;
+  --cc-icon-check: #38c47f;
+  --cc-icon-success: #30b874;
+  --cc-icon-warning: #e2a637;
+  --cc-icon-error: #e8465a;
+  --cc-icon-fg: #f8f3f3;
+  --cc-icon-muted: #8b8083;
+  --cc-icon-accent: #e63950;
+  --cc-icon-ink: #1a0a0d;
+  --cc-icon-slash: #524a4c;
+  --cc-icon-bell-dot: #ff4d63;
+  --cc-icon-music-2: #cbb9c2;
+  --cc-icon-app-window: #c4bbbd;
+
+  /* Top-bar SVG assets: one unique color per icon. */
+  --cc-icon-status-settings: #d5cdcf;
+  --cc-icon-status-battery-charging: #37c580;
+  --cc-icon-status-battery-unknown: #7c7174;
+  --cc-icon-status-battery-low: #ec4a5b;
+  --cc-icon-status-battery-medium: #e5ac3c;
+  --cc-icon-status-battery-full: #43ca8a;
+  --cc-icon-status-wifi-on: #ebe4e5;
+  --cc-icon-status-wifi-on-slash: #6d6265;
+  --cc-icon-status-bluetooth-on: #e7dfe0;
+  --cc-icon-status-bluetooth-on-slash: #695e61;
+  --cc-icon-status-sound-on: #e1d9da;
+  --cc-icon-status-sound-on-slash: #655a5d;
+  --cc-icon-status-bell-on: #ddd5d6;
+  --cc-icon-status-bell-on-slash: #61565a;
+  --cc-icon-status-coffee-on: #e4b273;
+  --cc-icon-status-coffee-on-slash: #5d5255;
+  --cc-icon-status-download: #eae2e3;
+  --cc-icon-status-power: #f0384f;
+  --cc-workspace-active: #e8384f;
+  --cc-workspace-inactive: #736869;
+  --cc-battery-text: #cfc6c8;
+}
