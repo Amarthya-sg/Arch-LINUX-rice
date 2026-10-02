@@ -1,3 +1,6 @@
 module ControlCenter.Core
 singleton ShellState 1.0 ShellState.qml
 singleton Theme 1.0 Theme.qml
+HyprWorkspaceManager 1.0 HyprWorkspaceManager.qml
+IconResolver 1.0 IconResolver.qml
+Config 1.0 Config.qml

@@ -50,7 +50,7 @@ Rectangle {
     readonly property var  previewNotification: notificationPreviewVisible
         ? NotificationService.toastList[0] : null
     readonly property int  notificationPreviewHeight:
-        Math.min(176, Math.max(52, notificationPreviewColumn.implicitHeight + 16))
+        Math.min(176, Math.max(52, notificationPreviewColumn.implicitHeight + 16 + 8))
     readonly property bool mediaPreviewVisible:
         MediaService.hasTrack && !notificationPreviewVisible
     property bool mediaExpanded:    false
@@ -385,11 +385,12 @@ Rectangle {
     RowLayout {
         id: notificationPreviewRow
         visible: root.notificationPreviewVisible
-        anchors.fill:        parent
+        anchors.left:   parent.left
+        anchors.right:  parent.right
+        anchors.top:    parent.top
         anchors.leftMargin:  Theme.marginSize(15)
         anchors.rightMargin: Theme.marginSize(15)
         anchors.topMargin:   Theme.marginSize(8)
-        anchors.bottomMargin: Theme.marginSize(8)
         spacing: Theme.spacingSize(9)
 
         Rectangle {
@@ -439,6 +440,13 @@ Rectangle {
             color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(9)
         }
         SvgIcon { width: Theme.dimensionSize(14); height: Theme.dimensionSize(14); Layout.alignment: Qt.AlignVCenter; iconName: "chevron-right"; tone: "muted" }
+    }
+
+    // Bottom padding spacer for notification preview
+    Item {
+        visible: root.notificationPreviewVisible
+        anchors.bottom: parent.bottom
+        height: Theme.marginSize(8)
     }
 
     // ════════════════════════════════════════════════════════════════════

@@ -1,0 +1,8 @@
+module ControlCenter.Components.Pill
+PillWorkspaceDots 1.0 PillWorkspaceDots.qml
+PillNowPlaying 1.0 PillNowPlaying.qml
+PillClock 1.0 PillClock.qml
+PillStatusRow 1.0 PillStatusRow.qml
+PillNotificationPreview 1.0 PillNotificationPreview.qml
+PillMediaPopover 1.0 PillMediaPopover.qml
+PillWindowList 1.0 PillWindowList.qml
