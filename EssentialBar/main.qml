@@ -160,7 +160,10 @@ Scope {
     }
     property var _statTimer2: Timer {
         id: statPollTimer
-        interval: 2500; repeat: true; running: false; triggeredOnStart: true
+        interval: 2500; repeat: true
+        // Poll while panel is open (keeps tile subtitle live) or on system page
+        running: ShellState.popupOpen
+        triggeredOnStart: true
         onTriggered: if (!statProc2.running) statProc2.running = true
     }
 
@@ -241,15 +244,18 @@ Scope {
 
         // Panel open/close
         property bool expanded: ShellState.popupOpen
-        onExpandedChanged: ShellState.popupOpen = expanded
+        onExpandedChanged: {
+            ShellState.popupOpen = expanded
+            // Start system stats polling as soon as the panel opens
+            // so the tile subtitle isn't 0 before visiting the system page
+            if (expanded && !statProc2.running) statProc2.running = true
+        }
 
         // Page routing — mirrors ShellState.activeView
         property string page: ShellState.activeView
         onPageChanged: {
             flick.contentY = 0
             ShellState.activeView = page
-            // start/stop the local system stats poller
-            statPollTimer.running = (page === "system")
         }
 
         // Power confirm (tap once to arm, again to execute)
@@ -409,7 +415,7 @@ Scope {
 
             Timer {
                 id:       notifDismissTimer
-                interval: 2500
+                interval: Config.notificationToastMs
                 running:  island.showingNotif
                 repeat:   false
                 onTriggered: {
@@ -417,6 +423,8 @@ Scope {
                         NotificationService.removeToast(island.activeToast.notifId)
                 }
             }
+
+            onActiveToastChanged: if (activeToast) notifDismissTimer.restart()
 
             width:  root.expanded        ? root.contentW
                   : island.showingNotif  ? Math.min(root.width - 16, 520)
@@ -497,7 +505,7 @@ Scope {
                                 text:             island.activeToast ? (island.activeToast.appName || "") : ""
                                 color:            Theme.islandMuted
                                 font.pixelSize:   10
-                                font.weight:      Font.SemiBold
+                                font.weight:      Font.DemiBold
                                 font.letterSpacing: 0.4
                                 Layout.fillWidth: true
                                 elide:            Text.ElideRight
@@ -516,7 +524,7 @@ Scope {
                                               ? (island.activeToast.summary || "") : ""
                             color:            Theme.islandAccentStrong
                             font.pixelSize:   13
-                            font.weight:      Font.SemiBold
+                            font.weight:      Font.DemiBold
                             Layout.fillWidth: true
                             wrapMode:         Text.WordWrap
                             maximumLineCount: 2
@@ -725,7 +733,7 @@ Scope {
                                    ? Theme.success
                                    : Theme.batteryText
                             font.pixelSize: 11
-                            font.weight:    Font.SemiBold
+                            font.weight:    Font.DemiBold
                         }
                     }
 
@@ -815,11 +823,13 @@ Scope {
                               ? (sysStats.uptimeSec > 0 ? "Up " + sysStats.uptimeText() : "Reading system stats…")
                         : ""
                 showSwitch: ["wifi", "bluetooth", "sound", "alerts"].indexOf(root.page) >= 0
+                showClear:  root.page === "alerts" && NotificationService.count > 0
                 checked: root.page === "wifi"      ? root.wifi
                        : root.page === "bluetooth"  ? root.bluetooth
                        : root.page === "sound"      ? root.sound
                        : root.notifications
                 onBack: { root.page = "main"; ShellState.back() }
+                onCleared: NotificationService.clearAll()
                 onToggled: function(v) {
                     if (root.page === "wifi")       { if (v !== root.wifi) NetworkService.toggleWifi() }
                     else if (root.page === "bluetooth") { if (v !== root.bluetooth) BluetoothService.toggle() }
@@ -990,7 +1000,7 @@ Scope {
                                             text:           root.trackTitle || "Unknown track"
                                             color:          Theme.text
                                             font.pixelSize: 14
-                                            font.weight:    Font.SemiBold
+                                            font.weight:    Font.DemiBold
                                             y:              (parent.height - implicitHeight) / 2
 
                                             readonly property bool needsScroll:
@@ -1237,6 +1247,7 @@ Scope {
                                 name:      modelData.appName
                                 body:      modelData.summary || modelData.body
                                 age:       NotificationService.timeAgo(modelData.timestamp)
+                                timestamp: modelData.timestamp
                                 onDismissed: NotificationService.removeNotification(modelData.notifId)
                             }
                         }
@@ -1276,7 +1287,7 @@ Scope {
                     // ──── Wi-Fi view ──────────────────────────────────────
                     EmptyState {
                         visible: root.page === "wifi" && !root.wifi
-                        glyph: "⌁"
+                        iconName: "wifi"
                         title: "Wi-Fi is off"
                         body:  "Turn on Wi-Fi to see and join nearby networks."
                     }
@@ -1368,7 +1379,7 @@ Scope {
                     // ──── Bluetooth view ──────────────────────────────────
                     EmptyState {
                         visible: root.page === "bluetooth" && !root.bluetooth
-                        glyph: "ᛒ"
+                        iconName: "bluetooth"
                         title: "Bluetooth is off"
                         body:  "Turn on Bluetooth to connect headphones, keyboards and more."
                     }
@@ -1391,6 +1402,7 @@ Scope {
                             }
                         }
                         ScanBar { width: parent.width; active: root.btScanning }
+                        BluetoothPairPrompt { width: parent.width; height: implicitHeight }
 
                         Text {
                             visible:        BluetoothService.connectedDevices.length > 0
@@ -1457,6 +1469,7 @@ Scope {
                             name:     modelData.appName
                             body:     modelData.summary || modelData.body
                             age:      NotificationService.timeAgo(modelData.timestamp)
+                            timestamp: modelData.timestamp
                             onDismissed: NotificationService.removeNotification(modelData.notifId)
                         }
                     }
@@ -2140,12 +2153,14 @@ Scope {
         }
 
         component NotificationCard: Rectangle {
-            property string name: "Name"
-            property string body: "Message"
-            property string age:  "now"
+            property string name:      "Name"
+            property string body:      "Message"
+            property string age:       "now"
+            property real   timestamp: 0
             signal dismissed()
             width: parent ? parent.width : 0
-            height: 64; radius: 22; antialiasing: true
+            height: notifCardCol.implicitHeight + 20
+            radius: 22; antialiasing: true
             color:  Theme.surfaceRaised
 
             RowLayout {
@@ -2153,17 +2168,32 @@ Scope {
                 Rectangle {
                     width: 32; height: 32; radius: 16
                     color: Theme.surface
+                    Layout.alignment: Qt.AlignTop; Layout.topMargin: 2
                     Text { anchors.centerIn: parent; text: "◌"; color: Theme.primary; font.pixelSize: 16 }
                 }
                 ColumnLayout {
-                    Layout.fillWidth: true; spacing: 2
-                    Text { text: "Messages · " + age; color: Theme.muted; font.pixelSize: 11 }
-                    Text { text: name; color: Theme.text; font.pixelSize: 13; font.bold: true }
+                    id: notifCardCol
+                    Layout.fillWidth: true; spacing: 3
+                    // App name row with clock time on the right
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Text { text: name; color: Theme.text; font.pixelSize: 13; font.bold: true; Layout.fillWidth: true; elide: Text.ElideRight }
+                        Text {
+                            text: timestamp > 0
+                                  ? Qt.formatTime(new Date(timestamp), "h:mm AP")
+                                  : age
+                            color: Theme.muted; font.pixelSize: 10
+                        }
+                    }
+                    // Relative age
+                    Text { text: age; color: Theme.muted; font.pixelSize: 10 }
+                    // Body
                     Text {
                         text:             body
                         color:            Theme.muted
                         font.pixelSize:   11
-                        elide:            Text.ElideRight
+                        wrapMode:         Text.WordWrap
+                        maximumLineCount: 2
                         Layout.fillWidth: true
                     }
                 }
@@ -2221,19 +2251,28 @@ Scope {
             id: sw
             property bool checked: false
             signal toggled(bool value)
+            // Optimistic: flips immediately on tap, syncs back when service confirms
+            property bool _optimistic: checked
+            onCheckedChanged: _optimistic = checked
             implicitWidth: 52; implicitHeight: 30
             radius: height / 2; antialiasing: true
-            color: checked ? Theme.primary : Theme.surface
-            Behavior on color { ColorAnimation { duration: 140 } }
+            color: sw._optimistic ? Theme.primary : Theme.surface
+            Behavior on color { ColorAnimation { duration: 80 } }
             Rectangle {
-                width:  sw.checked ? 22 : 16; height: width; radius: width / 2; antialiasing: true
+                width:  sw._optimistic ? 22 : 16; height: width; radius: width / 2; antialiasing: true
                 anchors.verticalCenter: parent.verticalCenter
-                x: sw.checked ? sw.width - width - 4 : 7
-                color: sw.checked ? Theme.background : Theme.muted
-                Behavior on x     { NumberAnimation { duration: 140; easing.type: Easing.OutCubic } }
-                Behavior on width { NumberAnimation { duration: 140 } }
+                x: sw._optimistic ? sw.width - width - 4 : 7
+                color: sw._optimistic ? Theme.background : Theme.muted
+                Behavior on x     { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+                Behavior on width { NumberAnimation { duration: 100 } }
             }
-            MouseArea { anchors.fill: parent; onClicked: sw.toggled(!sw.checked) }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    sw._optimistic = !sw._optimistic   // instant visual flip
+                    sw.toggled(!sw.checked)             // fire the real toggle
+                }
+            }
         }
 
         component PageHeader: RowLayout {
@@ -2242,8 +2281,10 @@ Scope {
             property string subtitle:   ""
             property bool   showSwitch: false
             property bool   checked:    false
+            property bool   showClear:  false
             signal back()
             signal toggled(bool value)
+            signal cleared()
             spacing: 12
 
             Rectangle {
@@ -2267,6 +2308,30 @@ Scope {
                     Layout.fillWidth: true
                 }
             }
+            // Clear all button — shown on alerts page
+            Rectangle {
+                visible: ph.showClear
+                Layout.preferredHeight: 30
+                implicitWidth: clearTxt.implicitWidth + 20
+                radius: 15; antialiasing: true
+                color: clearHov.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
+                Behavior on color { ColorAnimation { duration: 100 } }
+                Text {
+                    id: clearTxt
+                    anchors.centerIn: parent
+                    text:           "Clear all"
+                    color:          Theme.muted
+                    font.pixelSize: 12
+                }
+                MouseArea {
+                    id:           clearHov
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked:    ph.cleared()
+                }
+            }
+            Item { Layout.preferredWidth: 8; visible: ph.showSwitch }
+            // DND toggle — rightmost
             ToggleSwitch {
                 visible: ph.showSwitch
                 Layout.preferredWidth: 52; Layout.preferredHeight: 30
@@ -2298,9 +2363,10 @@ Scope {
         }
 
         component EmptyState: Rectangle {
-            property string glyph: ""
-            property string title: ""
-            property string body:  ""
+            property string glyph:    ""
+            property string iconName: ""
+            property string title:    ""
+            property string body:     ""
             width:  parent ? parent.width : 0
             height: 164; radius: 22; antialiasing: true; color: Theme.surfaceRaised
 
@@ -2311,7 +2377,22 @@ Scope {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 52; Layout.preferredHeight: 52
                     radius: 26; antialiasing: true; color: Theme.surface
-                    Text { anchors.centerIn: parent; text: glyph; color: Theme.muted; font.pixelSize: 24 }
+
+                    // SVG icon if iconName provided, text glyph fallback
+                    SvgIcon {
+                        anchors.centerIn: parent
+                        width: 28; height: 28
+                        iconName: parent.parent.parent.iconName
+                        tone: "muted"
+                        visible: parent.parent.parent.iconName !== ""
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        text:    glyph
+                        color:   Theme.muted
+                        font.pixelSize: 24
+                        visible: iconName === ""
+                    }
                 }
                 Text { Layout.alignment: Qt.AlignHCenter; text: title; color: Theme.text;  font.pixelSize: 15 }
                 Text {
@@ -2569,7 +2650,12 @@ Scope {
                     Rectangle {
                         Layout.preferredWidth: 40; Layout.preferredHeight: 40; radius: 20; antialiasing: true
                         color: dr.connected ? Theme.primary : Theme.surface
-                        Text { anchors.centerIn: parent; text: dr.glyphs[dr.kind] || "ᛒ"; color: dr.connected ? Theme.background : Theme.muted; font.pixelSize: 18 }
+                        SvgIcon {
+                            anchors.centerIn: parent
+                            width: 20; height: 20
+                            iconName: "bluetooth"
+                            tone: dr.connected ? "ink" : "muted"
+                        }
                     }
                     ColumnLayout {
                         Layout.fillWidth: true; spacing: 1
@@ -2932,4 +3018,3 @@ Scope {
 
     }  // end PanelWindow
 }  // end Scope
-
