@@ -464,7 +464,7 @@ Scope {
                     anchors.rightMargin:  10
                     anchors.topMargin:    10
                     anchors.bottomMargin: 10
-                    spacing: 10
+                    spacing: Theme.spaceSm
 
                     // App icon / avatar
                     Rectangle {
@@ -497,7 +497,7 @@ Scope {
                     // Message text
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 3
+                        spacing: Theme.spaceXxs
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -515,7 +515,7 @@ Scope {
                                                 ? NotificationService.timeAgo(island.activeToast.timestamp)
                                                 : ""
                                 color:          Theme.islandMutedDim
-                                font.pixelSize: 10
+                                font.pixelSize: Theme.textMicro
                             }
                         }
 
@@ -552,7 +552,7 @@ Scope {
                         radius: 12
                         color:  dismissHov.containsMouse ? Theme.surfaceHover : Theme.surface
                         Behavior on color { ColorAnimation { duration: 100 } }
-                        Text { anchors.centerIn: parent; text: "✕"; color: Theme.muted; font.pixelSize: 10 }
+                        Text { anchors.centerIn: parent; text: "✕"; color: Theme.muted; font.pixelSize: Theme.textMicro }
                         MouseArea {
                             id:           dismissHov
                             anchors.fill: parent
@@ -611,7 +611,7 @@ Scope {
                         Text {
                             text:           root.timeText() + " " + root.ampmText()
                             color:          Theme.islandMuted
-                            font.pixelSize: 12
+                            font.pixelSize: Theme.textSmall
                             font.weight:    Font.DemiBold
                         }
 
@@ -643,7 +643,7 @@ Scope {
                                 // ── 3 tall pill EQ bars ───────────────────
                                 Row {
                                     id:      eqBarsRow
-                                    spacing: 3
+                                    spacing: Theme.spaceXxs
                                     anchors.verticalCenter: parent.verticalCenter
 
                                     Repeater {
@@ -699,7 +699,7 @@ Scope {
                                         id:             scrollingTitle
                                         text:           root.trackTitle
                                         color:          Theme.islandAccentStrong
-                                        font.pixelSize: 10
+                                        font.pixelSize: Theme.textMicro
                                         font.italic:    true
                                         font.weight:    Font.Medium
                                         anchors.verticalCenter: parent.verticalCenter
@@ -732,7 +732,7 @@ Scope {
                                    : root.battery >= 0 && root.battCharging
                                    ? Theme.success
                                    : Theme.batteryText
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.textCaption
                             font.weight:    Font.DemiBold
                         }
                     }
@@ -740,7 +740,7 @@ Scope {
                     // Workspace dots — one dot per real workspace, active dot is wider
                     Row {
                         Layout.alignment: Qt.AlignHCenter
-                        spacing: 3
+                        spacing: Theme.spaceXxs
                         Repeater {
                             model: wsManager.numberedWorkspaces
                             Rectangle {
@@ -871,25 +871,25 @@ Scope {
                             Layout.alignment: Qt.AlignVCenter
                             spacing: 5
                             Row {
-                                spacing: 6
+                                spacing: Theme.spaceXs
                                 Text {
                                     id: bigClock
                                     text:           root.timeText()
                                     color:          Theme.text
-                                    font.pixelSize: 38
+                                    font.pixelSize: Theme.textHero
                                     font.weight:    Font.Light
                                 }
                                 Text {
                                     text:           root.ampmText()
                                     color:          Theme.muted
-                                    font.pixelSize: 15
+                                    font.pixelSize: Theme.textSection
                                     anchors.baseline: bigClock.baseline
                                 }
                             }
                             Text {
                                 text:           root.dateText()
                                 color:          Theme.muted
-                                font.pixelSize: 13
+                                font.pixelSize: Theme.textBody
                             }
                         }
 
@@ -912,21 +912,21 @@ Scope {
                                     text:           root.battery >= 0 ? root.battery + "%" : "—"
                                     color:          root.battery >= 0 && root.battery <= 20 ? Theme.warning
                                                     : root.battCharging ? Theme.success : Theme.text
-                                    font.pixelSize: 22
+                                    font.pixelSize: Theme.textLarge
                                     font.weight:    Font.Medium
                                 }
                             }
                             Row {
-                                spacing: 10
+                                spacing: Theme.spaceSm
                                 Layout.alignment: Qt.AlignHCenter
                                 Text {
                                     textFormat: Text.StyledText
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.textCaption
                                     text: "<font color='" + Theme.muted + "'>CPU</font> <font color='" + Theme.primary + "'>" + Math.round(SystemService.cpuPercent) + "%</font>"
                                 }
                                 Text {
                                     textFormat: Text.StyledText
-                                    font.pixelSize: 11
+                                    font.pixelSize: Theme.textCaption
                                     text: "<font color='" + Theme.muted + "'>RAM</font> <font color='" + Theme.success + "'>" + Math.round(SystemService.memoryPercent) + "%</font>"
                                 }
                             }
@@ -941,7 +941,7 @@ Scope {
                             radius: 20; antialiasing: true
                             color: pwrArea.pressed ? Theme.surfaceHover : Theme.surfaceRaised
                             Behavior on color { ColorAnimation { duration: 110 } }
-                            Text { anchors.centerIn: parent; text: "⏻"; color: Theme.muted; font.pixelSize: 18 }
+                            Text { anchors.centerIn: parent; text: "⏻"; color: Theme.muted; font.pixelSize: Theme.statusIconSize }
                             MouseArea { id: pwrArea; anchors.fill: parent; onClicked: root.page = "power" }
                         }
                     }
@@ -951,7 +951,7 @@ Scope {
                         visible: root.playing || MediaService.hasTrack
                         width:  parent.width - 28
                         height: 176
-                        radius: 26
+                        radius: Theme.radiusPanel
                         antialiasing: true
                         color:  Theme.surfaceRaised
                         anchors.horizontalCenter: parent.horizontalCenter
@@ -966,7 +966,7 @@ Scope {
                                 spacing: 12
 
                                 Rectangle {
-                                    width: 48; height: 48; radius: 14
+                                    width: 48; height: 48; radius: Theme.radiusCard
                                     color: Theme.surface
 
                                     Image {
@@ -999,7 +999,7 @@ Scope {
                                             id:             panelScrollTitle
                                             text:           root.trackTitle || "Unknown track"
                                             color:          Theme.text
-                                            font.pixelSize: 14
+                                            font.pixelSize: Theme.textBody
                                             font.weight:    Font.DemiBold
                                             y:              (parent.height - implicitHeight) / 2
 
@@ -1048,19 +1048,19 @@ Scope {
                                 Text {
                                     text:           root.durationText(root.trackPos)
                                     color:          Theme.muted
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.textMicro
                                 }
                                 Item { Layout.fillWidth: true }
                                 Text {
                                     text:           root.durationText(root.trackLength)
                                     color:          Theme.muted
-                                    font.pixelSize: 10
+                                    font.pixelSize: Theme.textMicro
                                 }
                             }
 
                             RowLayout {
                                 Layout.alignment: Qt.AlignHCenter
-                                spacing: 14
+                                spacing: Theme.spaceMd
                                 PillButton {
                                     label: "◀"
                                     onClicked: MediaService.previous()
@@ -1167,7 +1167,7 @@ Scope {
                     RowLayout {
                         width: parent.width - 28
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 10
+                        spacing: Theme.spaceSm
 
                         SpeakerIcon {
                             muted:  !root.sound
@@ -1193,12 +1193,12 @@ Scope {
                     RowLayout {
                         width: parent.width - 28
                         anchors.horizontalCenter: parent.horizontalCenter
-                        spacing: 10
+                        spacing: Theme.spaceSm
 
                         Text {
                             text:           "☼"
                             color:          root.brightness < 16 ? Theme.muted : Theme.primary
-                            font.pixelSize: 18
+                            font.pixelSize: Theme.statusIconSize
                         }
                         PillSlider {
                             from:  5; to: 100
@@ -1315,7 +1315,7 @@ Scope {
                             visible:        NetworkService.savedNetworks.length > 0
                             text:           "SAVED"
                             color:          Theme.muted
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.textCaption
                             font.letterSpacing: 1
                         }
                         Repeater {
@@ -1347,7 +1347,7 @@ Scope {
                             visible: NetworkService.networks.filter(n => !n.known).length > 0
                             text:           "AVAILABLE"
                             color:          Theme.muted
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.textCaption
                             font.letterSpacing: 1
                             topPadding:     6
                         }
@@ -1409,7 +1409,7 @@ Scope {
                                             || BluetoothService.devices.filter(d => BluetoothService.value(d, "paired")).length > 0
                             text:           "MY DEVICES"
                             color:          Theme.muted
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.textCaption
                             font.letterSpacing: 1
                         }
                         Repeater {
@@ -1436,7 +1436,7 @@ Scope {
                             visible: BluetoothService.devices.filter(d => !BluetoothService.value(d, "paired")).length > 0
                             text:           "NEARBY"
                             color:          Theme.muted
-                            font.pixelSize: 11
+                            font.pixelSize: Theme.textCaption
                             font.letterSpacing: 1
                             topPadding:     6
                         }
@@ -1531,7 +1531,7 @@ Scope {
                                 Text {
                                     text:           root.volume + "%"
                                     color:          Theme.text
-                                    font.pixelSize: 13
+                                    font.pixelSize: Theme.textBody
                                     font.weight:    Font.Medium
                                     Layout.preferredWidth: 36
                                     horizontalAlignment: Text.AlignRight
@@ -1549,7 +1549,7 @@ Scope {
                         Rectangle {
                             width:  parent.width
                             height: balCol.implicitHeight + 28
-                            radius: 22
+                            radius: Theme.radiusPanel
                             antialiasing: true
                             color:  Theme.surfaceRaised
 
@@ -1559,7 +1559,7 @@ Scope {
                                 anchors.right:   parent.right
                                 anchors.top:     parent.top
                                 anchors.margins: 14
-                                spacing: 10
+                                spacing: Theme.spaceSm
 
                                 RowLayout {
                                     Layout.fillWidth: true
@@ -1576,28 +1576,28 @@ Scope {
                                              : pct < 0   ? "Left "  + (-pct) + "%"
                                              :              "Right " + pct    + "%"
                                         color:          Theme.primary
-                                        font.pixelSize: 12
+                                        font.pixelSize: Theme.textSmall
                                     }
                                 }
 
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 10
-                                    Text { text: "L"; color: Theme.muted; font.pixelSize: 13; font.weight: Font.Medium }
+                                    spacing: Theme.spaceSm
+                                    Text { text: "L"; color: Theme.muted; font.pixelSize: Theme.textBody; font.weight: Font.Medium }
                                     BalanceSlider {
                                         Layout.fillWidth: true
                                         // slider uses -100..100; service uses -1..1
                                         value: Math.round(root.balance * 100)
                                         onMoved: AudioService.setOutputBalance(value / 100)
                                     }
-                                    Text { text: "R"; color: Theme.muted; font.pixelSize: 13; font.weight: Font.Medium }
+                                    Text { text: "R"; color: Theme.muted; font.pixelSize: Theme.textBody; font.weight: Font.Medium }
                                 }
 
                                 // Left / right level meters
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 10
-                                    Text { text: "L"; color: Theme.muted; font.pixelSize: 11; Layout.preferredWidth: 10 }
+                                    spacing: Theme.spaceSm
+                                    Text { text: "L"; color: Theme.muted; font.pixelSize: Theme.textCaption; Layout.preferredWidth: 10 }
                                     PillProgress {
                                         from:  0; to: 100
                                         value: {
@@ -1614,15 +1614,15 @@ Scope {
                                             var b = root.balance
                                             return Math.round(m * (b > 0 ? (1 - b) : 1)) + "%"
                                         }
-                                        color: Theme.muted; font.pixelSize: 11
+                                        color: Theme.muted; font.pixelSize: Theme.textCaption
                                         Layout.preferredWidth: 32
                                         horizontalAlignment: Text.AlignRight
                                     }
                                 }
                                 RowLayout {
                                     Layout.fillWidth: true
-                                    spacing: 10
-                                    Text { text: "R"; color: Theme.muted; font.pixelSize: 11; Layout.preferredWidth: 10 }
+                                    spacing: Theme.spaceSm
+                                    Text { text: "R"; color: Theme.muted; font.pixelSize: Theme.textCaption; Layout.preferredWidth: 10 }
                                     PillProgress {
                                         from:  0; to: 100
                                         value: {
@@ -1639,7 +1639,7 @@ Scope {
                                             var b = root.balance
                                             return Math.round(m * (b < 0 ? (1 + b) : 1)) + "%"
                                         }
-                                        color: Theme.muted; font.pixelSize: 11
+                                        color: Theme.muted; font.pixelSize: Theme.textCaption
                                         Layout.preferredWidth: 32
                                         horizontalAlignment: Text.AlignRight
                                     }
@@ -1746,11 +1746,11 @@ Scope {
                                 anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 12; spacing: 12
                                 Row { spacing: 5
                                     Rectangle { width: 7; height: 7; radius: 3.5; color: Theme.primary; anchors.verticalCenter: parent.verticalCenter }
-                                    Text { text: "CPU " + sysStats.cpuPercent + "%"; color: Theme.muted; font.pixelSize: 10 }
+                                    Text { text: "CPU " + sysStats.cpuPercent + "%"; color: Theme.muted; font.pixelSize: Theme.textMicro }
                                 }
                                 Row { spacing: 5
                                     Rectangle { width: 7; height: 7; radius: 3.5; color: Theme.success; anchors.verticalCenter: parent.verticalCenter }
-                                    Text { text: "RAM " + sysStats.ramPercent() + "%"; color: Theme.muted; font.pixelSize: 10 }
+                                    Text { text: "RAM " + sysStats.ramPercent() + "%"; color: Theme.muted; font.pixelSize: Theme.textMicro }
                                 }
                             }
                             Sparkline {
@@ -1772,13 +1772,13 @@ Scope {
                                 anchors { left: parent.left; right: parent.right; top: parent.top; margins: 12; topMargin: 10 }
                                 spacing: 8
                                 RowLayout {
-                                    width: parent.width; spacing: 10
+                                    width: parent.width; spacing: Theme.spaceSm
                                     FanIcon { rpm: sysStats.fanRpmList.length > 0 ? sysStats.fanRpmList[0] : 0; tint: sysStats.fanMode === "max" ? Theme.warning : Theme.primary; Layout.alignment: Qt.AlignVCenter }
                                     ColumnLayout { Layout.fillWidth: true; spacing: 0
-                                        Text { text: "Fan"; color: Theme.text; font.pixelSize: 13 }
-                                        Text { text: sysStats.fanControllable ? (sysStats.fanMode === "max" ? "Max speed" : "Automatic") : (sysStats.fanRpmList.length > 0 ? "Read-only" : "No sensor"); color: Theme.muted; font.pixelSize: 10 }
+                                        Text { text: "Fan"; color: Theme.text; font.pixelSize: Theme.textBody }
+                                        Text { text: sysStats.fanControllable ? (sysStats.fanMode === "max" ? "Max speed" : "Automatic") : (sysStats.fanRpmList.length > 0 ? "Read-only" : "No sensor"); color: Theme.muted; font.pixelSize: Theme.textMicro }
                                     }
-                                    Text { text: sysStats.fanText(); color: sysStats.fanMode === "max" ? Theme.warning : Theme.primary; font.pixelSize: 15; font.weight: Font.Medium }
+                                    Text { text: sysStats.fanText(); color: sysStats.fanMode === "max" ? Theme.warning : Theme.primary; font.pixelSize: Theme.textSection; font.weight: Font.Medium }
                                 }
                                 Segmented {
                                     width: parent.width
@@ -1806,9 +1806,9 @@ Scope {
                             Column {
                                 id: hwStrCol
                                 anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 12; rightMargin: 12 }
-                                spacing: 3
-                                Text { text: "CPU   " + (sysStats.cpuModel !== "" ? sysStats.cpuModel : "Unknown"); width: parent.width; color: Theme.muted; font.pixelSize: 10; elide: Text.ElideRight }
-                                Text { text: "GPU   " + (sysStats.gpuName  !== "" ? sysStats.gpuName  : "Not detected"); width: parent.width; color: Theme.muted; font.pixelSize: 10; elide: Text.ElideRight }
+                                spacing: Theme.spaceXxs
+                                Text { text: "CPU   " + (sysStats.cpuModel !== "" ? sysStats.cpuModel : "Unknown"); width: parent.width; color: Theme.muted; font.pixelSize: Theme.textMicro; elide: Text.ElideRight }
+                                Text { text: "GPU   " + (sysStats.gpuName  !== "" ? sysStats.gpuName  : "Not detected"); width: parent.width; color: Theme.muted; font.pixelSize: Theme.textMicro; elide: Text.ElideRight }
                             }
                         }
 
@@ -1824,7 +1824,7 @@ Scope {
                     // ──── Workspaces view ─────────────────────────────────
                     Column {
                         visible: root.page === "workspaces"
-                        width:   parent.width; spacing: 10
+                        width:   parent.width; spacing: Theme.spaceSm
 
                         Repeater {
                             model: wsManager.workspaceData
@@ -1836,7 +1836,7 @@ Scope {
                                 readonly property bool   current: wsId === wsManager.activeWorkspaceId
                                 width:  parent.width
                                 height: wsCol.implicitHeight + 24
-                                radius: 22; antialiasing: true
+                                radius: Theme.radiusPanel; antialiasing: true
                                 color:  Theme.surfaceRaised
                                 border.width: current ? 2 : 0
                                 border.color: Theme.primary
@@ -1853,22 +1853,22 @@ Scope {
                                     spacing: 8
 
                                     RowLayout {
-                                        width: parent.width; spacing: 10
+                                        width: parent.width; spacing: Theme.spaceSm
                                         Rectangle {
                                             Layout.preferredWidth: 30; Layout.preferredHeight: 30; radius: 15
                                             color: wsCard.current ? Theme.primary : Theme.surface
-                                            Text { anchors.centerIn: parent; text: wsCard.wsId; font.pixelSize: 14; font.weight: Font.DemiBold; color: wsCard.current ? Theme.background : Theme.muted }
+                                            Text { anchors.centerIn: parent; text: wsCard.wsId; font.pixelSize: Theme.textBody; font.weight: Font.DemiBold; color: wsCard.current ? Theme.background : Theme.muted }
                                         }
                                         ColumnLayout {
                                             Layout.fillWidth: true; spacing: 1
-                                            Text { text: "Workspace " + wsCard.wsId; color: Theme.text; font.pixelSize: 14 }
-                                            Text { text: wsCard.apps.length === 0 ? "Empty" : wsCard.apps.length + (wsCard.apps.length === 1 ? " app" : " apps"); color: Theme.muted; font.pixelSize: 11 }
+                                            Text { text: "Workspace " + wsCard.wsId; color: Theme.text; font.pixelSize: Theme.textBody }
+                                            Text { text: wsCard.apps.length === 0 ? "Empty" : wsCard.apps.length + (wsCard.apps.length === 1 ? " app" : " apps"); color: Theme.muted; font.pixelSize: Theme.textCaption }
                                         }
                                         Rectangle {
                                             visible: wsCard.current
                                             Layout.preferredWidth: curLbl.implicitWidth + 18; Layout.preferredHeight: 22; radius: 11
                                             color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.18)
-                                            Text { id: curLbl; anchors.centerIn: parent; text: "Current"; color: Theme.primary; font.pixelSize: 11 }
+                                            Text { id: curLbl; anchors.centerIn: parent; text: "Current"; color: Theme.primary; font.pixelSize: Theme.textCaption }
                                         }
                                     }
 
@@ -1876,15 +1876,15 @@ Scope {
                                         model: wsCard.apps
                                         Rectangle {
                                             required property var modelData
-                                            width: wsCol.width; height: 44; radius: 16; antialiasing: true
+                                            width: wsCol.width; height: 44; radius: Theme.radiusCard; antialiasing: true
                                             color: Theme.surface
                                             RowLayout {
-                                                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 12; spacing: 10
+                                                anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 12; spacing: Theme.spaceSm
 
                                                 // App icon — real icon if available, letter fallback otherwise
                                                 Rectangle {
                                                     Layout.preferredWidth: 30; Layout.preferredHeight: 30
-                                                    radius: 8; color: Theme.surfaceRaised
+                                                    radius: Theme.smallRadius; color: Theme.surfaceRaised
 
                                                     Image {
                                                         id:             appIcon
@@ -1904,13 +1904,13 @@ Scope {
                                                     }
                                                 }
 
-                                                Text { text: modelData.appClass || "Unknown"; color: Theme.text; font.pixelSize: 13 }
-                                                Text { text: modelData.title || ""; color: Theme.muted; font.pixelSize: 11; elide: Text.ElideRight; horizontalAlignment: Text.AlignRight; Layout.fillWidth: true }
+                                                Text { text: modelData.appClass || "Unknown"; color: Theme.text; font.pixelSize: Theme.textBody }
+                                                Text { text: modelData.title || ""; color: Theme.muted; font.pixelSize: Theme.textCaption; elide: Text.ElideRight; horizontalAlignment: Text.AlignRight; Layout.fillWidth: true }
                                                 Rectangle {
-                                                    Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 14; antialiasing: true
+                                                    Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: Theme.radiusCard; antialiasing: true
                                                     color: closeArea.pressed ? Theme.error : closeArea.containsMouse ? Qt.rgba(Theme.error.r, Theme.error.g, Theme.error.b, 0.3) : Theme.surfaceRaised
                                                     Behavior on color { ColorAnimation { duration: 100 } }
-                                                    Text { anchors.centerIn: parent; text: "✕"; font.pixelSize: 12; color: closeArea.containsMouse ? Theme.text : Theme.muted }
+                                                    Text { anchors.centerIn: parent; text: "✕"; font.pixelSize: Theme.textSmall; color: closeArea.containsMouse ? Theme.text : Theme.muted }
                                                     MouseArea {
                                                         id:           closeArea
                                                         anchors.fill: parent; anchors.margins: -4
@@ -1941,7 +1941,7 @@ Scope {
                             Rectangle {
                                 required property var modelData
                                 readonly property bool armed: root.pendingPower === modelData.key
-                                width: parent.width; height: 56; radius: 22; antialiasing: true
+                                width: parent.width; height: 56; radius: Theme.radiusPanel; antialiasing: true
                                 color: armed ? Qt.rgba(Theme.error.r, Theme.error.g, Theme.error.b, 0.22)
                                              : rowPressArea.pressed ? Theme.surfaceHover : Theme.surfaceRaised
                                 Behavior on color { ColorAnimation { duration: 120 } }
@@ -1949,8 +1949,8 @@ Scope {
                                     anchors.fill: parent; anchors.leftMargin: 18; anchors.rightMargin: 18
                                     ColumnLayout {
                                         Layout.fillWidth: true; spacing: 2
-                                        Text { text: modelData.title; color: Theme.text; font.pixelSize: 13 }
-                                        Text { text: armed ? "Tap again to confirm" : modelData.sub; color: armed ? Theme.error : Theme.muted; font.pixelSize: 11 }
+                                        Text { text: modelData.title; color: Theme.text; font.pixelSize: Theme.textBody }
+                                        Text { text: armed ? "Tap again to confirm" : modelData.sub; color: armed ? Theme.error : Theme.muted; font.pixelSize: Theme.textCaption }
                                     }
                                 }
                                 MouseArea { id: rowPressArea; anchors.fill: parent; onClicked: root.powerAction(modelData.key, modelData.cmd) }
@@ -1961,10 +1961,10 @@ Scope {
                     // ──── Updates page ────────────────────────────────────
                     Column {
                         visible: root.page === "updates"
-                        width:   parent.width; spacing: 10
+                        width:   parent.width; spacing: Theme.spaceSm
 
                         Rectangle {
-                            width: parent.width; height: 72; radius: 22; antialiasing: true
+                            width: parent.width; height: 72; radius: Theme.radiusPanel; antialiasing: true
                             color: Theme.surfaceRaised
                             RowLayout {
                                 anchors.fill: parent; anchors.leftMargin: 18; anchors.rightMargin: 14; spacing: 12
@@ -1973,13 +1973,13 @@ Scope {
                                     Text {
                                         text:           root.pendingUpdates > 0 ? root.pendingUpdates : "✓"
                                         color:          root.pendingUpdates > 0 ? Theme.primary : Theme.success
-                                        font.pixelSize: 28; font.weight: Font.Medium
+                                        font.pixelSize: Theme.textIcon; font.weight: Font.Medium
                                     }
-                                    Text { text: "pending updates"; color: Theme.muted; font.pixelSize: 11 }
+                                    Text { text: "pending updates"; color: Theme.muted; font.pixelSize: Theme.textCaption }
                                 }
                                 Text {
                                     text:           root.updateTooltip
-                                    color:          Theme.muted; font.pixelSize: 11
+                                    color:          Theme.muted; font.pixelSize: Theme.textCaption
                                     wrapMode:       Text.WordWrap
                                     Layout.fillWidth: true
                                 }
@@ -2068,8 +2068,8 @@ Scope {
             signal tapped()
             signal opened()
             Layout.fillWidth: true
-            height: 64; radius: 32; antialiasing: true
-            color:   unavailable ? Qt.rgba(0.12, 0.13, 0.14, 1)
+            height: 64; radius: Theme.radiusPillLg; antialiasing: true
+            color:   unavailable ? Theme.surfaceDisabled
                    : active      ? Theme.primary : Theme.surfaceRaised
             opacity: unavailable ? 0.42 : 1
 
@@ -2134,7 +2134,7 @@ Scope {
                 Text {
                     text:           "›"
                     color:          tile.active ? Theme.background : Theme.muted
-                    font.pixelSize: 20
+                    font.pixelSize: Theme.textTitle
                 }
             }
 
@@ -2160,33 +2160,33 @@ Scope {
             signal dismissed()
             width: parent ? parent.width : 0
             height: notifCardCol.implicitHeight + 20
-            radius: 22; antialiasing: true
+            radius: Theme.radiusPanel; antialiasing: true
             color:  Theme.surfaceRaised
 
             RowLayout {
-                anchors.fill: parent; anchors.margins: 10; spacing: 10
+                anchors.fill: parent; anchors.margins: 10; spacing: Theme.spaceSm
                 Rectangle {
-                    width: 32; height: 32; radius: 16
+                    width: 32; height: 32; radius: Theme.radiusCard
                     color: Theme.surface
                     Layout.alignment: Qt.AlignTop; Layout.topMargin: 2
                     Text { anchors.centerIn: parent; text: "◌"; color: Theme.primary; font.pixelSize: 16 }
                 }
                 ColumnLayout {
                     id: notifCardCol
-                    Layout.fillWidth: true; spacing: 3
+                    Layout.fillWidth: true; spacing: Theme.spaceXxs
                     // App name row with clock time on the right
                     RowLayout {
                         Layout.fillWidth: true
-                        Text { text: name; color: Theme.text; font.pixelSize: 13; font.bold: true; Layout.fillWidth: true; elide: Text.ElideRight }
+                        Text { text: name; color: Theme.text; font.pixelSize: Theme.textBody; font.bold: true; Layout.fillWidth: true; elide: Text.ElideRight }
                         Text {
                             text: timestamp > 0
                                   ? Qt.formatTime(new Date(timestamp), "h:mm AP")
                                   : age
-                            color: Theme.muted; font.pixelSize: 10
+                            color: Theme.muted; font.pixelSize: Theme.textMicro
                         }
                     }
                     // Relative age
-                    Text { text: age; color: Theme.muted; font.pixelSize: 10 }
+                    Text { text: age; color: Theme.muted; font.pixelSize: Theme.textMicro }
                     // Body
                     Text {
                         text:             body
@@ -2207,7 +2207,7 @@ Scope {
             property string subtitle: "Available"
             property bool   checked:  false
             width:  parent ? parent.width : 0
-            height: 56; radius: 22; antialiasing: true
+            height: 56; radius: Theme.radiusPanel; antialiasing: true
             color:  Theme.surfaceRaised
 
             RowLayout {
@@ -2215,14 +2215,14 @@ Scope {
                 anchors.leftMargin: 18; anchors.rightMargin: 18
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 2
-                    Text { text: detailRowRoot.title;    color: Theme.text;  font.pixelSize: 13 }
-                    Text { text: detailRowRoot.subtitle; color: Theme.muted; font.pixelSize: 11 }
+                    Text { text: detailRowRoot.title;    color: Theme.text;  font.pixelSize: Theme.textBody }
+                    Text { text: detailRowRoot.subtitle; color: Theme.muted; font.pixelSize: Theme.textCaption }
                 }
                 Text {
                     visible:        detailRowRoot.checked
                     text:           "✓"
                     color:          Theme.primary
-                    font.pixelSize: 18
+                    font.pixelSize: Theme.statusIconSize
                 }
             }
         }
@@ -2242,7 +2242,7 @@ Scope {
                 id: pbText; anchors.centerIn: parent
                 text:           pb.label
                 color:          pb.primary ? Theme.background : Theme.text
-                font.pixelSize: 12; font.weight: Font.Medium
+                font.pixelSize: Theme.textSmall; font.weight: Font.Medium
             }
             MouseArea { id: pbMouse; anchors.fill: parent; onClicked: pb.clicked() }
         }
@@ -2289,16 +2289,16 @@ Scope {
 
             Rectangle {
                 Layout.preferredWidth: 38; Layout.preferredHeight: 38
-                radius: 19; antialiasing: true; color: Theme.surfaceRaised
+                radius: Theme.radiusPill; antialiasing: true; color: Theme.surfaceRaised
                 Text {
                     anchors.centerIn: parent; anchors.verticalCenterOffset: -2
-                    text: "‹"; color: Theme.text; font.pixelSize: 24
+                    text: "‹"; color: Theme.text; font.pixelSize: Theme.textIcon
                 }
                 MouseArea { anchors.fill: parent; onClicked: ph.back() }
             }
             ColumnLayout {
                 Layout.fillWidth: true; spacing: 1
-                Text { text: ph.title;    color: Theme.text;  font.pixelSize: 20 }
+                Text { text: ph.title;    color: Theme.text;  font.pixelSize: Theme.textTitle }
                 Text {
                     visible:          ph.subtitle !== ""
                     text:             ph.subtitle
@@ -2321,7 +2321,7 @@ Scope {
                     anchors.centerIn: parent
                     text:           "Clear all"
                     color:          Theme.muted
-                    font.pixelSize: 12
+                    font.pixelSize: Theme.textSmall
                 }
                 MouseArea {
                     id:           clearHov
@@ -2368,7 +2368,7 @@ Scope {
             property string title:    ""
             property string body:     ""
             width:  parent ? parent.width : 0
-            height: 164; radius: 22; antialiasing: true; color: Theme.surfaceRaised
+            height: 164; radius: Theme.radiusPanel; antialiasing: true; color: Theme.surfaceRaised
 
             ColumnLayout {
                 anchors.centerIn: parent
@@ -2376,7 +2376,7 @@ Scope {
                 Rectangle {
                     Layout.alignment: Qt.AlignHCenter
                     Layout.preferredWidth: 52; Layout.preferredHeight: 52
-                    radius: 26; antialiasing: true; color: Theme.surface
+                    radius: Theme.radiusPanel; antialiasing: true; color: Theme.surface
 
                     // SVG icon if iconName provided, text glyph fallback
                     SvgIcon {
@@ -2390,15 +2390,15 @@ Scope {
                         anchors.centerIn: parent
                         text:    glyph
                         color:   Theme.muted
-                        font.pixelSize: 24
+                        font.pixelSize: Theme.textIcon
                         visible: iconName === ""
                     }
                 }
-                Text { Layout.alignment: Qt.AlignHCenter; text: title; color: Theme.text;  font.pixelSize: 15 }
+                Text { Layout.alignment: Qt.AlignHCenter; text: title; color: Theme.text;  font.pixelSize: Theme.textSection }
                 Text {
                     Layout.fillWidth: true; horizontalAlignment: Text.AlignHCenter
                     text: body; wrapMode: Text.WordWrap
-                    color: Theme.muted; font.pixelSize: 12
+                    color: Theme.muted; font.pixelSize: Theme.textSmall
                 }
             }
         }
@@ -2406,8 +2406,8 @@ Scope {
         component InfoLine: RowLayout {
             property string label: ""
             property string value: ""
-            Text { text: label; color: Theme.muted;  font.pixelSize: 12; Layout.fillWidth: true }
-            Text { text: value; color: Theme.text; font.pixelSize: 12 }
+            Text { text: label; color: Theme.muted;  font.pixelSize: Theme.textSmall; Layout.fillWidth: true }
+            Text { text: value; color: Theme.text; font.pixelSize: Theme.textSmall }
         }
 
         component SignalBars: Row {
@@ -2432,7 +2432,7 @@ Scope {
             id: ib
             property bool active: false
             signal clicked()
-            implicitWidth: 32; implicitHeight: 32; radius: 16; antialiasing: true
+            implicitWidth: 32; implicitHeight: 32; radius: Theme.radiusCard; antialiasing: true
             color: ib.active ? Theme.primary : Theme.surfaceRaised
             opacity: ibMouse.pressed ? 0.7 : 1
             Behavior on color { ColorAnimation { duration: 140 } }
@@ -2491,7 +2491,7 @@ Scope {
 
             width:  parent ? parent.width : 0
             height: nrCol.implicitHeight
-            radius: 22; antialiasing: true; clip: true
+            radius: Theme.radiusPanel; antialiasing: true; clip: true
             color:  connected ? Theme.surfaceHover : Theme.surfaceRaised
             border.width: connected ? 1 : 0
             border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.34)
@@ -2507,7 +2507,7 @@ Scope {
 
                 RowLayout {
                     Layout.fillWidth: true; Layout.preferredHeight: 62
-                    Layout.leftMargin: 16; Layout.rightMargin: 12; spacing: 10
+                    Layout.leftMargin: 16; Layout.rightMargin: 12; spacing: Theme.spaceSm
                     SignalBars {
                         level: nr.level
                         tint:  nr.connected ? Theme.primary : Theme.muted
@@ -2515,9 +2515,9 @@ Scope {
                     }
                     ColumnLayout {
                         Layout.fillWidth: true; spacing: 1
-                        Text { text: nr.name; color: Theme.text; font.pixelSize: 14; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Text { text: nr.name; color: Theme.text; font.pixelSize: Theme.textBody; elide: Text.ElideRight; Layout.fillWidth: true }
                         Text {
-                            Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 11
+                            Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: Theme.textCaption
                             color: nr.connected ? Theme.primary : Theme.muted
                             text:  nr.connected  ? "Connected" + (nr.band && nr.band !== "Band unavailable" ? " · " + nr.band : "") + " · " + nr.signalText
                                  : nr.connecting ? "Connecting…"
@@ -2532,7 +2532,7 @@ Scope {
                 ColumnLayout {
                     visible: nr.showPassword || nr.showDetails
                     Layout.fillWidth: true; Layout.leftMargin: 16; Layout.rightMargin: 16; Layout.bottomMargin: 14
-                    spacing: 10
+                    spacing: Theme.spaceSm
 
                     RowLayout {
                         visible: nr.showPassword && !nr.saved && nr.secured && !nr.connected
@@ -2543,10 +2543,10 @@ Scope {
                             placeholderText: "Password (8+ characters)"
                             placeholderTextColor: Theme.muted
                             echoMode:       TextInput.Password
-                            color:          Theme.text; font.pixelSize: 13
+                            color:          Theme.text; font.pixelSize: Theme.textBody
                             leftPadding:    16; rightPadding: 16; selectByMouse: true
                             background: Rectangle {
-                                radius: 19; antialiasing: true; color: Theme.surface
+                                radius: Theme.radiusPill; antialiasing: true; color: Theme.surface
                                 border.width: pw.activeFocus ? 1 : 0; border.color: Theme.primary
                             }
                             onAccepted: nr.join()
@@ -2567,7 +2567,7 @@ Scope {
                             visible: nr.connected && nr.secured
                             Layout.fillWidth: true; spacing: 8
 
-                            Text { text: "Password"; color: Theme.muted; font.pixelSize: 12; Layout.fillWidth: true }
+                            Text { text: "Password"; color: Theme.muted; font.pixelSize: Theme.textSmall; Layout.fillWidth: true }
 
                             // Read directly from NetworkService so the binding stays live
                             readonly property bool _isMyKey: nr._networkObject !== null
@@ -2583,7 +2583,7 @@ Scope {
                                     : NetworkService.passwordLookupError !== "" && parent._isMyKey
                                     ? "Unavailable"
                                     : "Not stored"
-                                color: Theme.text; font.pixelSize: 12
+                                color: Theme.text; font.pixelSize: Theme.textSmall
                             }
                             PillButton {
                                 visible:   parent._livePassword !== "" && !NetworkService.passwordLookupBusy
@@ -2630,7 +2630,7 @@ Scope {
 
             width:  parent ? parent.width : 0
             height: drCol.implicitHeight
-            radius: 22; antialiasing: true; clip: true
+            radius: Theme.radiusPanel; antialiasing: true; clip: true
             color:  connected ? Theme.surfaceHover : Theme.surfaceRaised
             border.width: connected ? 1 : 0
             border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.34)
@@ -2659,9 +2659,9 @@ Scope {
                     }
                     ColumnLayout {
                         Layout.fillWidth: true; spacing: 1
-                        Text { text: dr.name; color: Theme.text; font.pixelSize: 14; elide: Text.ElideRight; Layout.fillWidth: true }
+                        Text { text: dr.name; color: Theme.text; font.pixelSize: Theme.textBody; elide: Text.ElideRight; Layout.fillWidth: true }
                         Text {
-                            Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: 11
+                            Layout.fillWidth: true; elide: Text.ElideRight; font.pixelSize: Theme.textCaption
                             color: dr.connected ? Theme.primary : Theme.muted
                             text:  dr.connected  ? "Connected" + (dr.battery >= 0 ? " · " + dr.battery + "%" : "")
                                  : dr.connecting ? (dr.paired ? "Connecting…" : "Pairing…")
@@ -2678,7 +2678,7 @@ Scope {
                 ColumnLayout {
                     visible: dr.showMore && dr.paired
                     Layout.fillWidth: true; Layout.leftMargin: 16; Layout.rightMargin: 12; Layout.bottomMargin: 14
-                    spacing: 6
+                    spacing: Theme.spaceXs
                     InfoLine { Layout.fillWidth: true; label: "Type";    value: dr.kindNames[dr.kind] || "Device" }
                     InfoLine { visible: dr.connected && dr.battery >= 0; Layout.fillWidth: true; label: "Battery"; value: dr.battery + "%" }
                     PillButton { Layout.topMargin: 4; label: "Forget device"; onClicked: { dr.showMore = false; dr.forgetRequested() } }
@@ -2760,7 +2760,7 @@ Scope {
             property bool   unavailable: false
             signal chosen()
             width:  parent ? parent.width : 0
-            height: 58; radius: 22; antialiasing: true
+            height: 58; radius: Theme.radiusPanel; antialiasing: true
             color:  selected ? Theme.surfaceHover : Theme.surfaceRaised
             border.width: selected ? 1 : 0
             border.color: Qt.rgba(Theme.primary.r, Theme.primary.g, Theme.primary.b, 0.34)
@@ -2776,11 +2776,11 @@ Scope {
                 }
                 ColumnLayout {
                     Layout.fillWidth: true; spacing: 1
-                    Text { text: ad.title;    color: Theme.text;                      font.pixelSize: 13; elide: Text.ElideRight; Layout.fillWidth: true }
-                    Text { text: ad.subtitle; color: ad.selected ? Theme.primary : Theme.muted; font.pixelSize: 11; elide: Text.ElideRight; Layout.fillWidth: true }
+                    Text { text: ad.title;    color: Theme.text;                      font.pixelSize: Theme.textBody; elide: Text.ElideRight; Layout.fillWidth: true }
+                    Text { text: ad.subtitle; color: ad.selected ? Theme.primary : Theme.muted; font.pixelSize: Theme.textCaption; elide: Text.ElideRight; Layout.fillWidth: true }
                 }
                 Rectangle {
-                    Layout.preferredWidth: 20; Layout.preferredHeight: 20; radius: 10; antialiasing: true
+                    Layout.preferredWidth: 20; Layout.preferredHeight: 20; radius: Theme.radiusControl; antialiasing: true
                     color: "transparent"; border.width: 2; border.color: ad.selected ? Theme.primary : Theme.muted
                     Rectangle { visible: ad.selected; anchors.centerIn: parent; width: 10; height: 10; radius: 5; antialiasing: true; color: Theme.primary }
                 }
@@ -2909,11 +2909,11 @@ Scope {
                     Layout.preferredWidth: 52; Layout.preferredHeight: 52
                     value:  gaugeCardRoot.available ? gaugeCardRoot.value : 0
                     active: gaugeCardRoot.available
-                    Text { anchors.centerIn: parent; text: gaugeCardRoot.label; color: gaugeRing.ringColor; font.pixelSize: 12; font.weight: Font.Medium }
+                    Text { anchors.centerIn: parent; text: gaugeCardRoot.label; color: gaugeRing.ringColor; font.pixelSize: Theme.textSmall; font.weight: Font.Medium }
                 }
                 ColumnLayout { Layout.fillWidth: true; spacing: 1
-                    Text { text: gaugeCardRoot.title; color: Theme.text;  font.pixelSize: 13; Layout.fillWidth: true; elide: Text.ElideRight }
-                    Text { text: gaugeCardRoot.sub;   color: Theme.muted; font.pixelSize: 10; Layout.fillWidth: true; elide: Text.ElideRight }
+                    Text { text: gaugeCardRoot.title; color: Theme.text;  font.pixelSize: Theme.textBody; Layout.fillWidth: true; elide: Text.ElideRight }
+                    Text { text: gaugeCardRoot.sub;   color: Theme.muted; font.pixelSize: Theme.textMicro; Layout.fillWidth: true; elide: Text.ElideRight }
                 }
             }
         }
@@ -2960,7 +2960,7 @@ Scope {
                         color:  sel ? Theme.primary : "transparent"
                         opacity: segCtrl.interactive ? 1 : 0.45
                         Behavior on color { ColorAnimation { duration: 150 } }
-                        Text { anchors.centerIn: parent; text: modelData[1]; font.pixelSize: 12; font.weight: sel ? Font.DemiBold : Font.Normal; color: sel ? Theme.background : Theme.muted }
+                        Text { anchors.centerIn: parent; text: modelData[1]; font.pixelSize: Theme.textSmall; font.weight: sel ? Font.DemiBold : Font.Normal; color: sel ? Theme.background : Theme.muted }
                         MouseArea { anchors.fill: parent; enabled: segCtrl.interactive; onClicked: segCtrl.picked(modelData[0]) }
                     }
                 }
@@ -3011,8 +3011,8 @@ Scope {
                 anchors.left: parent.left; anchors.right: parent.right
                 anchors.leftMargin: 12; anchors.rightMargin: 8
                 spacing: 1
-                Text { text: label;        color: Theme.muted; font.pixelSize: 10 }
-                Text { text: "" + value;   color: Theme.text;  font.pixelSize: 13; width: parent.width; elide: Text.ElideRight }
+                Text { text: label;        color: Theme.muted; font.pixelSize: Theme.textMicro }
+                Text { text: "" + value;   color: Theme.text;  font.pixelSize: Theme.textBody; width: parent.width; elide: Text.ElideRight }
             }
         }
 
