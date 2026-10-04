@@ -14,4 +14,4 @@ fi
 if [ ! -d icons ] || [ style.css -nt icons ] || [ icons-src -nt icons ]; then
     python3 core/gen_icons.py || echo "icon generation failed"
 fi
-exec quickshell -p ./shell.qml "$@"
+exec quickshell -p ./main.qml "$@"

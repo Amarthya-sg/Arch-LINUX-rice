@@ -922,6 +922,8 @@ Item {
                 active: BluetoothService.scanning
             }
 
+            BluetoothPairPrompt { Layout.fillWidth: true }
+
             Text { visible: !BluetoothService.enabled; text: "Turn Bluetooth on to discover devices."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
 
             Flickable {
@@ -1502,7 +1504,7 @@ Item {
                 RowLayout {
                     Layout.fillWidth: true
                     Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: updBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: updBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
-                        RowLayout { id: updBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "Updates"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
+                        RowLayout { id: updBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6); SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" } Text { text: "System Updates"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont } }
                         MouseArea { id: updBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                     }
                     Item { Layout.fillWidth: true }

@@ -127,7 +127,7 @@ Rectangle {
         onTriggered: if (!root.mediaExpanded) root.mediaAutoPopup = false }
     Timer { id: mediaInactivity; interval: 5000; repeat: false
         onTriggered: { root.mediaExpanded = false; root.mediaAutoPopup = false } }
-    Timer { id: notificationHide; interval: 6000; running: false; repeat: false
+    Timer { id: notificationHide; interval: Config.notificationToastMs; running: false; repeat: false
         onTriggered: {
             if (root.previewNotification)
                 NotificationService.removeToast(root.previewNotification.notifId)

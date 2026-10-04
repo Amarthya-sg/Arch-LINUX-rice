@@ -13,6 +13,12 @@ Item {
     id: root
 
     property string detailsAddress: ""
+    property string pairingInput: ""
+
+    Connections {
+        target: BluetoothService
+        function onPairingPromptChanged() { root.pairingInput = "" }
+    }
 
     function toggleDetails(device): void {
         const address = String(BluetoothService.value(device, "address") || "")
@@ -47,6 +53,128 @@ Item {
 
         // ── Scan sweep ────────────────────────────────────────────────────
         ScanSweep { Layout.fillWidth: true; Layout.leftMargin: Theme.marginSize(8); Layout.rightMargin: Theme.marginSize(8); active: BluetoothService.scanning }
+
+        // ── Pairing-agent request (rendered in this panel, not a desktop popup) ──
+        Rectangle {
+            visible: BluetoothService.pairingPrompt !== null
+            Layout.fillWidth: true
+            implicitHeight: pairingPromptColumn.implicitHeight + Theme.dimensionSize(20)
+            radius: Theme.radiusCard
+            color: Theme.surface
+            border.width: Theme.dimensionSize(1)
+            border.color: Theme.primary
+
+            ColumnLayout {
+                id: pairingPromptColumn
+                anchors.fill: parent
+                anchors.margins: Theme.marginSize(10)
+                spacing: Theme.spacingSize(6)
+
+                Text {
+                    Layout.fillWidth: true
+                    text: BluetoothService.pairingPrompt?.kind === "confirmation"
+                        ? "Bluetooth pairing request"
+                        : BluetoothService.pairingPrompt?.kind === "authorization"
+                            ? "Allow Bluetooth pairing?"
+                            : BluetoothService.pairingPrompt?.kind === "service"
+                                ? "Allow Bluetooth service?"
+                                : BluetoothService.pairingPrompt?.kind === "display"
+                                    ? "Bluetooth code"
+                                    : "Enter Bluetooth code"
+                    color: Theme.text
+                    font.family: Theme.uiFont
+                    font.pixelSize: Theme.fontSize(13)
+                    font.weight: Theme.fontWeightSemibold
+                }
+                Text {
+                    Layout.fillWidth: true
+                    text: BluetoothService.pairingPrompt?.kind === "confirmation"
+                        ? "Confirm that this code matches on " + (BluetoothService.pairingPrompt?.deviceName || "your device") + "."
+                        : BluetoothService.pairingPrompt?.kind === "display"
+                            ? "Show this code on " + (BluetoothService.pairingPrompt?.deviceName || "your device") + "."
+                            : "Pair with " + (BluetoothService.pairingPrompt?.deviceName || "this device") + "?"
+                    color: Theme.muted
+                    font.family: Theme.uiFont
+                    font.pixelSize: Theme.fontSize(11)
+                    wrapMode: Text.Wrap
+                }
+                Text {
+                    visible: !!BluetoothService.pairingPrompt?.passkey
+                    Layout.alignment: Qt.AlignHCenter
+                    text: BluetoothService.pairingPrompt?.passkey || ""
+                    color: Theme.primary
+                    font.family: Theme.uiFont
+                    font.pixelSize: Theme.fontSize(22)
+                    font.weight: Theme.fontWeightBold
+                    font.letterSpacing: Theme.letterSpacingValue(1)
+                }
+                TextField {
+                    visible: ["pin", "passkey"].includes(BluetoothService.pairingPrompt?.kind || "")
+                    Layout.fillWidth: true
+                    text: root.pairingInput
+                    placeholderText: BluetoothService.pairingPrompt?.kind === "pin" ? "Enter PIN" : "Enter passkey"
+                    onTextChanged: root.pairingInput = text
+                    inputMethodHints: BluetoothService.pairingPrompt?.kind === "passkey"
+                        ? Qt.ImhDigitsOnly : Qt.ImhNone
+                }
+                RowLayout {
+                    visible: BluetoothService.pairingPrompt?.requiresDecision === true
+                    Layout.fillWidth: true
+                    spacing: Theme.spacingSize(8)
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: Theme.dimensionSize(34)
+                        radius: Theme.radiusControl
+                        color: denyPairMouse.containsMouse ? Theme.surfaceHover : Theme.surfaceRaised
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Deny"
+                            color: Theme.error
+                            font.family: Theme.uiFont
+                            font.pixelSize: Theme.fontSize(12)
+                            font.weight: Theme.fontWeightMedium
+                        }
+                        MouseArea {
+                            id: denyPairMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: BluetoothService.respondToPairingPrompt(false)
+                        }
+                    }
+                    Rectangle {
+                        Layout.fillWidth: true
+                        implicitHeight: Theme.dimensionSize(34)
+                        radius: Theme.radiusControl
+                        color: confirmPairMouse.containsMouse ? Theme.primaryStrong : Theme.primary
+                        Text {
+                            anchors.centerIn: parent
+                            text: ["pin", "passkey"].includes(BluetoothService.pairingPrompt?.kind || "") ? "Submit" : "Confirm"
+                            color: Theme.background
+                            font.family: Theme.uiFont
+                            font.pixelSize: Theme.fontSize(12)
+                            font.weight: Theme.fontWeightSemibold
+                        }
+                        MouseArea {
+                            id: confirmPairMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            enabled: !["pin", "passkey"].includes(BluetoothService.pairingPrompt?.kind || "") || root.pairingInput.length > 0
+                            onClicked: BluetoothService.respondToPairingPrompt(true, root.pairingInput)
+                        }
+                    }
+                }
+            }
+        }
+
+        Text {
+            visible: !!BluetoothService.errorMessage
+            Layout.fillWidth: true
+            text: BluetoothService.errorMessage
+            color: Theme.error
+            font.family: Theme.uiFont
+            font.pixelSize: Theme.fontSize(11)
+            wrapMode: Text.Wrap
+        }
 
         Text { visible: !BluetoothService.enabled; text: "Turn Bluetooth on to discover devices."; color: Theme.muted; font.family: Theme.uiFont; font.pixelSize: Theme.fontSize(12) }
 

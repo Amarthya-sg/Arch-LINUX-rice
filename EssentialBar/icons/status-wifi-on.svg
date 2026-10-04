@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#68a3fa" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e3e9f2" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
   <title>Wi-Fi on</title>
   <path d="M2.8 8.4a14.2 14.2 0 0 1 18.4 0"/>
   <path d="M5.7 11.5a9.8 9.8 0 0 1 12.6 0"/>
   <path d="M8.8 14.7a5.1 5.1 0 0 1 6.4 0"/>
-  <circle cx="12" cy="18.2" r=".95" fill="#68a3fa" stroke="none"/>
+  <circle cx="12" cy="18.2" r=".95" fill="#e3e9f2" stroke="none"/>
 </svg>

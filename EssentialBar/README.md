@@ -25,6 +25,7 @@ Clicking the pill (or any of its status icons) opens a 404×672 rounded control 
 ```
 EssentialBar/
 ├── shell.qml                  ← root scope: bar window, clock popup, workspace/client polling
+├── main.qml                   ← alternate standalone UI; also supports inline pairing prompts
 ├── style.css                  ← design token source of truth (hot-reloaded)
 ├── run-lean.sh                ← launch script with memory/rendering optimizations
 ├── qmldir
@@ -44,11 +45,13 @@ EssentialBar/
 │   ├── LockKeysService.qml    ← Caps/Num lock state
 │   ├── MediaService.qml       ← MPRIS player, position interpolation
 │   ├── NetworkService.qml     ← NetworkManager Wi-Fi scan/connect/forget/details
+│   ├── bluetooth_agent.py     ← app-scoped BlueZ agent; sends pairing prompts to the panel
 │   ├── NightLightService.qml  ← hyprsunset IPC temperature control
 │   ├── NotificationService.qml← Quickshell notification server, DND, grouping
 │   └── SystemService.qml      ← CPU/GPU/RAM/battery/fan stats + power profiles
 │
 ├── components/
+│   ├── BluetoothPairPrompt.qml← in-panel BlueZ confirmation/PIN prompt
 │   ├── SvgIcon.qml            ← bundled Lucide SVG icon renderer
 │   ├── StyledButton.qml
 │   ├── ToggleSwitch.qml
@@ -74,7 +77,7 @@ EssentialBar/
 | [Quickshell](https://quickshell.outfoxxed.me/) ≥ 0.3.1 | QML shell runtime |
 | Hyprland | Compositor (IPC + layer-shell) |
 | Qt 6 + QtQuick | Bundled with Quickshell |
-| Python 3 | CSS token parser (`core/parse_css_tokens.py`) + icon generator |
+| Python 3 + `dbus-next` | CSS token parser/icon generator and in-panel BlueZ pairing agent |
 | NetworkManager + `nmcli` | Wi-Fi scanning, connecting, saved-profile lookup |
 | BlueZ | Bluetooth adapter and device management |
 | PipeWire + WirePlumber + `pactl` | Audio volume, device routing, balance |
@@ -214,11 +217,13 @@ Backed by `Quickshell.Bluetooth`.
 
 - Adapter power on/off with `rfkill` soft-block recovery
 - Device list filtered to paired, connected, or named devices; sorted connected-first
-- Pair → trust → connect sequence via `bluetoothctl` (45 s timeout)
+- Pairing uses the app-scoped BlueZ agent; after the panel confirms the request, EssentialBar trusts and connects the device
 - Bounded reconnect retry — up to 3 attempts at 4 s intervals before giving up with an error message
 - Opt-in auto-pair for audio and input devices (skips randomized LE addresses)
 - Forget via `bluetoothctl disconnect && bluetoothctl remove` (avoids "Resource Not Ready" on live links)
 - Discovery stops before connect to prevent link drops on some controllers
+- Numeric passkey confirmation is shown inline in the Bluetooth view with Confirm/Deny controls instead of a separate desktop pairing dialog. The agent is app-scoped; EssentialBar does not request global default-agent ownership.
+- The pairing helper requires the Python `dbus-next` package. On Arch Linux, install it with `sudo pacman -S python-dbus-next` (do not use pip against Arch's externally managed system Python). On other distributions, prefer the OS package; use `python3 -m pip install --user -r services/requirements.txt` only where user-site installs are supported.
 
 ### NetworkService
 

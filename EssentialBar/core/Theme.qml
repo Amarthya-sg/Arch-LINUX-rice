@@ -23,7 +23,7 @@ QtObject {
     property color surfaceRaised:    tokens.surfaceRaised    !== undefined ? tokens.surfaceRaised    : "#211c1e"
     property color surfaceHover:     tokens.surfaceHover     !== undefined ? tokens.surfaceHover     : "#2d2629"
     property color surfaceDisabled:  tokens.surfaceDisabled  !== undefined ? tokens.surfaceDisabled  : "#1a1617"
-    property color outline:          tokens.outline          !== undefined ? tokens.outline          : "#ffffff1a"
+    property color outline:          tokens.outline          !== undefined ? tokens.outline          : "#1affffff"
     property color text:             tokens.text             !== undefined ? tokens.text             : "#f4eeee"
     property color textMuted:        tokens.textMuted        !== undefined ? tokens.textMuted        : "#a09598"
     property color primary:          tokens.primary          !== undefined ? tokens.primary          : "#e5334b"
@@ -39,6 +39,7 @@ QtObject {
     property color workspaceActive:  tokens.workspaceActive  !== undefined ? tokens.workspaceActive  : "#e8384f"
     property color workspaceInactive: tokens.workspaceInactive !== undefined ? tokens.workspaceInactive : "#736869"
     property color batteryText:      tokens.batteryText      !== undefined ? tokens.batteryText      : "#cfc6c8"
+    property color launchGlow:       tokens.launchGlow       !== undefined ? tokens.launchGlow       : "#f0c35c"
 
     // Layout and typography tokens.
     property int radiusPanel:    tokens.radiusPanel    !== undefined ? tokens.radiusPanel    : 22

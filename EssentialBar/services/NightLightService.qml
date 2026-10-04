@@ -25,6 +25,7 @@ QtObject {
     }
     function setEnabled(value): void {
         if (!available) return
+        applyDebounce.stop()
         pending = true
  errorMessage = ""
         commandProcess.command = value

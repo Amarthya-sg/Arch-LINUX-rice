@@ -1,3 +1,4 @@
+//@ pragma UseQApplication
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
@@ -7,6 +8,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Services.UPower
+import Quickshell.Services.SystemTray
 import "core"
 import "services"
 import "components"
@@ -212,6 +214,24 @@ Scope {
         exclusiveZone: 54
         mask: Region { item: root.expanded ? outsideCatcher : island }
 
+        // Close on any click outside the panel, including below the window
+        function dismiss() {
+            ShellState.close()
+            collapseTimer.stop()
+            resetPageTimer.restart()
+        }
+        HyprlandFocusGrab {
+            windows: [root]
+            active: root.expanded
+            onCleared: root.dismiss()
+        }
+        // Return to the main page once the collapse animation is done
+        Timer {
+            id: resetPageTimer
+            interval: 350
+            onTriggered: if (!root.expanded) { root.page = "main"; ShellState.back() }
+        }
+
         // ── Derived state from real services ─────────────────────────────
         // Connectivity
         readonly property bool wifi:          NetworkService.wifiEnabled
@@ -246,6 +266,7 @@ Scope {
         property bool expanded: ShellState.popupOpen
         onExpandedChanged: {
             ShellState.popupOpen = expanded
+            if (expanded) resetPageTimer.stop(); else resetPageTimer.restart()
             // Start system stats polling as soon as the panel opens
             // so the tile subtitle isn't 0 before visiting the system page
             if (expanded && !statProc2.running) statProc2.running = true
@@ -309,7 +330,7 @@ Scope {
         // Sizes
         property int contentW: Math.min(width - 28, 560)
         property real headerH: page === "main" ? 0 : 62
-        property real expandedH: Math.max(160, Math.min(800, root.headerH + flick.contentHeight + 10))
+        property real expandedH: Math.max(160, Math.min(800, root.headerH + flick.contentHeight + 10 + 38))
 
         // Balance (from AudioService)
         property real balance: AudioService.outputBalance   // -1..1
@@ -395,7 +416,7 @@ Scope {
             z: 0
             anchors.fill: parent
             enabled: root.expanded
-            onClicked: { ShellState.close(); collapseTimer.stop() }
+            onClicked: root.dismiss()
         }
 
         // ════════════════════════════════════════════════════════════════
@@ -415,7 +436,7 @@ Scope {
 
             Timer {
                 id:       notifDismissTimer
-                interval: Config.notificationToastMs
+                interval: Config.notificationToastMs > 0 ? Config.notificationToastMs : 2500
                 running:  island.showingNotif
                 repeat:   false
                 onTriggered: {
@@ -444,6 +465,47 @@ Scope {
             Behavior on width  { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
             Behavior on height { NumberAnimation { duration: 380; easing.type: Easing.OutCubic } }
             Behavior on border.color { ColorAnimation { duration: 220 } }
+
+            // ── Launch glow — separate overlay ring, nothing to do with border ──
+            Rectangle {
+                id:           glowRing
+                anchors.fill: parent
+                radius:       parent.radius
+                color:        "transparent"
+                border.width: 2
+                border.color: Theme.launchGlow
+                opacity:      0
+                antialiasing: true
+
+                SequentialAnimation on opacity {
+                    id:      glowAnim
+                    running: false
+                    // fade in
+                    NumberAnimation { from: 0;    to: 1;    duration: 350; easing.type: Easing.OutCubic }
+                    // hold
+                    PauseAnimation  { duration: 300 }
+                    // fade out
+                    NumberAnimation { from: 1;    to: 0;    duration: 500; easing.type: Easing.InQuad }
+                }
+            }
+
+            // Play the launch glow exactly once, and only after the CSS token
+            // for it has really loaded (never with the yellow fallback color).
+            QtObject {
+                id: glowGate
+                property bool played: false
+                function tryPlay() {
+                    if (played) return
+                    if (Theme.tokens.launchGlow === undefined) return
+                    played = true
+                    glowAnim.restart()
+                }
+            }
+            Connections {
+                target: Theme
+                function onTokensChanged() { glowGate.tryPlay() }
+            }
+            Component.onCompleted: glowGate.tryPlay()
 
             // ── Notification preview (Dynamic Island expand) ──────────
             Item {
@@ -583,6 +645,7 @@ Scope {
             // ── Collapsed status row ──────────────────────────────────────
             RowLayout {
                 id: statusRow
+                z: 1
                 anchors.top:         parent.top
                 anchors.left:        parent.left
                 anchors.right:       parent.right
@@ -757,6 +820,16 @@ Scope {
                     }
                 }
 
+                Row {
+                    spacing: 2
+                    visible: SystemTray.items.values.some(function(i) { var id = String(i.id).toLowerCase(); return !["nm-applet","blueman","udiskie"].some(function(h) { return id.indexOf(h) >= 0 }) })
+                    Layout.alignment: Qt.AlignVCenter
+                    Repeater {
+                        model: SystemTray.items
+                        TrayIcon { width: 22; height: 22 }
+                    }
+                }
+
                 IslandRightIcon {
                     bluetoothOn: root.bluetooth
                     soundOn:     root.sound
@@ -807,9 +880,11 @@ Scope {
                      : root.page === "workspaces"  ? "Workspaces"
                      : root.page === "power"       ? "Power"
                      : root.page === "updates"     ? "Updates"
+                     : root.page === "nightlight" ? "Night Light"
                      : root.page === "system"      ? "System Panel"
                      : "Settings"
-                subtitle: root.page === "wifi"
+                subtitle: root.page === "nightlight" ? NightLightService.detail
+                        : root.page === "wifi"
                               ? (!root.wifi ? "Off" : root.wifiSsid !== "" ? "Connected to " + root.wifiSsid : "Not connected")
                         : root.page === "bluetooth"
                               ? (!root.bluetooth ? "Off" : root.btSummary)
@@ -822,16 +897,18 @@ Scope {
                         : root.page === "system"
                               ? (sysStats.uptimeSec > 0 ? "Up " + sysStats.uptimeText() : "Reading system stats…")
                         : ""
-                showSwitch: ["wifi", "bluetooth", "sound", "alerts"].indexOf(root.page) >= 0
+                showSwitch: ["wifi", "bluetooth", "sound", "alerts", "nightlight"].indexOf(root.page) >= 0
                 showClear:  root.page === "alerts" && NotificationService.count > 0
-                checked: root.page === "wifi"      ? root.wifi
+                checked: root.page === "nightlight" ? NightLightService.enabled
+                       : root.page === "wifi" ? root.wifi
                        : root.page === "bluetooth"  ? root.bluetooth
                        : root.page === "sound"      ? root.sound
                        : root.notifications
                 onBack: { root.page = "main"; ShellState.back() }
                 onCleared: NotificationService.clearAll()
                 onToggled: function(v) {
-                    if (root.page === "wifi")       { if (v !== root.wifi) NetworkService.toggleWifi() }
+                    if (root.page === "nightlight") { if (v !== NightLightService.enabled) NightLightService.toggle() }
+                    else if (root.page === "wifi") { if (v !== root.wifi) NetworkService.toggleWifi() }
                     else if (root.page === "bluetooth") { if (v !== root.bluetooth) BluetoothService.toggle() }
                     else if (root.page === "sound") AudioService.setMuted(!v)
                     else NotificationService.setDnd(!v)
@@ -848,7 +925,7 @@ Scope {
                 anchors.bottomMargin: 10
                 contentWidth:  width
                 contentHeight: (root.page === "main"
-                    ? contentColumn.height : detailColumn.height) + 16
+                    ? contentColumn.height : (detailLoader.item ? detailLoader.item.height : 0)) + 16
                 clip:           true
                 boundsBehavior: Flickable.StopAtBounds
 
@@ -922,12 +999,12 @@ Scope {
                                 Text {
                                     textFormat: Text.StyledText
                                     font.pixelSize: Theme.textCaption
-                                    text: "<font color='" + Theme.muted + "'>CPU</font> <font color='" + Theme.primary + "'>" + Math.round(SystemService.cpuPercent) + "%</font>"
+                                    text: "<font color='" + Theme.muted + "'>CPU</font> <font color='" + Theme.primary + "'>" + sysStats.cpuPercent + "%</font>"
                                 }
                                 Text {
                                     textFormat: Text.StyledText
                                     font.pixelSize: Theme.textCaption
-                                    text: "<font color='" + Theme.muted + "'>RAM</font> <font color='" + Theme.success + "'>" + Math.round(SystemService.memoryPercent) + "%</font>"
+                                    text: "<font color='" + Theme.muted + "'>RAM</font> <font color='" + Theme.success + "'>" + sysStats.ramPercent() + "%</font>"
                                 }
                             }
                         }
@@ -942,7 +1019,7 @@ Scope {
                             color: pwrArea.pressed ? Theme.surfaceHover : Theme.surfaceRaised
                             Behavior on color { ColorAnimation { duration: 110 } }
                             Text { anchors.centerIn: parent; text: "⏻"; color: Theme.muted; font.pixelSize: Theme.statusIconSize }
-                            MouseArea { id: pwrArea; anchors.fill: parent; onClicked: root.page = "power" }
+                            MouseArea { id: pwrArea; anchors.fill: parent; onClicked: { ShellState.close(); powerExecProc.command = ["/home/amarthya/.local/bin/hyde-shell", "logoutlaunch", "1"]; powerExecProc.running = true } }
                         }
                     }
 
@@ -1136,6 +1213,7 @@ Scope {
                             glyph:  "☼"
                             active: root.night
                             onTapped: NightLightService.toggle()
+                            onOpened: root.page = "nightlight"
                         }
                         Tile {
                             title:    "System Panel"
@@ -1158,8 +1236,8 @@ Scope {
                             subtitle: root.pendingUpdates > 0 ? root.pendingUpdates + " available" : "Up to date"
                             glyph:    "⇩"
                             active:   root.pendingUpdates > 0
-                            onTapped: root.page = "updates"
-                            onOpened: root.page = "updates"
+                            onTapped: { powerExecProc.command = ["sh", Quickshell.shellPath("scripts/update.sh")]; powerExecProc.running = true }
+                            onOpened: { powerExecProc.command = ["sh", Quickshell.shellPath("scripts/update.sh")]; powerExecProc.running = true }
                         }
                     }
 
@@ -1277,11 +1355,16 @@ Scope {
                 }  // end contentColumn
 
                 // ── DETAIL VIEWS ─────────────────────────────────────────
+Loader {
+    id: detailLoader
+    active: root.page !== "main"
+    width: parent.width - 28
+    x: 14
+    sourceComponent: Component {
                 Column {
                     id: detailColumn
                     visible:     root.page !== "main"
-                    width:       parent.width - 28
-                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width
                     topPadding:  4; bottomPadding: 24; spacing: 12
 
                     // ──── Wi-Fi view ──────────────────────────────────────
@@ -1475,6 +1558,58 @@ Scope {
                     }
 
                     // ──── Sound view ──────────────────────────────────────
+                    Column {
+                        visible: root.page === "nightlight"
+                        width:   parent.width
+                        spacing: 8
+
+                        Text {
+                            text: "TEMPERATURE"
+                            color: Theme.muted
+                            font.pixelSize: 11
+                            font.letterSpacing: 1
+                        }
+
+                        Rectangle {
+                            width:  parent.width
+                            height: nlRow.implicitHeight + 28
+                            radius: Theme.radiusCard
+                            color:  Theme.surfaceRaised
+
+                            RowLayout {
+                                id: nlRow
+                                anchors.fill: parent
+                                anchors.margins: 14
+                                spacing: 12
+
+                                PillSlider {
+                                    Layout.fillWidth: true
+                                    enabled:  NightLightService.available
+                                    from:     NightLightService.minimum
+                                    to:       NightLightService.maximum
+                                    stepSize: 100
+                                    value:    NightLightService.temperature
+                                    onMoved:  NightLightService.setTemperature(value)
+                                }
+
+                                Text {
+                                    text: NightLightService.temperature + "K"
+                                    color: Theme.text
+                                    font.pixelSize: Theme.textBody
+                                }
+                            }
+                        }
+
+                        Text {
+                            visible: !NightLightService.available
+                            width: parent.width
+                            wrapMode: Text.WordWrap
+                            text: NightLightService.detail
+                            color: Theme.muted
+                            font.pixelSize: 11
+                        }
+                    }
+
                     Column {
                         visible: root.page === "sound"
                         width:   parent.width
@@ -1993,6 +2128,8 @@ Scope {
                     }
 
                 }  // end detailColumn
+    }
+}
             }  // end Flickable
         }  // end panel Item
 

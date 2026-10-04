@@ -1,32 +1,43 @@
 :root {
   /* ── Core palette ──────────────────────────────────────────────────── */
-  --cc-background:      #0f0d0e;
-  --cc-surface:         #171415;
-  --cc-surface-raised:  #211c1e;
-  --cc-surface-hover:   #2d2629;
-  --cc-surface-disabled:#1a1617;
+  --cc-background:      #0c0e12;
+  --cc-surface:         #13161c;
+  --cc-surface-raised:  #1b1f27;
+  --cc-surface-hover:   #252a34;
+  --cc-surface-disabled:#161920;
   --cc-outline:         #ffffff1a;
-  --cc-text:            #f4eeee;
-  --cc-text-muted:      #a09598;
-  --cc-primary:         #e5334b;
-  --cc-primary-strong:  #ff5a6e;
-  --cc-success:         #34c17b;
-  --cc-warning:         #e8ac3a;
-  --cc-error:           #f0505f;
+  --cc-text:            #eef1f6;
+  --cc-text-muted:      #8e97a6;
+  --cc-primary:         #3b7ddd;
+  --cc-primary-strong:  #6aa3f5;
+  --cc-success:         #2fb982;
+  --cc-warning:         #e0a93b;
+  --cc-error:           #ec5d6a;
 
   /* ── Island / pill ─────────────────────────────────────────────────── */
-  --cc-island-bg:            #060505;
-  --cc-island-accent:        #ee3a52;
-  --cc-island-accent-strong: #ff8896;
-  --cc-island-muted:         #b3a8ab;
-  --cc-island-muted-dim:     #6a5f62;
+  --cc-island-bg:            #050608;
+  --cc-island-accent:        #4a8df0;
+  --cc-island-accent-strong: #8fb8f7;
+  --cc-island-muted:         #a5adb9;
+  --cc-island-muted-dim:     #5a6270;
 
   /* ── Workspace dots ────────────────────────────────────────────────── */
-  --cc-workspace-active:   #e8384f;
-  --cc-workspace-inactive: #736869;
+  --cc-workspace-active:   #4a8df0;
+  --cc-workspace-inactive: #667082;
 
   /* ── Battery text ──────────────────────────────────────────────────── */
-  --cc-battery-text: #cfc6c8;
+  --cc-battery-text: #c4cad4;
+
+  /* ── Launch animation ─────────────────────────────────────────────── */
+  --cc-launch-glow: #df1616;   /* pill outline color on startup — change freely */
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  --cc-font-family:          "Inter";   /* any installed font name */
+  --cc-font-weight-light:    300;
+  --cc-font-weight-regular:  400;
+  --cc-font-weight-medium:   500;
+  --cc-font-weight-semibold: 600;
+  --cc-font-weight-bold:     700;
 
   /* ── Typography scale (px) ─────────────────────────────────────────── */
   --cc-text-hero:    38;
@@ -55,62 +66,62 @@
   --cc-space-xl:  24;
 
   /* ── SVG icon colors ───────────────────────────────────────────────── */
-  --cc-icon-menu:           #e9e2e3;
-  --cc-icon-wifi:           #f1eaeb;
-  --cc-icon-wifi-slash:     #6f6467;
-  --cc-icon-bluetooth:      #ece5e6;
-  --cc-icon-bluetooth-slash:#6b6063;
-  --cc-icon-volume-2:       #e6dedf;
-  --cc-icon-volume-2-slash: #675c5f;
-  --cc-icon-bell:           #e2dadc;
-  --cc-icon-bell-slash:     #63585b;
-  --cc-icon-bell-dot:       #ff4d63;
-  --cc-icon-coffee:         #e9b877;
-  --cc-icon-coffee-slash:   #5f5457;
-  --cc-icon-battery:        #d8cfd1;
-  --cc-icon-battery-charging: #3ecb86;
-  --cc-icon-battery-full:   #4ad091;
-  --cc-icon-battery-medium: #ecb444;
-  --cc-icon-battery-low:    #f04a5b;
-  --cc-icon-moon:           #d3c6de;
+  --cc-icon-menu:           #e3e8f0;
+  --cc-icon-wifi:           #e9eef6;
+  --cc-icon-wifi-slash:     #626b7a;
+  --cc-icon-bluetooth:      #e4eaf3;
+  --cc-icon-bluetooth-slash:#5e6776;
+  --cc-icon-volume-2:       #dde3ec;
+  --cc-icon-volume-2-slash: #5a6372;
+  --cc-icon-bell:           #d6dce6;
+  --cc-icon-bell-slash:     #565f6e;
+  --cc-icon-bell-dot:       #ff5d6c;
+  --cc-icon-coffee:         #e3b36b;
+  --cc-icon-coffee-slash:   #535c6b;
+  --cc-icon-battery:        #ccd2dc;
+  --cc-icon-battery-charging: #36c48a;
+  --cc-icon-battery-full:   #43c993;
+  --cc-icon-battery-medium: #e5ae42;
+  --cc-icon-battery-low:    #ec5565;
+  --cc-icon-moon:           #bcc7e0;
   --cc-icon-sun:            #f0c35c;
-  --cc-icon-map-pin:        #f28b7d;
-  --cc-icon-screen-share:   #dbd3d5;
-  --cc-icon-chevron-left:   #b8adb0;
-  --cc-icon-chevron-right:  #b1a6a9;
-  --cc-icon-play:           #ef4258;
-  --cc-icon-pause:          #e93d54;
-  --cc-icon-download:       #efe7e8;
-  --cc-icon-check:          #38c47f;
-  --cc-icon-music-2:        #cbb9c2;
-  --cc-icon-app-window:     #c4bbbd;
+  --cc-icon-map-pin:        #5fb8c9;
+  --cc-icon-screen-share:   #d0d7e2;
+  --cc-icon-chevron-left:   #aab2c0;
+  --cc-icon-chevron-right:  #a4acba;
+  --cc-icon-play:           #4a8df0;
+  --cc-icon-pause:          #4486e8;
+  --cc-icon-download:       #e6ebf3;
+  --cc-icon-check:          #33bd85;
+  --cc-icon-music-2:        #aebbd4;
+  --cc-icon-app-window:     #b8c0cd;
 
   /* ── Semantic icon tones ───────────────────────────────────────────── */
-  --cc-icon-fg:      #f8f3f3;
-  --cc-icon-muted:   #8b8083;
-  --cc-icon-accent:  #e63950;
-  --cc-icon-ink:     #1a0a0d;
-  --cc-icon-slash:   #524a4c;
-  --cc-icon-success: #30b874;
-  --cc-icon-warning: #e2a637;
-  --cc-icon-error:   #e8465a;
+  --cc-icon-fg:      #f3f6fa;
+  --cc-icon-muted:   #838c9b;
+  --cc-icon-accent:  #3f84e8;
+  --cc-icon-ink:     #0a111c;
+  --cc-icon-slash:   #484f5c;
+  --cc-icon-success: #2bb27c;
+  --cc-icon-warning: #dba133;
+  --cc-icon-error:   #e4586a;
 
   /* ── Status bar icon colors ────────────────────────────────────────── */
-  --cc-icon-status-battery-charging: #37c580;
-  --cc-icon-status-battery-unknown:  #7c7174;
-  --cc-icon-status-battery-low:      #ec4a5b;
-  --cc-icon-status-battery-medium:   #e5ac3c;
-  --cc-icon-status-battery-full:     #43ca8a;
-  --cc-icon-status-wifi-on:          #ebe4e5;
-  --cc-icon-status-wifi-on-slash:    #6d6265;
-  --cc-icon-status-bluetooth-on:     #e7dfe0;
-  --cc-icon-status-bluetooth-on-slash: #695e61;
-  --cc-icon-status-sound-on:         #e1d9da;
-  --cc-icon-status-sound-on-slash:   #655a5d;
-  --cc-icon-status-bell-on:          #ddd5d6;
-  --cc-icon-status-bell-on-slash:    #61565a;
-  --cc-icon-status-coffee-on:        #e4b273;
-  --cc-icon-status-coffee-on-slash:  #5d5255;
-  --cc-icon-status-download:         #eae2e3;
-  --cc-icon-status-power:            #f0384f;
+  --cc-icon-status-battery-charging: #31bf86;
+  --cc-icon-status-battery-unknown:  #727b8a;
+  --cc-icon-status-battery-low:      #e8566a;
+  --cc-icon-status-battery-medium:   #dfa83f;
+  --cc-icon-status-battery-full:     #3dc58f;
+  --cc-icon-status-wifi-on:          #e3e9f2;
+  --cc-icon-status-wifi-on-slash:    #646d7c;
+  --cc-icon-status-bluetooth-on:     #dfe5ef;
+  --cc-icon-status-bluetooth-on-slash: #5f6877;
+  --cc-icon-status-sound-on:         #d9e0ea;
+  --cc-icon-status-sound-on-slash:   #5b6473;
+  --cc-icon-status-bell-on:          #d4dbe5;
+  --cc-icon-status-bell-on-slash:    #576070;
+  --cc-icon-status-coffee-on:        #dcae6e;
+  --cc-icon-status-coffee-on-slash:  #545d6b;
+  --cc-icon-status-download:         #e2e8f1;
+  --cc-icon-status-power:            #4a8df0;
 }

@@ -1,9 +1,6 @@
 module ControlCenter.Panels.Views
-MainView 1.0 MainView.qml
-WifiView 1.0 WifiView.qml
 BtView 1.0 BtView.qml
 SoundView 1.0 SoundView.qml
-BattView 1.0 BattView.qml
 CalendarView 1.0 CalendarView.qml
 AlertsView 1.0 AlertsView.qml
 UpdateView 1.0 UpdateView.qml

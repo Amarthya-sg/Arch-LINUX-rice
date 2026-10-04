@@ -33,7 +33,7 @@ Item {
                 Rectangle { implicitHeight: Theme.dimensionSize(40); implicitWidth: updBackRow.implicitWidth + 20; radius: Theme.radiusSize(12); color: updBackHov.containsMouse ? Theme.surfaceRaised : "transparent"
                     RowLayout { id: updBackRow; anchors.centerIn: parent; spacing: Theme.spacingSize(6)
                         SvgIcon { width: Theme.dimensionSize(16); height: Theme.dimensionSize(16); iconName: "chevron-left"; tone: "fg" }
-                        Text { text: "Updates"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont }
+                        Text { text: "System Updates"; color: Theme.fg; font.pixelSize: Theme.fontSize(16); font.weight: Theme.fontWeightSemibold; font.family: Theme.uiFont }
                     }
                     MouseArea { id: updBackHov; anchors.fill: parent; hoverEnabled: true; onClicked: ShellState.back() }
                 }

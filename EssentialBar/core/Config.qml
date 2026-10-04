@@ -28,7 +28,7 @@ QtObject {
     // ── Notification toasts ───────────────────────────────────────────────
     // How long (ms) a toast preview stays visible in the pill before
     // auto-dismissing.
-    property int notificationToastMs: 6000
+    property int notificationToastMs: 2500
 
     // ── Media auto-popup ──────────────────────────────────────────────────
     // Duration (ms) the media popover stays open after a track change

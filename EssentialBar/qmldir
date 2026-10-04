@@ -1,1 +1,2 @@
 module ControlCenter
+TrayIcon 1.0 TrayIcon.qml

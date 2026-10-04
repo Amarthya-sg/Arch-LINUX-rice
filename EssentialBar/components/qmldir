@@ -3,7 +3,8 @@ ToggleSwitch 1.0 ToggleSwitch.qml
 LevelSlider 1.0 LevelSlider.qml
 StyledButton 1.0 StyledButton.qml
 Gauge 1.0 Gauge.qml
-UnifiedPill 1.0 UnifiedPill.qml
+BluetoothPairPrompt 1.0 BluetoothPairPrompt.qml
 ChannelBalance 1.0 ChannelBalance.qml
 SvgIcon 1.0 SvgIcon.qml
 LockBadge 1.0 LockBadge.qml
+UnifiedPill 1.0 UnifiedPill.qml
